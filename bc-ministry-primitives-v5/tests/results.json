@@ -1,0 +1,635 @@
+{
+  "tests": 40,
+  "passed": 40,
+  "failed": 0,
+  "environment": "Chromium via Playwright; installed local fonts; external font downloads were not verified in this environment",
+  "results": [
+    {
+      "name": "All default role faces load at their requested weight",
+      "passed": true,
+      "details": [
+        {
+          "id": "open-heavy",
+          "status": "ready",
+          "source": "local"
+        },
+        {
+          "id": "condensed-bold",
+          "status": "ready",
+          "source": "local"
+        },
+        {
+          "id": "slab-bold",
+          "status": "ready",
+          "source": "local"
+        },
+        {
+          "id": "sans-regular",
+          "status": "ready",
+          "source": "local"
+        }
+      ]
+    },
+    {
+      "name": "Recipe: forests",
+      "passed": true,
+      "details": {
+        "recipe": "forests",
+        "duplicateIds": false,
+        "missingReferences": 0,
+        "runCount": 2,
+        "reportCount": 2,
+        "overflow": [],
+        "finite": true,
+        "invalid": false,
+        "perCharacterTransforms": 0,
+        "stretch": 0
+      }
+    },
+    {
+      "name": "Recipe: forests-wildfire",
+      "passed": true,
+      "details": {
+        "recipe": "forests-wildfire",
+        "duplicateIds": false,
+        "missingReferences": 0,
+        "runCount": 3,
+        "reportCount": 3,
+        "overflow": [],
+        "finite": true,
+        "invalid": false,
+        "perCharacterTransforms": 0,
+        "stretch": 0
+      }
+    },
+    {
+      "name": "Recipe: long-ministry",
+      "passed": true,
+      "details": {
+        "recipe": "long-ministry",
+        "duplicateIds": false,
+        "missingReferences": 0,
+        "runCount": 2,
+        "reportCount": 2,
+        "overflow": [],
+        "finite": true,
+        "invalid": false,
+        "perCharacterTransforms": 0,
+        "stretch": 0
+      }
+    },
+    {
+      "name": "Recipe: long-wildfire",
+      "passed": true,
+      "details": {
+        "recipe": "long-wildfire",
+        "duplicateIds": false,
+        "missingReferences": 0,
+        "runCount": 3,
+        "reportCount": 3,
+        "overflow": [],
+        "finite": true,
+        "invalid": false,
+        "perCharacterTransforms": 0,
+        "stretch": 0
+      }
+    },
+    {
+      "name": "Recipe: forest-service",
+      "passed": true,
+      "details": {
+        "recipe": "forest-service",
+        "duplicateIds": false,
+        "missingReferences": 0,
+        "runCount": 2,
+        "reportCount": 2,
+        "overflow": [],
+        "finite": true,
+        "invalid": false,
+        "perCharacterTransforms": 0,
+        "stretch": 0
+      }
+    },
+    {
+      "name": "Recipe: wildfire-management",
+      "passed": true,
+      "details": {
+        "recipe": "wildfire-management",
+        "duplicateIds": false,
+        "missingReferences": 0,
+        "runCount": 3,
+        "reportCount": 3,
+        "overflow": [],
+        "finite": true,
+        "invalid": false,
+        "perCharacterTransforms": 0,
+        "stretch": 0
+      }
+    },
+    {
+      "name": "Recipe: parks",
+      "passed": true,
+      "details": {
+        "recipe": "parks",
+        "duplicateIds": false,
+        "missingReferences": 0,
+        "runCount": 3,
+        "reportCount": 3,
+        "overflow": [],
+        "finite": true,
+        "invalid": false,
+        "perCharacterTransforms": 0,
+        "stretch": 0
+      }
+    },
+    {
+      "name": "Recipe: bcts-wildlife",
+      "passed": true,
+      "details": {
+        "recipe": "bcts-wildlife",
+        "duplicateIds": false,
+        "missingReferences": 0,
+        "runCount": 4,
+        "reportCount": 4,
+        "overflow": [],
+        "finite": true,
+        "invalid": false,
+        "perCharacterTransforms": 0,
+        "stretch": 0
+      }
+    },
+    {
+      "name": "Recipe: bcts-tree",
+      "passed": true,
+      "details": {
+        "recipe": "bcts-tree",
+        "duplicateIds": false,
+        "missingReferences": 0,
+        "runCount": 4,
+        "reportCount": 4,
+        "overflow": [],
+        "finite": true,
+        "invalid": false,
+        "perCharacterTransforms": 0,
+        "stretch": 0
+      }
+    },
+    {
+      "name": "Recipe: bcts-district",
+      "passed": true,
+      "details": {
+        "recipe": "bcts-district",
+        "duplicateIds": false,
+        "missingReferences": 0,
+        "runCount": 5,
+        "reportCount": 5,
+        "overflow": [],
+        "finite": true,
+        "invalid": false,
+        "perCharacterTransforms": 0,
+        "stretch": 0
+      }
+    },
+    {
+      "name": "Recipe: bcts-stacked-words",
+      "passed": true,
+      "details": {
+        "recipe": "bcts-stacked-words",
+        "duplicateIds": false,
+        "missingReferences": 0,
+        "runCount": 5,
+        "reportCount": 5,
+        "overflow": [],
+        "finite": true,
+        "invalid": false,
+        "perCharacterTransforms": 0,
+        "stretch": 0
+      }
+    },
+    {
+      "name": "Recipe: bcts-wordmark",
+      "passed": true,
+      "details": {
+        "recipe": "bcts-wordmark",
+        "duplicateIds": false,
+        "missingReferences": 0,
+        "runCount": 2,
+        "reportCount": 2,
+        "overflow": [],
+        "finite": true,
+        "invalid": false,
+        "perCharacterTransforms": 0,
+        "stretch": 0
+      }
+    },
+    {
+      "name": "Recipe: branch-strip",
+      "passed": true,
+      "details": {
+        "recipe": "branch-strip",
+        "duplicateIds": false,
+        "missingReferences": 0,
+        "runCount": 3,
+        "reportCount": 3,
+        "overflow": [],
+        "finite": true,
+        "invalid": false,
+        "perCharacterTransforms": 0,
+        "stretch": 0
+      }
+    },
+    {
+      "name": "Recipe: airtanker",
+      "passed": true,
+      "details": {
+        "recipe": "airtanker",
+        "duplicateIds": false,
+        "missingReferences": 0,
+        "runCount": 3,
+        "reportCount": 3,
+        "overflow": [],
+        "finite": true,
+        "invalid": false,
+        "perCharacterTransforms": 0,
+        "stretch": 0
+      }
+    },
+    {
+      "name": "Shared lettering identity: forests / forests-wildfire",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Shared lettering identity: long-ministry / long-wildfire",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Shared lettering identity: forest-service / wildfire-management",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Shared lettering identity: bcts-tree / bcts-district",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Crest-role changes do not alter the independent service role",
+      "passed": true,
+      "details": {
+        "upperChanged": true,
+        "lowerChanged": true,
+        "serviceUnchanged": true
+      }
+    },
+    {
+      "name": "Recolouring leaves the source scene geometry identical",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Original artwork strings match the imported master hashes",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "27 short, long, empty, accented and escaped-name cases preserve text and fit",
+      "passed": true,
+      "details": [
+        {
+          "recipe": "forests",
+          "n": 1,
+          "preserved": true,
+          "fit": true,
+          "smallWarning": true
+        },
+        {
+          "recipe": "forests",
+          "n": 7,
+          "preserved": true,
+          "fit": true,
+          "smallWarning": true
+        },
+        {
+          "recipe": "forests",
+          "n": 30,
+          "preserved": true,
+          "fit": true,
+          "smallWarning": true
+        },
+        {
+          "recipe": "forests",
+          "n": 46,
+          "preserved": true,
+          "fit": true,
+          "smallWarning": true
+        },
+        {
+          "recipe": "forests",
+          "n": 160,
+          "preserved": true,
+          "fit": true,
+          "smallWarning": true
+        },
+        {
+          "recipe": "forests",
+          "n": 320,
+          "preserved": true,
+          "fit": true,
+          "smallWarning": true
+        },
+        {
+          "recipe": "forests",
+          "n": 17,
+          "preserved": true,
+          "fit": true,
+          "smallWarning": true
+        },
+        {
+          "recipe": "forests",
+          "n": 11,
+          "preserved": true,
+          "fit": true,
+          "smallWarning": true
+        },
+        {
+          "recipe": "forests",
+          "n": 0,
+          "preserved": true,
+          "fit": true,
+          "smallWarning": true
+        },
+        {
+          "recipe": "long-ministry",
+          "n": 1,
+          "preserved": true,
+          "fit": true,
+          "smallWarning": true
+        },
+        {
+          "recipe": "long-ministry",
+          "n": 7,
+          "preserved": true,
+          "fit": true,
+          "smallWarning": true
+        },
+        {
+          "recipe": "long-ministry",
+          "n": 30,
+          "preserved": true,
+          "fit": true,
+          "smallWarning": true
+        },
+        {
+          "recipe": "long-ministry",
+          "n": 46,
+          "preserved": true,
+          "fit": true,
+          "smallWarning": true
+        },
+        {
+          "recipe": "long-ministry",
+          "n": 160,
+          "preserved": true,
+          "fit": true,
+          "smallWarning": true
+        },
+        {
+          "recipe": "long-ministry",
+          "n": 320,
+          "preserved": true,
+          "fit": true,
+          "smallWarning": true
+        },
+        {
+          "recipe": "long-ministry",
+          "n": 17,
+          "preserved": true,
+          "fit": true,
+          "smallWarning": true
+        },
+        {
+          "recipe": "long-ministry",
+          "n": 11,
+          "preserved": true,
+          "fit": true,
+          "smallWarning": true
+        },
+        {
+          "recipe": "long-ministry",
+          "n": 0,
+          "preserved": true,
+          "fit": true,
+          "smallWarning": true
+        },
+        {
+          "recipe": "forest-service",
+          "n": 1,
+          "preserved": true,
+          "fit": true,
+          "smallWarning": true
+        },
+        {
+          "recipe": "forest-service",
+          "n": 7,
+          "preserved": true,
+          "fit": true,
+          "smallWarning": true
+        },
+        {
+          "recipe": "forest-service",
+          "n": 30,
+          "preserved": true,
+          "fit": true,
+          "smallWarning": true
+        },
+        {
+          "recipe": "forest-service",
+          "n": 46,
+          "preserved": true,
+          "fit": true,
+          "smallWarning": true
+        },
+        {
+          "recipe": "forest-service",
+          "n": 160,
+          "preserved": true,
+          "fit": true,
+          "smallWarning": true
+        },
+        {
+          "recipe": "forest-service",
+          "n": 320,
+          "preserved": true,
+          "fit": true,
+          "smallWarning": true
+        },
+        {
+          "recipe": "forest-service",
+          "n": 17,
+          "preserved": true,
+          "fit": true,
+          "smallWarning": true
+        },
+        {
+          "recipe": "forest-service",
+          "n": 11,
+          "preserved": true,
+          "fit": true,
+          "smallWarning": true
+        },
+        {
+          "recipe": "forest-service",
+          "n": 0,
+          "preserved": true,
+          "fit": true,
+          "smallWarning": true
+        }
+      ]
+    },
+    {
+      "name": "Automatic profile selection is based on measured width",
+      "passed": true,
+      "details": [
+        "wildlife-caps",
+        "wildlife-long"
+      ]
+    },
+    {
+      "name": "Configuration round trip preserves resolved typography",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "All seven composition types render with finite bounds",
+      "passed": true,
+      "details": [
+        {
+          "layout": "badge",
+          "ok": true
+        },
+        {
+          "layout": "horizontal",
+          "ok": true
+        },
+        {
+          "layout": "horizontal-compact",
+          "ok": true
+        },
+        {
+          "layout": "words",
+          "ok": true
+        },
+        {
+          "layout": "wordmark",
+          "ok": true
+        },
+        {
+          "layout": "strip",
+          "ok": true
+        },
+        {
+          "layout": "stacked",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "name": "Glyph ink stays inside the lettering band: forests",
+      "passed": true,
+      "details": {
+        "recipe": "forests",
+        "solidTextPixels": 45657,
+        "outsidePaperPixels": 0
+      }
+    },
+    {
+      "name": "Glyph ink stays inside the lettering band: forests-wildfire",
+      "passed": true,
+      "details": {
+        "recipe": "forests-wildfire",
+        "solidTextPixels": 72452,
+        "outsidePaperPixels": 0
+      }
+    },
+    {
+      "name": "Glyph ink stays inside the lettering band: long-wildfire",
+      "passed": true,
+      "details": {
+        "recipe": "long-wildfire",
+        "solidTextPixels": 94882,
+        "outsidePaperPixels": 0
+      }
+    },
+    {
+      "name": "Glyph ink stays inside the lettering band: forest-service",
+      "passed": true,
+      "details": {
+        "recipe": "forest-service",
+        "solidTextPixels": 79110,
+        "outsidePaperPixels": 0
+      }
+    },
+    {
+      "name": "Glyph ink stays inside the lettering band: wildfire-management",
+      "passed": true,
+      "details": {
+        "recipe": "wildfire-management",
+        "solidTextPixels": 93872,
+        "outsidePaperPixels": 0
+      }
+    },
+    {
+      "name": "Glyph ink stays inside the lettering band: parks",
+      "passed": true,
+      "details": {
+        "recipe": "parks",
+        "solidTextPixels": 37804,
+        "outsidePaperPixels": 0
+      }
+    },
+    {
+      "name": "PNG export returns a real PNG image",
+      "passed": true,
+      "details": {
+        "bytes": 99817
+      }
+    },
+    {
+      "name": "Export has coherent live text and contains no font payload",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "ZIP export round-trips UTF-8 names and file content",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Rule overlay exposes fitted baselines",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Source overlay uses a uniform scale only",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "390 px mobile viewport has no horizontal document overflow",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Excluded Fire Control is not in the selectable family",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "No uncaught browser errors",
+      "passed": true,
+      "details": []
+    }
+  ]
+}

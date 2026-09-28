@@ -1,0 +1,85 @@
+{
+ "crestCentre": [
+  338.36631,
+  420.9648
+ ],
+ "frameCheck": {
+  "radiusDeviation": 0.376,
+  "treeOffset": [
+   1.24881,
+   1.62174
+  ]
+ },
+ "separators": {
+  "circle-caps": {
+   "at": [
+    [
+     72.9792270153161,
+     446
+    ],
+    [
+     603.7533929846838,
+     446
+    ]
+   ],
+   "scale": 1
+  },
+  "circle-long": {
+   "at": [
+    [
+     117.65906508334018,
+     215
+    ],
+    [
+     559.0735549166598,
+     215
+    ]
+   ],
+   "scale": 0.7114624505928854
+  },
+  "diamond": {
+   "at": [
+    [
+     72.89780158597654,
+     397.65
+    ],
+    [
+     603.8348184140234,
+     397.65
+    ]
+   ],
+   "scale": 1
+  }
+ },
+ "upperTabTransform": [
+  -1,
+  0,
+  0,
+  -1,
+  676.73262,
+  841.9296
+ ],
+ "airtanker-operations": {
+  "crestTransform": [
+   1.024692,
+   0.0,
+   0.0,
+   1.024692,
+   377.278743,
+   19.140729
+  ],
+  "crestScale": 1.024692,
+  "crestTransformAttr": "translate(724 450.5) scale(1.024692) translate(-338.366 -420.965)",
+  "diamonds": [
+   [
+    451.977,
+    426.61
+   ],
+   [
+    996.023,
+    426.61
+   ]
+  ],
+  "replaced": "oval-frame, landscape and its parts (hero conifer, ridges, distant forest, ground, small pine)"
+ }
+}

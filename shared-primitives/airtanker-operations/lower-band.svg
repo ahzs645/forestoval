@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="253 584 942 467" width="942" height="467">
+  <title>Airtanker · lower service band</title>
+  <desc>Isolated from airtanker-operations/airtanker-operations-editable.svg → #lower-band. Original coordinates retained; only the viewBox is cropped. Reference-based reconstruction, not an official master.</desc>
+  <g id="lower-band-piece">
+    <g id="lower-band">
+      <path id="band-outline" d="M 259 590 A 465 455 0 0 0 1189 590 Z" fill="#002950" />
+      <path id="band-face" d="M 279 590 A 445 435 0 0 0 1169 590 Z" fill="#FFECC0" />
+    </g>
+  </g>
+</svg>

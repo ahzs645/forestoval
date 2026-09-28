@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="151.852 471.318 374.666 116.551" width="374.666" height="116.551">
+  <title>Tree scene · mountains</title>
+  <desc>Centred in the shared crest window (source artwork shifted 1.25, 1.62 units). Isolated from bc-ministry-primitives-v5/data/art.json → treeInner #tree-mountains. Original coordinates retained; only the viewBox is cropped. Reference-based reconstruction, not an official master.</desc>
+  <defs>
+    <clipPath id="crest-window" clipPathUnits="userSpaceOnUse">
+      <ellipse id="crest-window-ellipse" cx="338.36631" cy="420.96480" rx="206.03861" ry="296.59750" />
+    </clipPath>
+  </defs>
+  <g id="mountains">
+    <g clip-path="url(#crest-window)">
+      <g transform="translate(1.24881 1.62174) translate(-353.61901156 -234.70751182) scale(11.61682669)">
+        <path fill="#0091c4" d="m75.05 66.503.09-.217-1.196.422-3.164-2.46-.351.07-.985.843-1.687.422-1.969-1.477-1.336.633-2.32-2.742-1.617.703-1.758-.914-.844-.633-3.586 2.883-.984-.492-3.164 2.18-.914-.844-.844.492h-.352l-1.054-1.055-3.094 1.9.084.167 1.668 3.668.076.101c.563-.35 3.656-1.757 4.57-1.757s2.953.843 3.868.843c.914 0 2.109-.562 2.742-.633s1.828.985 1.828.985l1.828.07c2.109-1.547 2.953-1.476 3.867-1.758.844-.07 2.883.774 3.445.844.563.07 1.899-.492 2.532-.492s2.531.914 3.445 1.266l.076-.138z" id="tree-mountains" />
+      </g>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="126.328 118.367 424.077 605.195" width="424.077" height="605.195">
+  <title>Tree scene · sky</title>
+  <desc>Centred in the shared crest window (source artwork shifted 1.25, 1.62 units). Isolated from bc-ministry-primitives-v5/data/art.json → treeInner #tree-sky. Original coordinates retained; only the viewBox is cropped. Reference-based reconstruction, not an official master.</desc>
+  <defs>
+    <clipPath id="crest-window" clipPathUnits="userSpaceOnUse">
+      <ellipse id="crest-window-ellipse" cx="338.36631" cy="420.96480" rx="206.03861" ry="296.59750" />
+    </clipPath>
+  </defs>
+  <g id="sky">
+    <g clip-path="url(#crest-window)">
+      <ellipse id="tree-sky" cx="338.36631" cy="420.96480" rx="206.03861" ry="296.59750" fill="#6dc9ef" />
+    </g>
+  </g>
+</svg>

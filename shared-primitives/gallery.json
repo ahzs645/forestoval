@@ -1,0 +1,343 @@
+{
+ "source": "/Users/ahmadjalil/Desktop/bcts/New Folder With Items 2",
+ "references": [
+  {
+   "id": "long-ministry",
+   "role": "primary",
+   "file": "references/long-ministry.jpeg",
+   "original": "1630573023028.jpeg",
+   "sha256": "3121015fd6e9453ba184c9038ed3eb3190c11711c0f245bc5cc79ba5caffc148",
+   "width": 200,
+   "height": 200,
+   "registration": {
+    "x": -102.463,
+    "y": -15.0531,
+    "w": 891.0144,
+    "h": 891.0144
+   },
+   "method": "v5 studio registration (matched by SHA-256)",
+   "note": "Small raster."
+  },
+  {
+   "id": "wildfire-management",
+   "role": "primary",
+   "file": "references/wildfire-management.jpg",
+   "original": "1_ae00efe2cef7ed231ee26b863d110033.jpg",
+   "sha256": "0bd6a56dfbd26e0020208d26edcde6e8989baccf1cff7e9d499719f58439a269",
+   "width": 400,
+   "height": 299,
+   "registration": {
+    "x": -561.3023,
+    "y": -226.4993,
+    "w": 1857.8597,
+    "h": 1388.7501
+   },
+   "method": "v5 studio registration (matched by SHA-256)",
+   "note": "Photograph of an embroidered patch."
+  },
+  {
+   "id": "airtanker",
+   "role": "primary",
+   "file": "references/airtanker.jpg",
+   "original": "2844942231_04659148b0_b.jpg",
+   "sha256": "5de4b946c57a24a99fef405b9786421eadd183b1d523dc06575af6936e851a1c",
+   "width": 1024,
+   "height": 732,
+   "registration": {
+    "x": -148.4944,
+    "y": -47.4911,
+    "w": 1734.729,
+    "h": 1240.0602
+   },
+   "method": "v5 studio registration (matched by SHA-256), carried into the airtanker layout with the shared-crest transform",
+   "note": "Photograph of a decal."
+  },
+  {
+   "id": "fire-control",
+   "role": "primary",
+   "file": "references/fire-control.jpg",
+   "original": "61c01a2d630e3ce5ead6c1583e511898.jpg",
+   "sha256": "d2899a886954c77e1b75fe54bb27692ddd50f0d706bcf6ff1629057466b4f26c",
+   "width": 703,
+   "height": 960,
+   "registration": {
+    "x": -18.6941,
+    "y": -126.9718,
+    "w": 711.624,
+    "h": 971.7767
+   },
+   "method": "v5 studio registration (matched by SHA-256)",
+   "note": "Photograph; the v5 studio excluded it from calibration as distorted."
+  },
+  {
+   "id": "long-wildfire",
+   "role": "primary",
+   "file": "references/long-wildfire.png",
+   "original": "British_Columbia_Wildfire_Service.png",
+   "sha256": "0137827e538a5a6b91e2a0b245d5541e1f0547765a2a55901888f5375306edcf",
+   "width": 267,
+   "height": 373,
+   "registration": {
+    "x": -28.8132,
+    "y": -37.0211,
+    "w": 738.2856,
+    "h": 1031.3877
+   },
+   "method": "v5 studio registration (matched by SHA-256)",
+   "note": ""
+  },
+  {
+   "id": "bcts-wordmark",
+   "role": "primary",
+   "file": "references/bcts-wordmark.png",
+   "original": "Screenshot 2026-09-24 at 1.34.09 PM.png",
+   "sha256": "2666a7698cef9172d184814ee95c45abaea3e680dc8bfcb0c705df455842ace8",
+   "width": 590,
+   "height": 278,
+   "registration": {
+    "x": -176,
+    "y": -140,
+    "w": 1667,
+    "h": 785.4678
+   },
+   "method": "v5 studio registration (matched by SHA-256)",
+   "note": ""
+  },
+  {
+   "id": "bcts-stacked-words",
+   "role": "primary",
+   "file": "references/bcts-stacked-words.png",
+   "original": "Screenshot 2026-09-24 at 2.00.38 PM.png",
+   "sha256": "454ab05bff1d00f9c82c694e039c8fa6a79d6fa7a21466d0274cb47486d4f481",
+   "width": 652,
+   "height": 560,
+   "registration": {
+    "x": -130.2681,
+    "y": -276.0016,
+    "w": 1711.5709,
+    "h": 1470.0609
+   },
+   "method": "v5 studio registration (matched by SHA-256)",
+   "note": ""
+  },
+  {
+   "id": "bcts-wildlife",
+   "role": "alternate",
+   "file": "references/bcts-wildlife-alt1.png",
+   "original": "Screenshot 2026-09-24 at 2.08.49 PM.png",
+   "sha256": "3e8e2c6df39770d215e15948f33cb517a09d6f9f4f1f8d7d37876d020e490bcf",
+   "width": 869,
+   "height": 369,
+   "registration": null,
+   "method": "none",
+   "note": "Screenshot of the same lockup."
+  },
+  {
+   "id": "bcts-district",
+   "role": "primary",
+   "file": "references/bcts-district.png",
+   "original": "Screenshot 2026-09-24 at 2.10.07 PM.png",
+   "sha256": "4c13727f165fb7c46ac03b546134c5ca036b94dcfb84434f74e792b68072046a",
+   "width": 418,
+   "height": 192,
+   "registration": {
+    "x": -146.4531,
+    "y": -260.9293,
+    "w": 2519.9518,
+    "h": 1157.4898
+   },
+   "method": "v5 studio registration (matched by SHA-256)",
+   "note": ""
+  },
+  {
+   "id": "forests-wildfire",
+   "role": "primary",
+   "file": "references/forests-wildfire.png",
+   "original": "a467069837794d374680005507598a62e7d4f8a4-676x945.png",
+   "sha256": "141ff4fb9d852846961fed27982f201621cb8ac59e7b7d1edec8ea09dec0307f",
+   "width": 676,
+   "height": 945,
+   "registration": {
+    "x": -0.0344,
+    "y": 0.2043,
+    "w": 675.7441,
+    "h": 944.6423
+   },
+   "method": "fitted: visible outline → frame + ribbon, uniform scale by height (width ratio 1.001)",
+   "note": ""
+  },
+  {
+   "id": "wildfire-management",
+   "role": "alternate",
+   "file": "references/wildfire-management-alt1.jpeg",
+   "original": "images (1).jpeg",
+   "sha256": "228ad8ccd01e97188ba9e85f4334058bca8fb96fbdc008670c30ccc14f302d3c",
+   "width": 211,
+   "height": 238,
+   "registration": null,
+   "method": "none",
+   "note": "Greyscale photograph of the same patch."
+  },
+  {
+   "id": "parks",
+   "role": "primary",
+   "file": "references/parks.jpeg",
+   "original": "images (2).jpeg",
+   "sha256": "bc36bf4f8a6ac2dd3ad931892b9e140e0647a87f7616a8bdc04fcd22b453040f",
+   "width": 401,
+   "height": 498,
+   "registration": {
+    "x": -104.355,
+    "y": -80.1649,
+    "w": 911.3514,
+    "h": 1131.803
+   },
+   "method": "v5 studio registration (matched by SHA-256)",
+   "note": "Photograph of an embroidered patch."
+  },
+  {
+   "id": "long-wildfire",
+   "role": "alternate",
+   "file": "references/long-wildfire-alt1.jpeg",
+   "original": "images.jpeg",
+   "sha256": "0d95864a904e7872e4af9bfc8225d4c05b62d5d922126bce09d89485a9cae533",
+   "width": 299,
+   "height": 168,
+   "registration": {
+    "x": -497.239,
+    "y": 6.202,
+    "w": 1654.5521,
+    "h": 929.648
+   },
+   "method": "fitted: visible outline → frame + ribbon, uniform scale by height (width ratio 1.066)",
+   "note": "Smaller copy on white."
+  },
+  {
+   "id": "forests",
+   "role": "primary",
+   "file": "references/forests.png",
+   "original": "logo_transparent-858x1024.png",
+   "sha256": "773a802ac186fb9dfa271efa8a0739fcc342fd8dd4f1d68d052b5a6a602b3615",
+   "width": 858,
+   "height": 1024,
+   "registration": {
+    "x": -108.7355,
+    "y": -114.6849,
+    "w": 894.1459,
+    "h": 1067.1392
+   },
+   "method": "fitted: visible outline → frame, uniform scale by height (width ratio 1.001)",
+   "note": ""
+  },
+  {
+   "id": "forests-wildfire",
+   "role": "alternate",
+   "file": "references/forests-wildfire-alt1.png",
+   "original": "page-1-selection-1 (1) copy.png",
+   "sha256": "16125633930e359c98976b279fb02911723b92764a9c961bf733b9527bf62c27",
+   "width": 408,
+   "height": 532,
+   "registration": {
+    "x": -108.946,
+    "y": -112.1966,
+    "w": 894.5669,
+    "h": 1166.4451
+   },
+   "method": "fitted: visible outline → frame + ribbon, uniform scale by height (width ratio 0.999)",
+   "note": "Smaller copy."
+  },
+  {
+   "id": "bcts-wildlife",
+   "role": "primary",
+   "file": "references/bcts-wildlife.png",
+   "original": "page-1-selection-1 (1).png",
+   "sha256": "b35dc3b09b95a059deb7d5937de8d6252c8014be33672a4f57f0d004652b8e92",
+   "width": 278,
+   "height": 156,
+   "registration": {
+    "x": -47.8971,
+    "y": -40.2307,
+    "w": 1619.4561,
+    "h": 908.7596
+   },
+   "method": "v5 studio registration (matched by SHA-256)",
+   "note": ""
+  },
+  {
+   "id": "bcts-wildlife",
+   "role": "context",
+   "file": "references/bcts-wildlife-context1.png",
+   "original": "page-1-selection-1 (2).png",
+   "sha256": "9a4b652dbf8fb583ee6e838322b9871d7fba8789b523b6d3e46f53178e1587a3",
+   "width": 1312,
+   "height": 157,
+   "registration": null,
+   "method": "none",
+   "note": "Banner showing the logo in use."
+  },
+  {
+   "id": "forest-service-mono",
+   "role": "primary",
+   "file": "references/forest-service-mono.png",
+   "original": "page-1-selection-1 (3).png",
+   "sha256": "80737ce18c38be7f47da3ed154984aa3cd750943d283065d046856b9a6a103a9",
+   "width": 69,
+   "height": 88,
+   "registration": {
+    "x": 14.1518,
+    "y": 6.202,
+    "w": 657.9063,
+    "h": 839.0689
+   },
+   "method": "fitted: visible outline → frame, uniform scale by height (width ratio 0.992)",
+   "note": "Very small raster (69 × 88 px)."
+  },
+  {
+   "id": "branch-strip",
+   "role": "primary",
+   "file": "references/branch-strip.svg",
+   "original": "page-1-selection-1 copy 2.svg",
+   "sha256": "7c9068f058238cc85f80f980b33f6b11c881fdcd675bdb11879bab3828cb7c55",
+   "width": 320.0,
+   "height": 76.667,
+   "registration": {
+    "x": -92.5459,
+    "y": -153.0241,
+    "w": 4600.5372,
+    "h": 1102.2168
+   },
+   "method": "v5 studio registration (matched by exact SVG size)",
+   "note": "Supplied vector."
+  },
+  {
+   "id": "bcts-tree",
+   "role": "alternate",
+   "file": "references/bcts-tree-alt1.svg",
+   "original": "page-1-selection-1 copy.svg",
+   "sha256": "8c9db6a9a369ad0d1d902740b386bcfa08b777cec464e9445024354e1941b035",
+   "width": 184.0,
+   "height": 75.3,
+   "registration": null,
+   "method": "none",
+   "note": "Illustrator export of the same lockup."
+  },
+  {
+   "id": "bcts-tree",
+   "role": "primary",
+   "file": "references/bcts-tree.svg",
+   "original": "page-1-selection-1.svg",
+   "sha256": "187cf7240aac64fd07896577a9a62e6f2c894c3e59e608840fc54b8fbdad10b9",
+   "width": 234.667,
+   "height": 104.667,
+   "registration": {
+    "x": -353.619,
+    "y": -234.7075,
+    "w": 2726.0859,
+    "h": 1215.8984
+   },
+   "method": "v5 studio registration (matched by exact SVG size)",
+   "note": "Supplied vector."
+  }
+ ],
+ "unmatched": []
+}

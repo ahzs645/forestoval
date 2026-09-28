@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="151.015 568 374.703 162.841" width="374.703" height="162.841">
+  <title>Wildlife scene · river</title>
+  <desc>Clipped by the crest window exactly as in the scene. Isolated from bc-ministry-primitives-v5/data/art.json → wildlifeScene #river. Original coordinates retained; only the viewBox is cropped. Reference-based reconstruction, not an official master.</desc>
+  <defs>
+    <clipPath id="crest-window" clipPathUnits="userSpaceOnUse">
+      <ellipse id="crest-window-ellipse" cx="338.36631" cy="420.96480" rx="206.03861" ry="296.59750" />
+    </clipPath>
+  </defs>
+  <g id="river-piece">
+    <g clip-path="url(#crest-window)">
+      <rect id="river" x="130" y="574" width="450" height="160" fill="#478CCA" />
+    </g>
+  </g>
+</svg>

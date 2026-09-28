@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="-14.65 -14.65 29.3 29.3" width="29.3" height="29.3">
+  <title>Separator · circle (wildlife crests)</title>
+  <desc>Radius 12.65 (wildlife-caps). wildlife-long uses radius 9. Placed at y=446 / y=215 on the crest in the engine. Isolated from bc-ministry-primitives-v5/src/engine.js → drawBadge. Original coordinates retained; only the viewBox is cropped. Reference-based reconstruction, not an official master.</desc>
+  <g id="separator-circle">
+    <circle cx="0" cy="0" r="12.65" fill="#15864a" data-fill-token="text" />
+  </g>
+</svg>

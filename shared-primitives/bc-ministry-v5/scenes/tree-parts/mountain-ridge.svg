@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="148.352 467.818 381.666 83.532" width="381.666" height="83.532">
+  <title>Tree scene · mountain ridge line</title>
+  <desc>The top edge of the mountains as a 7-unit line in the lettering ink, for the single-colour and airtanker crests. Not part of the full-colour scene. Centred in the shared crest window (source artwork shifted 1.25, 1.62 units). Isolated from bc-ministry-primitives-v5/data/art.json → treeInner #tree-mountains (top edge). Original coordinates retained; only the viewBox is cropped. Reference-based reconstruction, not an official master.</desc>
+  <defs>
+    <clipPath id="crest-window" clipPathUnits="userSpaceOnUse">
+      <ellipse id="crest-window-ellipse" cx="338.36631" cy="420.96480" rx="206.03861" ry="296.59750" />
+    </clipPath>
+  </defs>
+  <g id="mountain-ridge">
+    <g clip-path="url(#crest-window)">
+      <g transform="translate(1.24881 1.62174) translate(-353.61901156 -234.70751182) scale(11.61682669)">
+        <path id="tree-mountain-ridge" d="M 75.14 66.286 L 73.944 66.708 L 70.78 64.248 L 70.429 64.318 L 69.444 65.161 L 67.757 65.583 L 65.788 64.106 L 64.452 64.739 L 62.132 61.997 L 60.515 62.7 L 58.757 61.786 L 57.913 61.153 L 54.327 64.036 L 53.343 63.544 L 50.179 65.724 L 49.265 64.88 L 48.421 65.372 L 48.069 65.372 L 47.015 64.317 L 43.921 66.217" fill="none" stroke="#231f20" stroke-width="0.6026" stroke-linejoin="round" stroke-linecap="round" />
+      </g>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,62 @@
+{
+  "wildlife-long": {
+    "archiveFile": "1630573023028.jpeg",
+    "sha256": "3121015fd6e9453ba184c9038ed3eb3190c11711c0f245bc5cc79ba5caffc148",
+    "originalBytesRetained": true,
+    "originalMode": "RGB"
+  },
+  "wildlife-long-ribbon": {
+    "archiveFile": "British_Columbia_Wildfire_Service.png",
+    "sha256": "0137827e538a5a6b91e2a0b245d5541e1f0547765a2a55901888f5375306edcf",
+    "originalBytesRetained": true,
+    "originalMode": "P"
+  },
+  "wildfire-management": {
+    "archiveFile": "1_ae00efe2cef7ed231ee26b863d110033.jpg",
+    "sha256": "0bd6a56dfbd26e0020208d26edcde6e8989baccf1cff7e9d499719f58439a269",
+    "originalBytesRetained": true,
+    "originalMode": "RGB"
+  },
+  "parks": {
+    "archiveFile": "images (2).jpeg",
+    "sha256": "bc36bf4f8a6ac2dd3ad931892b9e140e0647a87f7616a8bdc04fcd22b453040f",
+    "originalBytesRetained": true,
+    "originalMode": "RGB"
+  },
+  "airtanker": {
+    "archiveFile": "2844942231_04659148b0_b.jpg",
+    "sha256": "5de4b946c57a24a99fef405b9786421eadd183b1d523dc06575af6936e851a1c",
+    "originalBytesRetained": true,
+    "originalMode": "RGB"
+  },
+  "bcts-wildlife": {
+    "archiveFile": "page-1-selection-1 (1).png",
+    "sha256": "b35dc3b09b95a059deb7d5937de8d6252c8014be33672a4f57f0d004652b8e92",
+    "originalBytesRetained": true,
+    "originalMode": "RGBA"
+  },
+  "bcts-only": {
+    "archiveFile": "Screenshot 2026-09-24 at 1.34.09\u0393\u00c7\u00bbPM.png",
+    "sha256": "2666a7698cef9172d184814ee95c45abaea3e680dc8bfcb0c705df455842ace8",
+    "originalBytesRetained": true,
+    "originalMode": "RGBA"
+  },
+  "bcts-district": {
+    "archiveFile": "Screenshot 2026-09-24 at 2.10.07\u0393\u00c7\u00bbPM.png",
+    "sha256": "4c13727f165fb7c46ac03b546134c5ca036b94dcfb84434f74e792b68072046a",
+    "originalBytesRetained": true,
+    "originalMode": "RGBA"
+  },
+  "bcts-stack": {
+    "archiveFile": "Screenshot 2026-09-24 at 2.00.38\u0393\u00c7\u00bbPM.png",
+    "sha256": "454ab05bff1d00f9c82c694e039c8fa6a79d6fa7a21466d0274cb47486d4f481",
+    "originalBytesRetained": true,
+    "originalMode": "RGBA"
+  },
+  "fire-control": {
+    "archiveFile": "61c01a2d630e3ce5ead6c1583e511898.jpg",
+    "sha256": "d2899a886954c77e1b75fe54bb27692ddd50f0d706bcf6ff1629057466b4f26c",
+    "originalBytesRetained": true,
+    "originalMode": "RGB"
+  }
+}

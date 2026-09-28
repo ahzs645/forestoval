@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="124 452.045 431.454 143.955" width="431.454" height="143.955">
+  <title>Wildlife scene · snow mountains</title>
+  <desc>Clipped by the crest window exactly as in the scene. Isolated from bc-ministry-primitives-v5/data/art.json → wildlifeScene #mountains. Original coordinates retained; only the viewBox is cropped. Reference-based reconstruction, not an official master.</desc>
+  <defs>
+    <clipPath id="crest-window" clipPathUnits="userSpaceOnUse">
+      <ellipse id="crest-window-ellipse" cx="338.36631" cy="420.96480" rx="206.03861" ry="296.59750" />
+    </clipPath>
+  </defs>
+  <g id="mountains-piece">
+    <g clip-path="url(#crest-window)">
+      <path id="mountains" d="M 130.0000 526.1757 L 180.2992 495.7540 L 193.6751 509.0000 L 201.0000 509.0000 L 207.0000 500.8547 L 219.9279 513.2412 L 259.7703 486.2086 L 272.1631 492.2758 L 315.3446 458.0448 L 349.8460 475.7621 L 370.1757 467.0866 L 399.2882 500.9638 L 416.0397 493.1494 L 455.0000 521.8174 L 490.0000 480.0000 L 560.0000 530.0000 L 560.0000 590.0000 L 130.0000 590.0000 Z" fill="#FFFFFF" />
+    </g>
+  </g>
+</svg>

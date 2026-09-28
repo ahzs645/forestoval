@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="6 384 455 404" width="455" height="404">
+  <title>Airtanker · wing master (left)</title>
+  <desc>The right wing is this master mirrored: translate(1448 0) scale(-1 1). Isolated from airtanker-operations/airtanker-operations-editable.svg → #wing-master. Original coordinates retained; only the viewBox is cropped. Reference-based reconstruction, not an official master.</desc>
+  <g id="wing">
+    <g id="wing-master">
+      <path d="M400 400 H111 C65 400 22 433 22 473 C22 499 39 520 61 532 C64 565 78 585 104 595 C109 626 123 646 154 657 C160 689 177 708 199 714 C207 750 234 772 271 772 H319 H455 V400 Z" fill="#FFECC0" />
+      <path d="M400 400 H111 C65 400 22 433 22 473 C22 499 39 520 61 532 C64 565 78 585 104 595 C109 626 123 646 154 657 C160 689 177 708 199 714 C207 750 234 772 271 772 H319" fill="none" stroke="#002950" stroke-width="20" stroke-linejoin="round" stroke-linecap="butt" />
+      <path d="M22 472 H365 M61 535 H364 M104 598 H257 M154 658 H273 M199 715 H297" fill="none" stroke="#002950" stroke-width="17" stroke-linecap="butt" />
+      <path d="M314 762 H320 V773 Z" fill="#FFECC0" />
+    </g>
+  </g>
+</svg>

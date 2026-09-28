@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="6 791 665 158" width="665" height="158">
+  <title>Parks plate</title>
+  <desc>Isolated from bc-ministry-primitives-v5/src/engine.js → drawBadge plate. Original coordinates retained; only the viewBox is cropped. Reference-based reconstruction, not an official master.</desc>
+  <g id="parks-plate">
+    <rect x="20" y="805" width="637" height="130" rx="3" fill="#163d32" stroke="#dfbd4f" stroke-width="16" data-fill-token="paper" data-stroke-token="ink" />
+  </g>
+</svg>

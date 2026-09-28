@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="-30.5 -32 61 64" width="61" height="64">
+  <title>Airtanker · diamond marker</title>
+  <desc>Master at the origin; placed on the shared crest band at (452.0, 426.6) and (996.0, 426.6). Isolated from airtanker-operations/airtanker-operations-editable.svg → #diamond. Original coordinates retained; only the viewBox is cropped. Reference-based reconstruction, not an official master.</desc>
+  <g id="diamond-piece">
+    <g fill="#EB001B">
+      <path id="diamond" d="M0 -26 L24.5 0 L0 26 L-24.5 0 Z" />
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="119.049 111.088 438.635 619.753" width="438.635" height="619.753">
+  <title>Wildlife scene · sky</title>
+  <desc>Clipped by the crest window exactly as in the scene. Isolated from bc-ministry-primitives-v5/data/art.json → wildlifeScene #sky. Original coordinates retained; only the viewBox is cropped. Reference-based reconstruction, not an official master.</desc>
+  <defs>
+    <clipPath id="crest-window" clipPathUnits="userSpaceOnUse">
+      <ellipse id="crest-window-ellipse" cx="338.36631" cy="420.96480" rx="206.03861" ry="296.59750" />
+    </clipPath>
+  </defs>
+  <g id="sky-piece">
+    <g clip-path="url(#crest-window)">
+      <rect id="sky" x="100" y="100" width="470" height="640" fill="#70C6EA" />
+    </g>
+  </g>
+</svg>

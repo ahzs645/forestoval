@@ -1,0 +1,14 @@
+# Only the three source folders are tracked; the loose review exports and zips
+# at the top level stay local.
+/*
+!/.gitignore
+!/.github/
+!/README.md
+!/shared-primitives/
+!/bc-ministry-primitives-v5/
+!/airtanker-operations/
+
+node_modules/
+dist/
+__pycache__/
+.DS_Store

@@ -1,0 +1,760 @@
+{
+ "crest-wildlife-caps": {
+  "reference": "logo_transparent-858x1024.png, a467069837794d374680005507598a62e7d4f8a4-676x945.png",
+  "before": 0.8702,
+  "after": 0.9063,
+  "accepted": true,
+  "runs": {
+   "0:upper": {
+    "scale": 0.9,
+    "spacing": 4.292,
+    "gaps": [
+     -0.36
+    ],
+    "tracks": [
+     0.179,
+     -0.089
+    ],
+    "dr": 2.38,
+    "dry": -2.25,
+    "rot": 1,
+    "dx": 0.63,
+    "dy": -0.13,
+    "start": 212.532,
+    "centre": -89.263
+   },
+   "0:lower": {
+    "scale": 1,
+    "spacing": 0.124,
+    "gaps": [],
+    "tracks": [],
+    "dr": 2,
+    "dry": -3,
+    "rot": 0,
+    "dx": -2,
+    "dy": 1,
+    "start": 492.782,
+    "centre": 89.774
+   }
+  },
+  "members": {
+   "forests": {
+    "reference": "logo_transparent-858x1024.png",
+    "before": 0.8745,
+    "after": 0.9105
+   },
+   "forests-wildfire": {
+    "reference": "a467069837794d374680005507598a62e7d4f8a4-676x945.png",
+    "before": 0.8778,
+    "after": 0.9021
+   }
+  }
+ },
+ "crest-wildlife-long": {
+  "reference": "1630573023028.jpeg, British_Columbia_Wildfire_Service.png, page-1-selection-1 (1).png",
+  "before": 0.5666,
+  "after": 0.699,
+  "accepted": true,
+  "runs": {
+   "0:upper": {
+    "scale": 0.95,
+    "spacing": -1.475,
+    "gaps": [
+     -7.37
+    ],
+    "tracks": [
+     0,
+     -1.106
+    ],
+    "dr": 0,
+    "dry": 1.5,
+    "rot": 5,
+    "dx": 3,
+    "dy": 2.5,
+    "start": 330.688,
+    "centre": -90.897
+   },
+   "0:lower": {
+    "scale": 1.05,
+    "spacing": 0,
+    "gaps": [
+     0,
+     4.52,
+     4.17,
+     0.35,
+     13.22
+    ],
+    "tracks": [
+     0,
+     0,
+     0,
+     0,
+     1.391,
+     1.913
+    ],
+    "dr": 6.25,
+    "dry": -4.5,
+    "rot": 9,
+    "dx": 2.25,
+    "dy": 1.75,
+    "start": 201.671,
+    "centre": -270.445
+   }
+  },
+  "members": {
+   "long-ministry": {
+    "reference": "1630573023028.jpeg",
+    "before": 0.66,
+    "after": 0.8072
+   },
+   "long-wildfire": {
+    "reference": "British_Columbia_Wildfire_Service.png",
+    "before": 0.6005,
+    "after": 0.7097
+   },
+   "bcts-wildlife": {
+    "reference": "page-1-selection-1 (1).png",
+    "before": 0.5313,
+    "after": 0.5799
+   }
+  }
+ },
+ "crest-tree": {
+  "reference": "page-1-selection-1 (3).png, 1_ae00efe2cef7ed231ee26b863d110033.jpg, 61c01a2d630e3ce5ead6c1583e511898.jpg, 2844942231_04659148b0_b.jpg, page-1-selection-1.svg, Screenshot 2026-09-24 at 2.10.07\u202fPM.png, Screenshot 2026-09-24 at 2.00.38\u202fPM.png, page-1-selection-1 copy 2.svg",
+  "before": 0.5906,
+  "after": 0.6451,
+  "accepted": true,
+  "runs": {
+   "0:upper": {
+    "scale": 1.05,
+    "spacing": -1.735,
+    "gaps": [
+     0
+    ],
+    "tracks": [
+     0,
+     -0.868
+    ],
+    "dr": 0.13,
+    "dry": -0.63,
+    "rot": 0,
+    "dx": 1.13,
+    "dy": -0.5,
+    "start": 255.714,
+    "centre": -89.493
+   },
+   "0:lower": {
+    "scale": 0.95,
+    "spacing": 3.478,
+    "gaps": [
+     12.17
+    ],
+    "tracks": [
+     0,
+     -3.043
+    ],
+    "dr": -1.63,
+    "dry": 4.38,
+    "rot": -2,
+    "dx": -0.13,
+    "dy": 0.75,
+    "start": 247.831,
+    "centre": -271.442
+   }
+  },
+  "members": {
+   "forest-service-mono": {
+    "reference": "page-1-selection-1 (3).png",
+    "before": 0.6577,
+    "after": 0.8267
+   },
+   "wildfire-management": {
+    "reference": "1_ae00efe2cef7ed231ee26b863d110033.jpg",
+    "before": 0.6684,
+    "after": 0.6609
+   },
+   "fire-control": {
+    "reference": "61c01a2d630e3ce5ead6c1583e511898.jpg",
+    "before": 0.4673,
+    "after": 0.4759
+   },
+   "airtanker": {
+    "reference": "2844942231_04659148b0_b.jpg",
+    "before": 0.5914,
+    "after": 0.5856
+   },
+   "bcts-tree": {
+    "reference": "page-1-selection-1.svg",
+    "before": 0.8363,
+    "after": 0.8714
+   },
+   "bcts-district": {
+    "reference": "Screenshot 2026-09-24 at 2.10.07\u202fPM.png",
+    "before": 0.8238,
+    "after": 0.8593
+   },
+   "bcts-stacked-words": {
+    "reference": "Screenshot 2026-09-24 at 2.00.38\u202fPM.png",
+    "before": 0.8309,
+    "after": 0.8814
+   },
+   "branch-strip": {
+    "reference": "page-1-selection-1 copy 2.svg",
+    "before": 0,
+    "after": 0
+   }
+  }
+ },
+ "forests-wildfire": {
+  "reference": "a467069837794d374680005507598a62e7d4f8a4-676x945.png",
+  "before": 0.9407,
+  "after": 0.9407,
+  "accepted": false,
+  "frozen": [],
+  "runs": {
+   "1:service": {
+    "scale": 1,
+    "spacing": 0,
+    "gaps": [
+     0
+    ],
+    "tracks": [
+     0,
+     0
+    ],
+    "dr": 0,
+    "dry": 0,
+    "rot": 0,
+    "dx": 0,
+    "dy": 0,
+    "start": 539.262,
+    "centre": 89.991
+   }
+  },
+  "shared": {
+   "0:upper": {
+    "from": "crest-wildlife-caps",
+    "shrink": 1
+   },
+   "0:lower": {
+    "from": "crest-wildlife-caps",
+    "shrink": 1
+   }
+  }
+ },
+ "forests": {
+  "reference": "logo_transparent-858x1024.png",
+  "before": 0.9266,
+  "after": 0.9266,
+  "accepted": false,
+  "frozen": [],
+  "runs": {},
+  "shared": {
+   "0:upper": {
+    "from": "crest-wildlife-caps",
+    "shrink": 1
+   },
+   "0:lower": {
+    "from": "crest-wildlife-caps",
+    "shrink": 1
+   }
+  }
+ },
+ "long-ministry": {
+  "reference": "1630573023028.jpeg",
+  "before": 0.8102,
+  "after": 0.8102,
+  "accepted": false,
+  "frozen": [],
+  "runs": {},
+  "shared": {
+   "0:upper": {
+    "from": "crest-wildlife-long",
+    "shrink": 1
+   },
+   "0:lower": {
+    "from": "crest-wildlife-long",
+    "shrink": 1
+   }
+  }
+ },
+ "long-wildfire": {
+  "reference": "British_Columbia_Wildfire_Service.png",
+  "before": 0.666,
+  "after": 0.7079,
+  "accepted": true,
+  "frozen": [],
+  "runs": {
+   "1:service": {
+    "scale": 0.8525,
+    "spacing": 5.348,
+    "gaps": [
+     7.69
+    ],
+    "tracks": [
+     0,
+     0.251
+    ],
+    "dr": 4.38,
+    "dry": -3.38,
+    "rot": -1,
+    "dx": 1.63,
+    "dy": 7.5,
+    "start": 539.262,
+    "centre": 89.563
+   }
+  },
+  "shared": {
+   "0:upper": {
+    "from": "crest-wildlife-long",
+    "shrink": 1
+   },
+   "0:lower": {
+    "from": "crest-wildlife-long",
+    "shrink": 1
+   }
+  }
+ },
+ "forest-service-mono": {
+  "reference": "page-1-selection-1 (3).png",
+  "before": 0.8354,
+  "after": 0.8354,
+  "accepted": false,
+  "frozen": [],
+  "runs": {},
+  "shared": {
+   "0:upper": {
+    "from": "crest-tree",
+    "shrink": 1
+   },
+   "0:lower": {
+    "from": "crest-tree",
+    "shrink": 1
+   }
+  }
+ },
+ "wildfire-management": {
+  "reference": "1_ae00efe2cef7ed231ee26b863d110033.jpg",
+  "before": 0.6606,
+  "after": 0.6606,
+  "accepted": false,
+  "frozen": [],
+  "runs": {},
+  "shared": {
+   "0:upper": {
+    "from": "crest-tree",
+    "shrink": 1
+   },
+   "0:lower": {
+    "from": "crest-tree",
+    "shrink": 1
+   },
+   "1:service": {
+    "from": "forests-wildfire 1:service",
+    "shrink": 0.8405,
+    "tracking": -2.724
+   }
+  }
+ },
+ "fire-control": {
+  "reference": "61c01a2d630e3ce5ead6c1583e511898.jpg",
+  "before": 0.4759,
+  "after": 0.4759,
+  "accepted": false,
+  "frozen": [],
+  "runs": {},
+  "shared": {
+   "0:upper": {
+    "from": "crest-tree",
+    "shrink": 1
+   },
+   "0:lower": {
+    "from": "crest-tree",
+    "shrink": 1
+   },
+   "1:service": {
+    "from": "forests-wildfire 1:service",
+    "shrink": 1
+   }
+  }
+ },
+ "parks": {
+  "reference": "images (2).jpeg",
+  "before": 0.3237,
+  "after": 0.4759,
+  "accepted": true,
+  "frozen": [],
+  "runs": {
+   "0:upper": {
+    "scale": 0.905,
+    "spacing": 2.522,
+    "gaps": [
+     0
+    ],
+    "tracks": [
+     -0.348,
+     0
+    ],
+    "dr": -10.5,
+    "dry": 18.5,
+    "rot": 5,
+    "dx": -2,
+    "dy": 8,
+    "start": 345.063,
+    "centre": 273.132
+   },
+   "0:lower": {
+    "scale": 1.25,
+    "spacing": 6.122,
+    "gaps": [
+     0
+    ],
+    "tracks": [
+     0,
+     -0.612
+    ],
+    "dr": -2.13,
+    "dry": 3.63,
+    "rot": 0,
+    "dx": 2.88,
+    "dy": -2.5,
+    "start": 444.268,
+    "centre": -288.319
+   },
+   "0:service": {
+    "scale": 1.45,
+    "spacing": -4.07,
+    "gaps": [],
+    "tracks": [],
+    "dr": 0,
+    "dry": 0,
+    "rot": 0,
+    "dx": -10,
+    "dy": 11
+   }
+  }
+ },
+ "airtanker": {
+  "reference": "2844942231_04659148b0_b.jpg",
+  "before": 0.5062,
+  "after": 0.5426,
+  "accepted": true,
+  "frozen": [],
+  "runs": {
+   "1:airtanker-operations": {
+    "scale": 0.9,
+    "spacing": -2.291,
+    "gaps": [
+     18.33
+    ],
+    "tracks": [
+     0,
+     -3.436
+    ],
+    "dr": 6.5,
+    "dry": -8.5,
+    "rot": -7,
+    "dx": 2.5,
+    "dy": 2,
+    "start": 304.159,
+    "centre": 95.376
+   }
+  },
+  "shared": {
+   "0:upper": {
+    "from": "crest-tree",
+    "shrink": 1
+   },
+   "0:lower": {
+    "from": "crest-tree",
+    "shrink": 1
+   }
+  }
+ },
+ "bcts-wildlife": {
+  "reference": "page-1-selection-1 (1).png",
+  "before": 0.505,
+  "after": 0.7007,
+  "accepted": true,
+  "frozen": [],
+  "runs": {
+   "1:word-line-0": {
+    "scale": 0.94,
+    "spacing": -41.702,
+    "gaps": [],
+    "tracks": [],
+    "dr": 0,
+    "dry": 0,
+    "rot": 0,
+    "dx": -75,
+    "dy": -15
+   },
+   "1:word-line-1": {
+    "scale": 0.9,
+    "spacing": -9.127,
+    "gaps": [
+     0,
+     -27.38
+    ],
+    "tracks": [
+     1.141,
+     0,
+     5.704
+    ],
+    "dr": 0,
+    "dry": 0,
+    "rot": 0,
+    "dx": -56.25,
+    "dy": 48
+   }
+  },
+  "shared": {
+   "0:upper": {
+    "from": "crest-wildlife-long",
+    "shrink": 1
+   },
+   "0:lower": {
+    "from": "crest-wildlife-long",
+    "shrink": 1
+   }
+  }
+ },
+ "bcts-tree": {
+  "reference": "page-1-selection-1.svg",
+  "before": 0.93,
+  "after": 0.9589,
+  "accepted": true,
+  "frozen": [],
+  "runs": {
+   "1:word-line-0": {
+    "scale": 1.09,
+    "spacing": -37.624,
+    "gaps": [],
+    "tracks": [],
+    "dr": 0,
+    "dry": 0,
+    "rot": 0,
+    "dx": -14.25,
+    "dy": 24
+   },
+   "1:word-line-1": {
+    "scale": 1,
+    "spacing": 0,
+    "gaps": [
+     0,
+     9.02
+    ],
+    "tracks": [
+     0,
+     0,
+     0.751
+    ],
+    "dr": 0,
+    "dry": 0,
+    "rot": 0,
+    "dx": -18,
+    "dy": 0
+   }
+  },
+  "shared": {
+   "0:upper": {
+    "from": "crest-tree",
+    "shrink": 1
+   },
+   "0:lower": {
+    "from": "crest-tree",
+    "shrink": 1
+   }
+  }
+ },
+ "bcts-district": {
+  "reference": "Screenshot 2026-09-24 at 2.10.07\u202fPM.png",
+  "before": 0.4785,
+  "after": 0.9491,
+  "accepted": true,
+  "frozen": [],
+  "runs": {
+   "1:word-line-0": {
+    "scale": 1.015,
+    "spacing": -20.758,
+    "gaps": [],
+    "tracks": [],
+    "dr": 0,
+    "dry": 0,
+    "rot": 0,
+    "dx": -4.5,
+    "dy": 84
+   },
+   "1:word-line-1": {
+    "scale": 0.8,
+    "spacing": 18.031,
+    "gaps": [
+     -4.51,
+     6.01
+    ],
+    "tracks": [
+     0.751,
+     0,
+     -3.005
+    ],
+    "dr": 0,
+    "dry": 0,
+    "rot": 0,
+    "dx": -17.25,
+    "dy": 66
+   },
+   "1:word-line-2": {
+    "scale": 1,
+    "spacing": 9.35,
+    "gaps": [],
+    "tracks": [],
+    "dr": 0,
+    "dry": 0,
+    "rot": 0,
+    "dx": -12,
+    "dy": 54
+   }
+  },
+  "shared": {
+   "0:upper": {
+    "from": "crest-tree",
+    "shrink": 1
+   },
+   "0:lower": {
+    "from": "crest-tree",
+    "shrink": 1
+   }
+  }
+ },
+ "bcts-stacked-words": {
+  "reference": "Screenshot 2026-09-24 at 2.00.38\u202fPM.png",
+  "before": 0.6448,
+  "after": 0.9235,
+  "accepted": true,
+  "frozen": [],
+  "runs": {
+   "1:stacked-line-0": {
+    "scale": 1.015,
+    "spacing": 3.104,
+    "gaps": [],
+    "tracks": [],
+    "dr": 0,
+    "dry": 0,
+    "rot": 0,
+    "dx": 9,
+    "dy": -48
+   },
+   "1:stacked-line-1": {
+    "scale": 1,
+    "spacing": -6.623,
+    "gaps": [],
+    "tracks": [],
+    "dr": 0,
+    "dry": 0,
+    "rot": 0,
+    "dx": -1.5,
+    "dy": -36
+   },
+   "1:stacked-line-2": {
+    "scale": 0.975,
+    "spacing": 0,
+    "gaps": [],
+    "tracks": [],
+    "dr": 0,
+    "dry": 0,
+    "rot": 0,
+    "dx": 9,
+    "dy": -27
+   }
+  },
+  "shared": {
+   "0:upper": {
+    "from": "crest-tree",
+    "shrink": 1
+   },
+   "0:lower": {
+    "from": "crest-tree",
+    "shrink": 1
+   }
+  }
+ },
+ "bcts-wordmark": {
+  "reference": "Screenshot 2026-09-24 at 1.34.09\u202fPM.png",
+  "before": 0.5754,
+  "after": 0.9726,
+  "accepted": true,
+  "frozen": [],
+  "runs": {
+   "0:word-line-0": {
+    "scale": 1.01,
+    "spacing": -16.139,
+    "gaps": [],
+    "tracks": [],
+    "dr": 0,
+    "dry": 0,
+    "rot": 0,
+    "dx": 46.5,
+    "dy": 36
+   },
+   "0:word-line-1": {
+    "scale": 0.9,
+    "spacing": 4.73,
+    "gaps": [
+     0,
+     9.46
+    ],
+    "tracks": [
+     0,
+     0,
+     -0.591
+    ],
+    "dr": 0,
+    "dry": 0,
+    "rot": 0,
+    "dx": 42,
+    "dy": 45
+   }
+  }
+ },
+ "branch-strip": {
+  "reference": "page-1-selection-1 copy 2.svg",
+  "before": 0.4802,
+  "after": 0.6319,
+  "accepted": true,
+  "frozen": [],
+  "runs": {
+   "1:branch-label": {
+    "scale": 1.34,
+    "spacing": -11.882,
+    "gaps": [
+     -13.58,
+     6.79,
+     -6.79,
+     -3.39
+    ],
+    "tracks": [
+     0,
+     0,
+     3.395,
+     0,
+     -4.243
+    ],
+    "dr": 0,
+    "dry": 0,
+    "rot": 0,
+    "dx": 57,
+    "dy": 24
+   }
+  },
+  "shared": {
+   "0:upper": {
+    "from": "crest-tree",
+    "shrink": 1
+   },
+   "0:lower": {
+    "from": "crest-tree",
+    "shrink": 1
+   }
+  }
+ }
+}

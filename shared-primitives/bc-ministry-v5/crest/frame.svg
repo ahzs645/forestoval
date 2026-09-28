@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="5.41 0.202 665.855 841.534" width="665.855" height="841.534">
+  <title>Shared crest frame</title>
+  <desc>One frame for every crest: outer ink oval, paper lettering band, inner ink oval. The tree crest's own frame matched it within 0.38 units, so it was retired. Isolated from bc-ministry-primitives-v5/data/art.json → wildlifeFrame. Original coordinates retained; only the viewBox is cropped. Reference-based reconstruction, not an official master.</desc>
+  <g id="frame">
+    <g id="oval-frame">
+      <ellipse id="outer-black-oval" cx="338.33727" cy="420.96942" rx="326.92750" ry="414.76718" fill="#000000" />
+      <ellipse id="white-lettering-band" cx="338.32256" cy="420.96096" rx="310.34551" ry="398.06377" fill="#FFFFFF" />
+      <ellipse id="inner-black-oval" cx="338.35305" cy="420.94316" rx="222.52573" ry="313.12995" fill="#000000" />
+    </g>
+  </g>
+</svg>

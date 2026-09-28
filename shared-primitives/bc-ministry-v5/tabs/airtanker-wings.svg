@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="-341.438 338 1359.61 190" width="1359.61" height="190">
+  <title>Airtanker wings (v5 engine, mirrored pair)</title>
+  <desc>Photo-based approximation; colours are fixed in the engine, not themed. Isolated from bc-ministry-primitives-v5/src/engine.js → wings(). Original coordinates retained; only the viewBox is cropped. Reference-based reconstruction, not an official master.</desc>
+  <g id="airtanker-wings">
+    <g>
+      <g>
+        <path d="M 106 350 L -297 350 Q -340 350 -326 383 Q -318 408 -270 410 Q -297 440 -241 448 Q -262 478 -205 482 Q -215 511 -149 516 L 112 516 L 160 438 Z" fill="#e4c681" stroke="#172747" stroke-width="12" stroke-linejoin="round" />
+        <path d="M -279 402 H 106" fill="none" stroke="#172747" stroke-width="5" />
+        <path d="M -249 440 H 106" fill="none" stroke="#172747" stroke-width="5" />
+        <path d="M -212 478 H 106" fill="none" stroke="#172747" stroke-width="5" />
+      </g>
+      <g transform="translate(676.733 0) scale(-1 1)">
+        <path d="M 106 350 L -297 350 Q -340 350 -326 383 Q -318 408 -270 410 Q -297 440 -241 448 Q -262 478 -205 482 Q -215 511 -149 516 L 112 516 L 160 438 Z" fill="#e4c681" stroke="#172747" stroke-width="12" stroke-linejoin="round" />
+        <path d="M -279 402 H 106" fill="none" stroke="#172747" stroke-width="5" />
+        <path d="M -249 440 H 106" fill="none" stroke="#172747" stroke-width="5" />
+        <path d="M -212 478 H 106" fill="none" stroke="#172747" stroke-width="5" />
+      </g>
+    </g>
+  </g>
+</svg>
