@@ -48,6 +48,7 @@ FILES = {
     '8c9db6a9a369ad0d': ('bcts-tree', 'alternate', None, 'Illustrator export of the same lockup.'),
     '4c13727f165fb7c4': ('bcts-district', 'primary', ('v5', 'bcts-district'), ''),
     '454ab05bff1d00f9': ('bcts-stacked-words', 'primary', ('v5', 'bcts-stack'), ''),
+    # No recreation (it has no crest); kept because the v5 studio uses the image.
     '2666a7698cef9172': ('bcts-wordmark', 'primary', ('v5', 'bcts-only'), ''),
     '7c9068f058238cc8': ('branch-strip', 'primary', ('v5', 'branch-strip'), 'Supplied vector.'),
 }

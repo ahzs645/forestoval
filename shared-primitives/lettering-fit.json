@@ -678,44 +678,6 @@
    }
   }
  },
- "bcts-wordmark": {
-  "reference": "Screenshot 2026-09-24 at 1.34.09\u202fPM.png",
-  "before": 0.5754,
-  "after": 0.9726,
-  "accepted": true,
-  "frozen": [],
-  "runs": {
-   "0:word-line-0": {
-    "scale": 1.01,
-    "spacing": -16.139,
-    "gaps": [],
-    "tracks": [],
-    "dr": 0,
-    "dry": 0,
-    "rot": 0,
-    "dx": 46.5,
-    "dy": 36
-   },
-   "0:word-line-1": {
-    "scale": 0.9,
-    "spacing": 4.73,
-    "gaps": [
-     0,
-     9.46
-    ],
-    "tracks": [
-     0,
-     0,
-     -0.591
-    ],
-    "dr": 0,
-    "dry": 0,
-    "rot": 0,
-    "dx": 42,
-    "dy": 45
-   }
-  }
- },
  "branch-strip": {
   "reference": "page-1-selection-1 copy 2.svg",
   "before": 0.4802,

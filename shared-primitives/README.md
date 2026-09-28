@@ -171,7 +171,7 @@ is laid out with the same fonts and SVG text engine as the site:
 
   When Forests · Wildfire Service is refitted, refit the logos that share its tab too (`python fit_lettering.py forests-wildfire wildfire-management fire-control`). Given several ids, the fitter fits the source first.
 
-Overlap with each reference's letters, before and after fitting: Long ministry 0.66 → 0.86, Long ministry · Wildfire 0.53 → 0.75, BCTS district 0.47 → 0.95, BC / Timber / Sales 0.58 → 0.92, BCTS wordmark 0.58 → 0.97. The photographed patches (Parks 0.32 → 0.48, Airtanker 0.52 → 0.62) stay rougher: their embroidered or painted letters are heavier than the substitute fonts.
+Overlap with each reference's letters, before and after fitting: Long ministry 0.66 → 0.86, Long ministry · Wildfire 0.53 → 0.75, BCTS district 0.47 → 0.95, BC / Timber / Sales 0.58 → 0.92. The photographed patches (Parks 0.32 → 0.48, Airtanker 0.52 → 0.62) stay rougher: their embroidered or painted letters are heavier than the substitute fonts.
 
 The two upper-tab logos score lower because their tab lettering is shared rather than fitted to their own photos: Wildfire Management 0.67 → 0.71 (0.77 when its tab was fitted separately), Fire Control 0.46 → 0.60 (was 0.61). The patches use a narrower face on their top tabs, which fits more letters on the tab.
 

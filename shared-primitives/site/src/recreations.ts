@@ -133,7 +133,6 @@ export const RECREATIONS: Recreation[] = [
   { id: 'bcts-tree', name: 'BCTS · Forest Service', family: 'bc-ministry-v5', layers: ['frame', 'tree', 'diamond'], theme: 'forest', lettering: crest('bcts-tree', 'crest-tree'), hidden: true },
   { id: 'bcts-district', name: 'BCTS · district', family: 'bc-ministry-v5', layers: ['frame', 'tree', 'diamond'], theme: 'forest', lettering: crest('bcts-district', 'crest-tree'), hidden: true },
   { id: 'bcts-stacked-words', name: 'BC / Timber / Sales', family: 'bc-ministry-v5', layers: ['frame', 'tree', 'diamond'], theme: 'forest', lettering: crest('bcts-stacked-words', 'crest-tree') },
-  { id: 'bcts-wordmark', name: 'BCTS · wordmark only', family: 'bc-ministry-v5', layers: [], theme: 'forest', lettering: [{ from: 'bcts-wordmark' }], note: 'No primitives: lettering only.' },
   { id: 'branch-strip', name: 'Forest Analysis & Inventory', family: 'bc-ministry-v5', layers: ['frame', 'tree', 'diamond'], theme: 'mono', lettering: crest('branch-strip', 'crest-tree') },
 ];
 
