@@ -51,7 +51,7 @@ function clean(value,max=320){return String(value??'').replace(/[\u0000-\u0008\u
 function normalise(input={}){
  if(!input||typeof input!=='object'||Array.isArray(input))throw Error('Configuration must be an object');
  const rid=P.RECIPES.some(r=>r.id===input.recipe)?input.recipe:'forests';const r=P.recipe(rid);
- const s={version:5,recipe:rid,crest:input.crest||r.crest,tab:input.tab||r.tab,layout:input.layout||r.layout,theme:input.theme||r.theme,autoProfile:input.autoProfile===true,content:{...r.content},roles:{},slots:{},colours:{},outputWidth:clamp(Number(input.outputWidth)||1200,100,6000)};
+ const s={version:5,tabSizing:input.tabSizing==='follow-text'?'follow-text':'reference',recipe:rid,crest:input.crest||r.crest,tab:input.tab||r.tab,layout:input.layout||r.layout,theme:input.theme||r.theme,autoProfile:input.autoProfile===true,content:{...r.content},roles:{},slots:{},colours:{},outputWidth:clamp(Number(input.outputWidth)||1200,100,6000)};
  for(const [k,v]of Object.entries(input.content||{}))if(['upper','lower','service','word','descriptor','district','lines','branch'].includes(k))s.content[k]=clean(v);
  for(const k of ['crest','tab','layout','theme']){const t={crest:P.CRESTS,tab:P.TABS,layout:P.LOCKUPS,theme:P.THEMES}[k];if(!t[s[k]])throw Error('Unknown '+k+': '+s[k]);}
  for(const[id,v]of Object.entries(input.roles||{})){if(!P.ROLES[id]||!v||typeof v!=='object')continue;const out={};if(v.face&&P.FACES[v.face])out.face=v.face;if(Number.isFinite(v.capScale))out.capScale=clamp(v.capScale,.5,1.5);if(Number.isFinite(v.trackingEm))out.trackingEm=clamp(v.trackingEm,-.01,.12);s.roles[id]=out;}
@@ -92,8 +92,8 @@ function fitRun(text,slotId,s){
  return {text,widthBasis:'browser advance',slot:slotId,role:t.role,face:r.face,family:m.family,weight:m.weight,size,cap,preferredCap,tracking:tracking*size,trackingEm:tracking,width:getWidth(size,tracking),available:c.length-2*edge,curve:c,stage,tooSmall:cap<t.minCap,minimum:t.minCap,ascent:m.ascent*size,descent:m.descent*size};
 }
 function textAttrs(f,colour){return{'font-family':f.family,'font-weight':f.weight,'font-size':round(f.size),'font-kerning':'normal','letter-spacing':round(f.tracking),style:'font-synthesis:none;white-space:pre','xml:space':'preserve',fill:colour};}
-function curved(parent,defs,text,slotId,s,colour,id,report){if(!text?.trim())return;
- const f=fitRun(text,slotId,s);const pid=id+'-baseline';defs.append(node('path',{id:pid,d:f.curve.d,'data-baseline':slotId}));
+function curved(parent,defs,text,slotId,s,colour,id,report,resolved=null){if(!text?.trim())return;
+ const f=resolved||fitRun(text,slotId,s);const pid=id+'-baseline';defs.append(node('path',{id:pid,d:f.curve.d,'data-baseline':slotId}));
  const e=node('text',{...textAttrs(f,colour),'text-anchor':'middle','data-slot':slotId,'data-role':f.role,'data-face':f.face,'data-live-text':id});
  const tp=node('textPath',{href:'#'+pid,startOffset:'50%',method:'align',spacing:'exact'},text);tp.setAttributeNS(XL,'xlink:href','#'+pid);e.append(tp);parent.append(e);report.push(f);return f;
 }
@@ -120,37 +120,64 @@ function ribbon(defs,t,theme){
  const transform=`translate(${CX} ${CY+t.y}) scale(${t.width} ${t.height}) translate(${-CX} ${-CY})`+(t.side==='top'?` rotate(180 ${CX} ${CY})`:'');return use(id,{transform,'data-layer':'tab-shape'});
 }
 function wings(){const W=P.SHAPES.wings,g=node('g',{'data-layer':'tab-shape','data-fidelity':'photo-based approximation'});for(const mirror of [false,true]){const x=node('g',mirror?{transform:`translate(${2*CX} 0) scale(-1 1)`}:{});x.append(node('path',{d:W.outline,fill:W.fill,stroke:W.stroke,'stroke-width':W.strokeWidth,'stroke-linejoin':'round'}));for(const[a,b]of W.rules)x.append(node('path',{d:`M ${a} ${b} H ${W.ruleEnd}`,fill:'none',stroke:W.stroke,'stroke-width':W.ruleWidth}));g.append(x);}g.append(node('path',{d:W.band,fill:W.bandFill,stroke:W.stroke,'stroke-width':W.bandStrokeWidth}));return g;}
-function drawBadge(s,defs,theme,report){const crestId=effectiveCrest(s),c=P.CRESTS[crestId],t=P.TABS[s.tab],g=node('g',{'data-layer':'badge','data-crest':crestId});
- if(t.shape==='ribbon')g.append(ribbon(defs,t,theme));
+// Resolve the service lettering and its holder once; exports use this same result.
+function serviceTabLayout(s){
+ const t=P.TABS[s.tab];
+ if(s.tabSizing!=='follow-text'||t.shape!=='ribbon'||P.LOCKUPS[s.layout].kind==='wordmark')return null;
+ if(!global.BCTabLayout||!global.BCTabProfile)throw Error('Reactive tabs require tab-layout.js and the layout.json tab profile. Rebuild the studio.');
+ const text=s.content.service||'',sl=slot(t.slot,s),r=role(sl.role,s),m=metrics(text,r.face);
+ const layout=global.BCTabLayout.resolve({profile:global.BCTabProfile,side:t.side==='top'?'upper':'lower',metrics:m,
+  capHeight:sl.cap*r.capScale,referenceCap:P.SLOTS[t.slot].anchorCap,minCap:sl.minCap,
+  trackingEm:Math.max(0,sl.tracking+r.trackingEm),count:Array.from(text).length,endPad:sl.endPad||12});
+ const tab={mode:'follow-text',side:t.side,halfSpan:layout.halfSpan,depth:layout.depth,
+  padding:layout.padding,baselineOffset:layout.offset,endPadding:layout.endPadding,status:layout.status};
+ const fit={text,widthBasis:'browser advance',slot:t.slot,role:sl.role,face:r.face,family:m.family,weight:m.weight,
+  size:layout.size,cap:layout.cap,preferredCap:layout.requestedCap,tracking:layout.tracking,trackingEm:layout.trackingEm,
+  width:layout.width,available:layout.available,curve:layout.curve,stage:layout.stage,
+  tooSmall:layout.tooSmall,minimum:layout.minimum,ascent:m.ascent*layout.size,descent:m.descent*layout.size,tab};
+ return {fit,geometry:layout.geometry};
+}
+function reactiveRibbon(layout,theme){
+ const g=node('g',{'data-layer':'tab-shape','data-primitive':'reactive-service-ribbon',
+  'data-tab-depth':layout.fit.tab.depth,'data-tab-half-span':layout.fit.tab.halfSpan});
+ g.append(node('path',{d:layout.geometry.border,fill:theme.ink,'data-tab-part':'border'}));
+ g.append(node('path',{d:layout.geometry.face,fill:theme.paper,'data-tab-part':'face'}));
+ return g;
+}
+function drawBadge(s,defs,theme,report,tabLayout=null){const crestId=effectiveCrest(s),c=P.CRESTS[crestId],t=P.TABS[s.tab],g=node('g',{'data-layer':'badge','data-crest':crestId});
+ if(t.shape==='ribbon')g.append(tabLayout?reactiveRibbon(tabLayout,theme):ribbon(defs,t,theme));
  if(t.shape==='plate'){const p=P.SHAPES.plate;g.append(node('rect',{'data-layer':'tab-shape','data-primitive':'plate',x:p.x,y:p.y,width:p.width,height:p.height,rx:p.rx,fill:theme.paper,stroke:theme.ink,'stroke-width':p.strokeWidth}));}
  if(t.shape==='wings')g.append(wings());
  const frame=sourceShape(defs,'frame-'+c.scene,c.scene==='wildlife'?ART.wildlifeFrame:ART.treeFrame,theme,c.scene);g.append(use(frame,{'data-layer':'frame'}));
  if(c.scene==='wildlife')defs.append(fragment(ART.wildlifeClip));
  const scene=sourceShape(defs,'scene-'+c.scene,c.scene==='wildlife'?ART.wildlifeScene:ART.treeInner,theme,c.scene);g.append(use(scene,{'data-layer':'scene'}));
  if(c.separator!=='none'){const band=P.SHAPES.separatorBand,y=c.separatorY,dx=band.rx*Math.sqrt(Math.max(0,1-((y-CY)/band.ry)**2)),r=c.separatorSize,marks=node('g',{'data-layer':'separators',fill:theme.text});for(const x of[CX-dx,CX+dx])marks.append(c.separator==='circle'?node('circle',{cx:x,cy:y,r}):node('path',{d:`M ${x} ${y-r} l ${r} ${r} -${r} ${r} -${r} -${r} Z`}));g.append(marks);}
- const letters=node('g',{'data-layer':'live-lettering'});curved(letters,defs,s.content.upper,c.upper,s,theme.text,'upper',report);curved(letters,defs,s.content.lower,c.lower,s,theme.text,'lower',report);if(t.slot)curved(letters,defs,s.content.service,t.slot,s,t.shape==='wings'?P.SHAPES.wings.textFill:theme.text,'service',report);g.append(letters);return g;
+ const letters=node('g',{'data-layer':'live-lettering'});curved(letters,defs,s.content.upper,c.upper,s,theme.text,'upper',report);curved(letters,defs,s.content.lower,c.lower,s,theme.text,'lower',report);if(t.slot)curved(letters,defs,s.content.service,t.slot,s,t.shape==='wings'?P.SHAPES.wings.textFill:theme.text,'service',report,tabLayout?.fit);g.append(letters);return g;
 }
-function badgeBox(s){const t=P.TABS[s.tab];if(t.shape==='wings')return{x:-350,y:0,w:1376,h:965};if(t.side==='top')return{x:-20,y:-145,w:716,h:989};return{x:0,y:0,w:676,h:['plate','ribbon'].includes(t.shape)?945:844};}
+function badgeBox(s,tabLayout=null){
+ if(tabLayout){const b=tabLayout.geometry.bounds,x=Math.min(0,b.x),y=Math.min(0,b.y);return{x,y,w:Math.max(676,b.x+b.w)-x,h:Math.max(844,b.y+b.h)-y};}
+ const t=P.TABS[s.tab];if(t.shape==='wings')return{x:-350,y:0,w:1376,h:965};if(t.side==='top')return{x:-20,y:-145,w:716,h:989};return{x:0,y:0,w:676,h:['plate','ribbon'].includes(t.shape)?945:844};}
 function blockMetrics(s,l){const c=s.content;return[[c.word,'wordmark-heavy',l.wordCap,0],[c.descriptor,'descriptor-slab',l.descCap,.012],[c.district,'district-slab',l.districtCap,.008]].filter(a=>a[0]?.trim()).map(([text,r,cap,tr])=>fitPlain(text,r,cap,l.wordWidth,s,tr));}
 function blockHeight(rows,gap){return rows.reduce((h,r)=>h+r.ascent+r.descent,0)+Math.max(0,rows.length-1)*gap;}
 function wordBlock(g,s,l,theme,x,top,report,center=false){const rows=blockMetrics(s,l);let y=top;rows.forEach((f,i)=>{y+=f.ascent;plain(g,f,x+(center?(l.wordWidth-f.width)/2:0),y,i===0&&s.content.word?theme.word:theme.descriptor,'word-line-'+i,report);y+=f.descent+l.lineGap;});return rows;}
 function uniqueIds(svg,prefix){const map=new Map();for(const e of svg.querySelectorAll('[id]')){map.set(e.id,prefix+e.id);e.id=prefix+e.id;}for(const e of[svg,...svg.querySelectorAll('*')])for(const a of[...e.attributes]){let v=a.value.replace(/url\(#([^)]+)\)/g,(_,id)=>`url(#${map.get(id)||id})`);if(a.localName==='href'&&v.startsWith('#'))v='#'+(map.get(v.slice(1))||v.slice(1));if(a.name==='aria-labelledby')v=v.split(' ').map(x=>map.get(x)||x).join(' ');if(v!==a.value)e.setAttributeNS(a.namespaceURI,a.name,v);}}
 function makeLogo(input={},options={}){
- const s=normalise(input),theme={...P.THEMES[s.theme],...s.colours},report=[],warnings=[];const l=P.LOCKUPS[s.layout],bn=badgeBox(s);
+ const s=normalise(input),theme={...P.THEMES[s.theme],...s.colours},report=[],warnings=[];const l=P.LOCKUPS[s.layout],tabLayout=serviceTabLayout(s),bn=badgeBox(s,tabLayout);
  const svg=node('svg',{xmlns:NS,version:'1.1',role:'img','aria-labelledby':'title desc'});svg.setAttributeNS('http://www.w3.org/2000/xmlns/','xmlns:xlink',XL);
  svg.append(node('title',{id:'title'},Object.values(s.content).filter(Boolean).join(' — ')));svg.append(node('desc',{id:'desc'},'Reference-based reconstruction with shared vector primitives and editable text. Substitute fonts; not an authenticated official master. Font files are not embedded.'));
  const defs=node('defs');svg.append(defs);const composition=node('g',{'data-layer':'composition'});svg.append(composition);let nominal=bn;
  if(l.kind==='wordmark'){const rows=blockMetrics(s,l),h=blockHeight(rows,l.lineGap);wordBlock(composition,s,l,theme,0,0,report);nominal={x:0,y:0,w:l.wordWidth,h};}
  else{
-  const badge=drawBadge(s,defs,theme,report);
+  const badge=drawBadge(s,defs,theme,report,tabLayout);
   if(l.kind==='badge')composition.append(badge);
-  else if(l.kind==='strip'){composition.append(node('rect',{'data-layer':'branch-strip',x:330,y:l.barY,width:l.width-330,height:l.height,fill:theme.strip}));composition.append(badge);const f=fitPlain(s.content.branch||'','branch-condensed',l.textCap,l.width-830,s,.003);plain(composition,f,756,l.barY+(l.height-f.ascent-f.descent)/2+f.ascent,theme.stripText,'branch-label',report);nominal={x:0,y:bn.y,w:l.width,h:bn.h};}
-  else if(l.kind==='words'){composition.append(badge);const lines=(s.content.lines||'').split(/\r?\n/).filter(x=>x.trim());const rows=lines.map(text=>fitPlain(text,'plain-label',l.labelCap,l.wordWidth,s)),h=blockHeight(rows,l.lineGap);let y=(844-h)/2;rows.forEach((f,i)=>{y+=f.ascent;plain(composition,f,676+l.gap,y,theme.descriptor,'stacked-line-'+i,report);y+=f.descent+l.lineGap;});nominal={x:0,y:Math.min(bn.y,(844-h)/2),w:676+l.gap+l.wordWidth,h:Math.max(bn.h,h)};}
+  else if(l.kind==='strip'){composition.append(node('rect',{'data-layer':'branch-strip',x:330,y:l.barY,width:l.width-330,height:l.height,fill:theme.strip}));composition.append(badge);const labelX=tabLayout?Math.max(756,bn.x+bn.w+80):756;const f=fitPlain(s.content.branch||'','branch-condensed',l.textCap,l.width-labelX-74,s,.003);plain(composition,f,labelX,l.barY+(l.height-f.ascent-f.descent)/2+f.ascent,theme.stripText,'branch-label',report);nominal={x:0,y:bn.y,w:l.width,h:bn.h};}
+  else if(l.kind==='words'){composition.append(badge);const lines=(s.content.lines||'').split(/\r?\n/).filter(x=>x.trim());const rows=lines.map(text=>fitPlain(text,'plain-label',l.labelCap,l.wordWidth,s)),h=blockHeight(rows,l.lineGap);let y=(844-h)/2;rows.forEach((f,i)=>{y+=f.ascent;plain(composition,f,(tabLayout?bn.x+bn.w:676)+l.gap,y,theme.descriptor,'stacked-line-'+i,report);y+=f.descent+l.lineGap;});nominal={x:0,y:Math.min(bn.y,(844-h)/2),w:(tabLayout?bn.x+bn.w:676)+l.gap+l.wordWidth,h:Math.max(bn.h,h)};}
   else if(l.kind==='stacked'){const width=Math.max(bn.w,l.wordWidth);badge.setAttribute('transform',`translate(${(width-bn.w)/2-bn.x} ${-bn.y})`);composition.append(badge);const rows=blockMetrics(s,l),h=blockHeight(rows,l.lineGap);wordBlock(composition,s,l,theme,(width-l.wordWidth)/2,bn.h+l.gap,report,true);nominal={x:0,y:0,w:width,h:bn.h+l.gap+h};}
   else{composition.append(badge);const rows=blockMetrics(s,l),h=blockHeight(rows,l.lineGap);wordBlock(composition,s,l,theme,bn.x+bn.w+l.gap,(l.centerY||422)-h/2,report);nominal={x:bn.x,y:Math.min(bn.y,(844-h)/2),w:bn.w+l.gap+l.wordWidth,h:Math.max(bn.h,h)};}
  }
  const fontIds=[...new Set(report.map(r=>r.face))];for(const id of fontIds)if(fontState.get(id)?.status!=='ready')warnings.push({code:'FONT_FALLBACK',message:P.FACES[id].family+' '+P.FACES[id].weight+' is not verified. Load the reference faces or install that exact weight.'});
  for(const r of report)if(r.tooSmall)warnings.push({code:'SMALL_TEXT',message:`${r.slot||r.role}: fitted cap height ${r.cap.toFixed(1)}. Shorten the wording for a readable mark.`});
+ if(tabLayout?.fit.tab.status==='text-reduced')warnings.push({code:'TAB_TEXT_REDUCED',message:`Service tab reached its 80° half-span limit. Requested cap ${tabLayout.fit.preferredCap.toFixed(1)}; rendered ${tabLayout.fit.cap.toFixed(1)}. Shorten the wording to keep the requested size.`});
  if(P.recipe(s.recipe).excluded)warnings.push({code:'EXCLUDED_REFERENCE',message:'Fire Control is excluded from calibration. This is only a shared-component placeholder.'});
  if(s.tab==='airtanker')warnings.push({code:'APPROXIMATION',message:'Winged geometry remains a photographic approximation.'});
  measurementRoot().append(svg);let b;try{b=composition.getBBox();}catch{b={x:nominal.x,y:nominal.y,width:nominal.w,height:nominal.h};}
@@ -173,7 +200,7 @@ async function png(result,width=1600){
  const w=clamp(Math.round(width),100,6000),h=Math.round(w*result.viewBox.h/result.viewBox.w);if(w*h>32000000)throw Error('PNG is too large; reduce export width.');svg.setAttribute('width',w);svg.setAttribute('height',h);
  const url=URL.createObjectURL(new Blob([serialise(svg)],{type:'image/svg+xml'}));try{const img=new Image();await new Promise((ok,bad)=>{img.onload=ok;img.onerror=()=>bad(Error('SVG rasterization failed'));img.src=url;});const c=document.createElement('canvas');c.width=w;c.height=h;const context=c.getContext('2d');context.drawImage(img,0,0,w,h);return await new Promise((ok,bad)=>c.toBlob(b=>b?ok(b):bad(Error('PNG export failed')),'image/png'));}finally{URL.revokeObjectURL(url);}
 }
-function recipeState(id,shared={}){return normalise({recipe:id,roles:shared.roles||{},slots:shared.slots||{}});}
+function recipeState(id,shared={}){return normalise({recipe:id,tabSizing:shared.tabSizing,roles:shared.roles||{},slots:shared.slots||{}});}
 function dependencies(roleId){return P.RECIPES.filter(x=>!x.excluded).filter(r=>{const s=recipeState(r.id),c=P.CRESTS[s.crest],t=P.TABS[s.tab],l=P.LOCKUPS[s.layout];return [...(l.kind!=='wordmark'?[P.SLOTS[c.upper]?.role,P.SLOTS[c.lower]?.role,P.SLOTS[t.slot]?.role]:[]),...(l.kind==='wordmark'||l.kind==='horizontal'||l.kind==='stacked'?['wordmark-heavy','descriptor-slab',...(s.content.district?['district-slab']:[])]:[]),...(l.kind==='words'?['plain-label']:[]),...(l.kind==='strip'?['branch-condensed']:[])].includes(roleId);}).map(x=>x.name);}
 global.BCLogo={P,ART,normalise,recipeState,makeLogo,render,serialise,png,metrics,fitRun,fitPlain,curve,effectiveCrest,role,slot,dependencies,ensureFonts,retryFonts,fontState,invalidateMetrics,node,clone};
 })(window);

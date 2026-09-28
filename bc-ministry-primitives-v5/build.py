@@ -23,6 +23,12 @@ def source(token):
     name=TOKENS[token]
     if token=='REFERENCE_JSON':text=json.dumps(references(),ensure_ascii=False,separators=(',',':'))
     else:text=(ROOT/name).read_text(encoding='utf-8')
+    if token=='ENGINE_JS':
+        # Use the generated authoritative profile, without a second numeric copy.
+        shared=ROOT.parent/'shared-primitives'
+        profile=json.loads((shared/'layout.json').read_text(encoding='utf-8'))['tab']
+        text=('globalThis.BCTabProfile='+json.dumps(profile,separators=(',',':'))+';\n'
+              +(shared/'tab-layout.js').read_text(encoding='utf-8')+'\n'+text)
     if name.endswith('.json'):
         if token!='REFERENCE_JSON':text=json.dumps(json.loads(text),ensure_ascii=False,separators=(',',':'))
         return text.replace('</','<\\/')
