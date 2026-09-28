@@ -25,6 +25,9 @@ const MODES: [Mode, string][] = [
 export function Recreations({ view, onOpen }: { view: ViewSettings; onOpen: (file: string) => void }) {
   const [mode, setMode] = useState<Mode>('side');
   const [fitted, setFitted] = useState(true);
+  const [showHidden, setShowHidden] = useState(false);
+  const hiddenCount = RECREATIONS.filter((r) => r.hidden).length;
+  const shown = RECREATIONS.filter((r) => showHidden || !r.hidden);
   return (
     <div className="recreations">
       <div className="rechead">
@@ -47,16 +50,22 @@ export function Recreations({ view, onOpen }: { view: ViewSettings; onOpen: (fil
           </div>
         </div>
       </div>
-      <CrestVariants />
+      {hiddenCount > 0 && (
+        <label className="check small">
+          <input type="checkbox" checked={showHidden} onChange={(e) => setShowHidden(e.target.checked)} />
+          Show hidden logos ({hiddenCount}: the BCTS wordmark beside the crest)
+        </label>
+      )}
+      <CrestVariants showHidden={showHidden} />
       <div className="recgrid">
-        {RECREATIONS.map((r) => <RecreationCard key={r.id} rec={r} mode={mode} fitted={fitted} view={view} onOpen={onOpen} />)}
+        {shown.map((r) => <RecreationCard key={r.id} rec={r} mode={mode} fitted={fitted} view={view} onOpen={onOpen} />)}
       </div>
     </div>
   );
 }
 
 /** The lettering around the oval: one shared fit per crest variant. */
-function CrestVariants() {
+function CrestVariants({ showHidden }: { showHidden: boolean }) {
   const name = (id: string) => RECREATIONS.find((r) => r.id === id)?.name ?? id;
   // Parsing each variant's lettering is not free; it never changes.
   const lines = useMemo(() => Object.fromEntries(CREST_VARIANTS.map((v) => {
@@ -81,7 +90,7 @@ function CrestVariants() {
                   <td>{v.name[0].toUpperCase() + v.name.slice(1)}</td>
                   <td>{lines[v.id].map((r) => <div key={r.key}>{r.text} <span className="muted small">· {r.family.split(',')[0].replace(/"/g, '')} {r.weight}</span></div>)}</td>
                   <td>
-                    {members.map((m) => {
+                    {members.filter((m) => showHidden || !m.hidden).map((m) => {
                       const s = fit?.members?.[m.id];
                       return <div key={m.id}>{name(m.id)} <span className="muted small">{!s ? 'no registered reference' : s.before || s.after ? `${s.before.toFixed(2)} → ${s.after.toFixed(2)}` : 'crest too small in its reference to judge'}</span></div>;
                     })}

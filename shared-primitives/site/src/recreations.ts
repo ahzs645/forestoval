@@ -49,6 +49,9 @@ export interface Recreation {
   /** What the v5 studio drew, for the v5 switch, when `lettering` differs. */
   studio?: Lettering[];
   note?: string;
+  /** Left off the Recreations page unless "show hidden" is on. Still fitted,
+   *  and still counted in its crest variant's shared fit. */
+  hidden?: boolean;
 }
 
 const toAirtanker = layout['airtanker-operations'].crestTransform as M;
@@ -126,9 +129,9 @@ export const RECREATIONS: Recreation[] = [
     ],
     note: 'Crest lettering is the shared tree-crest fit, scaled with the crest into this layout. The band lettering comes from the airtanker package master.',
   },
-  { id: 'bcts-wildlife', name: 'BCTS · wildlife crest', family: 'bc-ministry-v5', layers: ['frame', 'wildlife', 'circle-long'], theme: 'wildlife', lettering: crest('bcts-wildlife', 'crest-wildlife-long') },
-  { id: 'bcts-tree', name: 'BCTS · Forest Service', family: 'bc-ministry-v5', layers: ['frame', 'tree', 'diamond'], theme: 'forest', lettering: crest('bcts-tree', 'crest-tree') },
-  { id: 'bcts-district', name: 'BCTS · district', family: 'bc-ministry-v5', layers: ['frame', 'tree', 'diamond'], theme: 'forest', lettering: crest('bcts-district', 'crest-tree') },
+  { id: 'bcts-wildlife', name: 'BCTS · wildlife crest', family: 'bc-ministry-v5', layers: ['frame', 'wildlife', 'circle-long'], theme: 'wildlife', lettering: crest('bcts-wildlife', 'crest-wildlife-long'), hidden: true },
+  { id: 'bcts-tree', name: 'BCTS · Forest Service', family: 'bc-ministry-v5', layers: ['frame', 'tree', 'diamond'], theme: 'forest', lettering: crest('bcts-tree', 'crest-tree'), hidden: true },
+  { id: 'bcts-district', name: 'BCTS · district', family: 'bc-ministry-v5', layers: ['frame', 'tree', 'diamond'], theme: 'forest', lettering: crest('bcts-district', 'crest-tree'), hidden: true },
   { id: 'bcts-stacked-words', name: 'BC / Timber / Sales', family: 'bc-ministry-v5', layers: ['frame', 'tree', 'diamond'], theme: 'forest', lettering: crest('bcts-stacked-words', 'crest-tree') },
   { id: 'bcts-wordmark', name: 'BCTS · wordmark only', family: 'bc-ministry-v5', layers: [], theme: 'forest', lettering: [{ from: 'bcts-wordmark' }], note: 'No primitives: lettering only.' },
   { id: 'branch-strip', name: 'Forest Analysis & Inventory', family: 'bc-ministry-v5', layers: ['frame', 'tree', 'diamond'], theme: 'mono', lettering: crest('branch-strip', 'crest-tree') },
