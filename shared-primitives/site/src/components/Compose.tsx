@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { FAMILIES, references, type FamilyId, type VB } from '../data';
 import { LAYERS, PRESETS, resolve, type Preset } from '../layers';
 import { dataUrl, download, downloadPng, finish, stack } from '../svg';
+import { MAX_HALF_SPAN, TAB, tabPiece, type TabSide } from '../tab';
+
+const TAB_LAYERS: Record<string, TabSide> = { 'ribbon-lower': 'lower', 'ribbon-upper': 'upper' };
 import type { ViewSettings } from '../App';
 
 export function Compose({ view, onOpen }: { view: ViewSettings; onOpen: (file: string) => void }) {
@@ -16,7 +19,18 @@ export function Compose({ view, onOpen }: { view: ViewSettings; onOpen: (file: s
   const [zoom, setZoom] = useState(1);
 
   const reference = references.find((r) => r.key === refKey && r.family === family) ?? null;
-  const chosen = useMemo(() => resolve(family, layers), [family, layers]);
+  // Tabs can grow around the oval: a span other than the default draws the band
+  // from tab.ts (already in place, so the upper tab's turn is not applied again).
+  const [spans, setSpans] = useState<Record<TabSide, number>>({ lower: TAB.halfSpan, upper: TAB.halfSpan });
+  const chosen = useMemo(
+    () =>
+      resolve(family, layers).map((c) => {
+        const side = TAB_LAYERS[c.layer.key];
+        return side && spans[side] !== TAB.halfSpan ? { layer: { ...c.layer, instances: undefined }, piece: tabPiece(side, spans[side]) } : c;
+      }),
+    [family, layers, spans],
+  );
+  const tabsShown = (Object.keys(TAB_LAYERS) as string[]).filter((k) => family === 'bc-ministry-v5' && layers.has(k));
 
   // The finished logo to overlay, fetched when first picked.
   const [loaded, setLoaded] = useState<{ key: string; href: string; vb: VB } | null>(null);
@@ -94,6 +108,24 @@ export function Compose({ view, onOpen }: { view: ViewSettings; onOpen: (file: s
             </li>
           ))}
         </ul>
+
+        {tabsShown.length > 0 && (
+          <>
+            <h4>Tabs</h4>
+            {tabsShown.map((k) => {
+              const side = TAB_LAYERS[k];
+              return (
+                <label key={k} className="range">
+                  {side === 'lower' ? 'Lower' : 'Upper'} tab span ±{spans[side].toFixed(1)}°{spans[side] === TAB.halfSpan ? ' (default)' : ''}
+                  <input type="range" min={30} max={MAX_HALF_SPAN} step={0.1} value={spans[side]} onChange={(e) => setSpans({ ...spans, [side]: +e.target.value })} />
+                </label>
+              );
+            })}
+            {(spans.lower !== TAB.halfSpan || spans.upper !== TAB.halfSpan) && (
+              <button className="small" onClick={() => setSpans({ lower: TAB.halfSpan, upper: TAB.halfSpan })}>Reset tabs</button>
+            )}
+          </>
+        )}
 
         <h4>Compare with a finished logo</h4>
         <select value={reference?.key ?? ''} onChange={(e) => setRefKey(e.target.value)}>

@@ -335,8 +335,8 @@
  },
  "wildfire-management": {
   "reference": "1_ae00efe2cef7ed231ee26b863d110033.jpg",
-  "before": 0.6606,
-  "after": 0.6606,
+  "before": 0.6663,
+  "after": 0.6663,
   "accepted": false,
   "frozen": [],
   "runs": {},
@@ -351,8 +351,9 @@
    },
    "1:service": {
     "from": "forests-wildfire 1:service",
-    "shrink": 0.8405,
-    "tracking": -2.724
+    "shrink": 1,
+    "tracking": -2.724,
+    "span": 57.798
    }
   }
  },

@@ -1,6 +1,7 @@
 import layout from '../../layout.json';
 import { byFile, type FamilyId, type Piece } from './data';
 import { mul, S, T, type Layer, type M } from './svg';
+import { tabPiece } from './tab';
 
 // Placements are computed by extract_primitives.py (from engine.js constants)
 // and written to layout.json, so the site and the generator cannot drift.
@@ -98,11 +99,13 @@ export function resolve(family: FamilyId, keys: Iterable<string>): { layer: Laye
   return LAYERS[family].filter((l) => wanted.has(l.key)).map((layer) => ({ layer, piece: byFile.get(layer.file)! }));
 }
 
-/** Reassembly checks: the parts, stacked, should reproduce the composite. */
-export const REASSEMBLY: { name: string; family: FamilyId; target: string; parts: string[] }[] = [
+/** Reassembly checks: the parts, stacked, should reproduce the composite.
+ *  `drawn` instead draws the part with the site's own generator. */
+export const REASSEMBLY: { name: string; family: FamilyId; target: string; parts: string[]; drawn?: () => Piece }[] = [
   { name: 'Tree scene = sky + forest + mountains + conifer', family: 'bc-ministry-v5', target: v5 + 'scenes/tree.svg', parts: treeParts },
   { name: 'Wildlife scene = its 10 parts', family: 'bc-ministry-v5', target: v5 + 'scenes/wildlife.svg', parts: wlParts },
   { name: 'Tree crest = shared frame + tree scene', family: 'bc-ministry-v5', target: v5 + 'crest/tree-crest.svg', parts: ['frame', 'tree'] },
   { name: 'Wildlife crest = shared frame + wildlife scene', family: 'bc-ministry-v5', target: v5 + 'crest/wildlife-crest.svg', parts: ['frame', 'wildlife'] },
   { name: 'Airtanker wing pair = master + mirror', family: 'airtanker-operations', target: at + 'wings-pair.svg', parts: ['wing'] },
+  { name: 'Service tab: site generator (tab.ts) = generated file', family: 'bc-ministry-v5', target: v5 + 'tabs/service-ribbon.svg', parts: [], drawn: () => tabPiece('lower') },
 ];

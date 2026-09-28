@@ -5,6 +5,7 @@ import layout from '../../layout.json';
 import packageSvg from '../../../airtanker-operations/airtanker-operations-editable.svg?raw';
 import { parseVB, themes, type FamilyId, type VB } from './data';
 import { resolve } from './layers';
+import { tabPiece } from './tab';
 import { apply, composite, parse, prefixIds, serialize, SVG_NS, unionBox, type M } from './svg';
 
 // Lettering is live text from the v5 studio's generated examples: the engine
@@ -274,8 +275,21 @@ export const letteringDoc = (spec: Lettering) => parse(spec.from === 'package' ?
 const runId = (t: Element) => t.getAttribute('data-live-text') ?? t.getAttribute('id') ?? '';
 const num = (v: string | null, d = 0) => (v === null || v === '' ? d : parseFloat(v));
 
-/** How an upper-tab shared run was fitted to its tab (see sharedRun). */
-export interface TabFit { shrink: number; tracking?: number }
+/** How an upper-tab shared run was fitted to its tab (see sharedRun). span:
+ *  the tab's half-span (degrees) when it grew to hold the words; the default
+ *  tab (layout.json tab.halfSpan) otherwise. */
+export interface TabFit { shrink: number; tracking?: number; span?: number }
+
+/** A recreation's pieces, with an upper tab that grew to hold its words drawn
+ *  at its fitted span (a band from tab.ts in place of the default file). */
+export function recreationLayers(rec: Recreation, tabFits: Record<string, TabFit> = fits[rec.id]?.shared ?? {}) {
+  const span = Math.max(0, ...Object.values(tabFits).map((f) => f.span ?? 0));
+  return resolve(rec.family, rec.layers).map((c) =>
+    c.layer.key === 'ribbon-upper' && span
+      ? { layer: { ...c.layer, instances: undefined, label: `${c.layer.label} · grown to ±${span.toFixed(1)}°` }, piece: tabPiece('upper', span) }
+      : c,
+  );
+}
 
 /** The text runs one lettering spec contributes (keys `${index}:${id}`).
  *  Shared runs come back with their fixed placement, adjusted to their tab by
@@ -505,7 +519,7 @@ export function build(rec: Recreation, fitted = true, adjust?: Record<string, Ru
   const hit = cache.get(key);
   if (hit) return hit;
   const prefix = `r-${rec.id}-${use ? 'f' : fitted ? 's' : 'v'}-`;
-  const chosen = resolve(rec.family, rec.layers);
+  const chosen = recreationLayers(rec, fitted || adjust ? undefined : {});
   const c = chosen.length ? composite(chosen, { palette: themes[rec.theme] ?? null, idPrefix: prefix }) : null;
   let defs = c?.defs ?? '', under = '', over = '';
   const boxes: VB[] = c ? [c.vb] : [];

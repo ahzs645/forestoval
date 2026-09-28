@@ -10,12 +10,12 @@
  * adjusted, so they stay identical on every logo. */
 import layout from '../../layout.json';
 import { themes } from './data';
-import { resolve } from './layers';
 import {
   CREST_RUNS,
   IDENTITY,
   letteringDoc,
   letteringRuns,
+  recreationLayers,
   runAttributes,
   setWords,
   type Lettering,
@@ -27,6 +27,7 @@ import {
   type RunParams,
 } from './recreations';
 import { apply, composite, mul, rasterize, serialize, SVG_NS, type M } from './svg';
+import { MAX_HALF_SPAN, TAB } from './tab';
 
 const PAPER = '#00ff00', STRIP = '#0000ff', BAND = '#ffff00', OTHER = '#ff00ff';
 // Service bands that keep their own colours (not themed): lettering sits on
@@ -182,8 +183,10 @@ function inkSpan(t: SVGTextElement, run: Run, e: Ellipse, around: number): [numb
 /** Fit an upper-tab shared run to its tab. Its letters may only cover the part
  *  of the tab that the fitted lower-tab line covers, carried through the same
  *  transform. With fillTab the letter-spacing is set so they cover exactly that
- *  stretch (it may tighten to no extra spacing). Words still too long are
- *  shrunk: size, spacing and gaps scale evenly (glyphs never squeezed). */
+ *  stretch (it may tighten to no extra spacing). Words still too long grow the
+ *  tab around the oval, keeping the same clearance to its ends, up to
+ *  MAX_HALF_SPAN; only then are they shrunk: size, spacing and gaps scale
+ *  evenly (glyphs never squeezed). */
 function upperTabFit(rec: Recreation, run: Run, host: SVGSVGElement): TabFit {
   const from = run.shared!;
   // The same line placed as fitted on its source (not on the upper tab): from
@@ -223,7 +226,19 @@ function upperTabFit(rec: Recreation, run: Run, host: SVGSVGElement): TabFit {
     placed.done();
     return s;
   };
-  const inside = (fit: TabFit) => { const [u0, u1] = span(fit); return u0 >= s0 + 180 && u1 <= s1 + 180; };
+  // Angles on the tab's lettering ellipse -> the crest oval's own angle, the one
+  // the tab's span is measured in (tab.ts). The clearance between the stretch's
+  // ends and the default tab's ends stays the same as the tab grows.
+  const [ocx, ocy, orx, ory] = TAB.oval;
+  const onOval = (deg: number) => {
+    const a = (deg * Math.PI) / 180, x = up.cx + up.rx * Math.cos(a), y = up.cy + up.ry * Math.sin(a);
+    const t = (Math.atan2((y - ocy) / ory, (x - ocx) / orx) * 180) / Math.PI;
+    return t - 360 * Math.round((t - TAB.upper) / 360);
+  };
+  const clear0 = TAB.halfSpan - (TAB.upper - onOval(s0 + 180)), clear1 = TAB.halfSpan - (onOval(s1 + 180) - TAB.upper);
+  // The half-span a tab needs to hold these letters.
+  const needs = (fit: TabFit) => { const [u0, u1] = span(fit); return Math.max(TAB.upper - onOval(u0) + clear0, onOval(u1) - TAB.upper + clear1); };
+  const inside = (fit: TabFit, limit = TAB.halfSpan) => needs(fit) <= limit + 1e-6;
   const bisect = (lo: number, hi: number, ok: (v: number) => boolean) => {
     for (let n = 0; n < 18; n++) { const mid = (lo + hi) / 2; if (ok(mid)) lo = mid; else hi = mid; }
     return lo;
@@ -235,9 +250,12 @@ function upperTabFit(rec: Recreation, run: Run, host: SVGSVGElement): TabFit {
     const covers = (t: number) => { const [u0, u1] = span({ shrink: 1, tracking: t }); return u1 - u0 <= s1 - s0; };
     tracking = covers(tightest) ? bisect(tightest, run.fontSize * 2, covers) : tightest;
   }
-  if (inside({ shrink: 1, tracking })) return { shrink: 1, ...(tracking ? { tracking } : {}) };
-  const shrink = bisect(0.5, 1, (k) => inside({ shrink: k, tracking }));
-  return { shrink, ...(tracking ? { tracking } : {}) };
+  const kept = tracking ? { tracking } : {};
+  if (inside({ shrink: 1, tracking })) return { shrink: 1, ...kept };
+  const grown = needs({ shrink: 1, tracking });
+  if (grown <= MAX_HALF_SPAN) return { shrink: 1, ...kept, span: grown };
+  const shrink = bisect(0.5, 1, (k) => inside({ shrink: k, tracking }, MAX_HALF_SPAN));
+  return { shrink, ...kept, span: MAX_HALF_SPAN };
 }
 
 /** One reference, prepared for scoring: our runs laid out in the browser, the
@@ -270,9 +288,23 @@ async function prepare(rec: Recreation, ref: ReferenceImage): Promise<Problem> {
   // bar, 3 fixed-colour service bands (the airtanker's cream), 4 the open page
   // around straight lockup lines. Scenes are left out: their white snow is
   // paper-coloured but never carries text.
+  // Our text is laid out by the browser in this off-screen host.
+  const host = document.createElementNS(SVG_NS, 'svg');
+  host.setAttribute('width', '10');
+  host.setAttribute('height', '10');
+  host.style.cssText = 'position:fixed;left:-20000px;top:0;overflow:visible';
+  document.body.append(host);
+  await Promise.all(runs.map((run) => document.fonts.load(`${run.weight} 40px ${run.family}`, run.text)));
+  // Upper-tab shared runs: spaced and, if the words are too long, the tab grown
+  // (or, past its limit, the words shrunk) to fit. Done first: a grown tab
+  // widens the lettering zone below.
+  const tabFits: Record<string, TabFit> = {};
+  for (const run of runs) if (run.shared?.tab) tabFits[run.key] = upperTabFit(rec, run, host);
+  runs = letteringRuns(rec, (key) => tabFits[key] ?? { shrink: 1 });
+
   const theme = themes[rec.theme];
   const palette = Object.fromEntries(Object.keys(themes.wildlife).map((t) => [t, t === 'paper' ? PAPER : OTHER]));
-  const chosen = resolve(rec.family, rec.layers).filter(({ layer }) => !layer.file.includes('/scenes/'));
+  const chosen = recreationLayers(rec, tabFits).filter(({ layer }) => !layer.file.includes('/scenes/'));
   const fixed = new Set(chosen.filter(({ piece }) => !piece.themable).map(({ piece }) => piece.file));
   const c = chosen.length
     ? composite(chosen, {
@@ -348,11 +380,6 @@ async function prepare(rec: Recreation, ref: ReferenceImage): Promise<Problem> {
 
   // Our text: laid out by the browser (real fonts, kerning, text-on-path),
   // then each glyph drawn on a canvas at the position the browser reports.
-  const host = document.createElementNS(SVG_NS, 'svg');
-  host.setAttribute('width', '10');
-  host.setAttribute('height', '10');
-  host.style.cssText = 'position:fixed;left:-20000px;top:0;overflow:visible';
-  document.body.append(host);
   const texts: SVGTextElement[] = [], paths: (SVGPathElement | null)[] = [];
   runs.forEach((run, i) => {
     const doc = new DOMParser().parseFromString(`<svg xmlns="${SVG_NS}" xmlns:xlink="http://www.w3.org/1999/xlink">${run.xml}</svg>`, 'image/svg+xml');
@@ -371,11 +398,6 @@ async function prepare(rec: Recreation, ref: ReferenceImage): Promise<Problem> {
     texts.push(t);
     paths.push(path);
   });
-  await Promise.all(runs.map((run) => document.fonts.load(`${run.weight} 40px ${run.family}`, run.text)));
-  // Upper-tab shared runs: spaced and, if the words are too long, shrunk to fit the tab.
-  const tabFits: Record<string, TabFit> = {};
-  for (const run of runs) if (run.shared?.tab) tabFits[run.key] = upperTabFit(rec, run, host);
-  runs = letteringRuns(rec, (key) => tabFits[key] ?? { shrink: 1 });
 
   const ours = document.createElement('canvas');
   ours.width = W;
@@ -584,6 +606,7 @@ export async function fitRecreation(rec: Recreation, ref: ReferenceImage, debug?
                 from: run.shared!.rec + (run.shared!.run ? ' ' + run.shared!.run : ''),
                 shrink: round(tabFits[run.key]?.shrink ?? 1, 4),
                 ...(tabFits[run.key]?.tracking ? { tracking: round(tabFits[run.key].tracking!, 3) } : {}),
+                ...(tabFits[run.key]?.span ? { span: round(tabFits[run.key].span!, 3) } : {}),
               },
             ]),
           ),

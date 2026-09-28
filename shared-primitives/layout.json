@@ -65,6 +65,21 @@
   676.73262,
   841.9296
  ],
+ "tab": {
+  "oval": [
+   338.33727,
+   420.96942,
+   326.9275,
+   414.76718
+  ],
+  "halfSpan": 49.7,
+  "depth": 85.5,
+  "border": 15,
+  "inset": 8,
+  "tilt": 14,
+  "lower": 90,
+  "upper": 270
+ },
  "airtanker-operations": {
   "crestTransform": [
    1.024692,

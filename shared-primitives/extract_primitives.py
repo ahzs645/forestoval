@@ -421,11 +421,69 @@ def frame_check(art):
     return {'radius_deviation': dev, 'tree_offset': (float(clip.get('cx')) - icx, float(clip.get('cy')) - icy)}
 
 
+# Service tabs (the Wildfire Service ribbon and the upper tab) as a parametric
+# band hugging the crest's outer oval, so a tab can grow around the oval. The
+# numbers were fitted to the traced sourceRibbon in art.json (they differ only
+# by slivers along its traced edges). site/src/tab.ts draws the same band; the
+# site's Checks compare the two.
+TAB = {
+    'halfSpan': 49.7,  # degrees of the oval's parameter either side of the tab's middle
+    'depth': 85.5,     # the paper face, outward from the oval's outer edge
+    'border': 15,      # ink border around the face
+    'inset': 8,        # the border's inner edge tucks this far under the crest's ring
+    'tilt': 14,        # each end cut leans this far off square, toward the tab's middle
+}
+
+
+def tab_bands(oval, centre, half, tab=TAB):
+    """The tab as two outlines: the ink band and the paper face on it. oval:
+    (cx, cy, rx, ry) of the crest's outer oval; centre: 90 for a lower tab, 270
+    for an upper one; half: the half-span in degrees (TAB['halfSpan'] by default)."""
+    cx, cy, rx, ry = oval
+    c, tilt = math.radians(centre), math.radians(tab['tilt'])
+    def normal(t):
+        nx, ny = math.cos(t)/rx, math.sin(t)/ry; n = math.hypot(nx, ny)
+        return nx/n, ny/n
+    def at(t, d):
+        nx, ny = normal(t)
+        return cx + rx*math.cos(t) + d*nx, cy + ry*math.sin(t) + d*ny
+    def end(sign, shift):
+        # The cut through the end of the oval edge, leaning toward the middle,
+        # moved `shift` toward the middle (the face's end sits inside the border).
+        t = c + sign*math.radians(half); nx, ny = normal(t); a = -sign*tilt
+        dx, dy = nx*math.cos(a) - ny*math.sin(a), nx*math.sin(a) + ny*math.cos(a)
+        (px, py), (sx, sy) = at(t, 0), (dy*sign, -dx*sign)
+        return (px + sx*shift, py + sy*shift), (dx, dy)
+    def meet(line, d, sign):
+        # Where the offset curve at distance d crosses the cut (bisection on the angle).
+        (qx, qy), (dx, dy) = line
+        side = lambda t: (lambda o: (o[0] - qx)*dy - (o[1] - qy)*dx)(at(t, d))
+        lo, hi = c, c + sign*math.radians(half + 40)
+        for _ in range(60):
+            mid = (lo + hi)/2
+            if (side(mid) > 0) == (side(lo) > 0): lo = mid
+            else: hi = mid
+        return (lo + hi)/2
+    def band(d0, d1, shift):
+        l0, l1 = end(-1, shift), end(1, shift)
+        a0, a1, b0, b1 = meet(l0, d1, -1), meet(l1, d1, 1), meet(l0, d0, -1), meet(l1, d0, 1)
+        n = max(8, math.ceil(math.degrees(abs(a1 - a0))*2))
+        pts = [at(a0 + (a1 - a0)*i/n, d1) for i in range(n + 1)] + [at(b1 + (b0 - b1)*i/n, d0) for i in range(n + 1)]
+        return 'M ' + ' L '.join('%.2f %.2f' % p for p in pts) + ' Z'
+    return band(-tab['inset'], tab['depth'] + tab['border'], 0), band(0, tab['depth'], tab['border'])
+
+
 def separator_pair(y):
     """engine.js drawBadge separator positions on the crest band."""
     band = SHAPES['separatorBand']
     dx = band['rx']*math.sqrt(max(0, 1 - ((y - CY)/band['ry'])**2))
     return [(CX - dx, y), (CX + dx, y)]
+
+
+def crest_oval(art):
+    """(cx, cy, rx, ry) of the shared frame's outer oval."""
+    e = fragment(art['wildlifeFrame'], '')['outer-black-oval']
+    return tuple(float(e.get(k)) for k in ('cx', 'cy', 'rx', 'ry'))
 
 
 def build_v5(w, base, themes, theme_name=None):
@@ -533,13 +591,15 @@ def build_v5(w, base, themes, theme_name=None):
         note='Half-diagonal %g. Placed at y=%g on the tree-heavy crest.' % (r, tree_heavy['separatorY']))
 
     # Service components (engine.js ribbon / plate / wings) -----------------
-    rib = fragment(art['sourceRibbon'], src)
-    d = rib['service-ribbon-border'].get('d')
-    outer = re.match(r'^\s*M[\s\S]*?(?=\s+M\s|$)', d).group(0)
-    backing = ET.Element(q('path'), {'d': outer, 'fill': '#ffffff'})
-    out('tabs/service-ribbon.svg', 'Service ribbon (Wildfire Service lower tab)', src + ' → sourceRibbon + engine.js ribbon()',
-        [backing, rib.wrapped(rib['service-ribbon'])],
-        note='The Wildfire Management upper tab reuses this exact shape, turned upside down: rotate(180) about the crest centre.')
+    ink_band, face = tab_bands(crest_oval(art), 90, TAB['halfSpan'])
+    ribbon = ET.Element(q('g'), {'id': 'service-ribbon'})
+    ET.SubElement(ribbon, q('path'), {'id': 'service-ribbon-border', 'd': ink_band, 'fill': '#000000'})
+    ET.SubElement(ribbon, q('path'), {'id': 'service-ribbon-face', 'd': face, 'fill': '#ffffff'})
+    out('tabs/service-ribbon.svg', 'Service ribbon (Wildfire Service lower tab)', src + ' → sourceRibbon, redrawn as a parametric band',
+        [ribbon],
+        note='A band hugging the crest\'s outer oval: half-span %g°, face %g deep, border %g, ends leaning %g°, fitted to the traced source ribbon. '
+             'It can grow around the oval (layout.json tab; site/src/tab.ts). The upper tab is this shape turned upside down: rotate(180) about the crest centre.'
+             % (TAB['halfSpan'], TAB['depth'], TAB['border'], TAB['tilt']))
     parks, plate = theme or themes['parks'], SHAPES['plate']
     out('tabs/parks-plate.svg', 'Parks plate', 'bc-ministry-primitives-v5/src/engine.js → drawBadge plate',
         [ET.Element(q('rect'), {**{k: '%g' % plate[k] for k in ('x', 'y', 'width', 'height', 'rx')}, 'fill': parks['paper'], 'stroke': parks['ink'],
@@ -666,6 +726,8 @@ def main():
                                               ('circle-long', CRESTS['wildlife-long'], CRESTS['wildlife-caps']['separatorSize']),
                                               ('diamond', CRESTS['tree-heavy'], CRESTS['tree-heavy']['separatorSize'])]},
         'upperTabTransform': [round(v, 6) for v in upper],
+        # The parametric tab (see TAB): the site draws grown tabs from this.
+        'tab': {'oval': list(crest_oval(art)), **TAB, 'lower': 90, 'upper': 270},
         'airtanker-operations': airtanker,
     }
     (args.out / 'layout.json').write_text(json.dumps(layout, indent=1) + '\n', encoding='utf-8')
