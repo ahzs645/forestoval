@@ -68,6 +68,9 @@ h4 { margin: 18px 0 8px; font-size: 12px; text-transform: uppercase; letter-spac
 .tabs button.active { background: var(--accent-soft); border-color: transparent; }
 .controls { margin-left: auto; display: flex; gap: 10px; align-items: center; }
 .controls label { display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--muted); }
+.studiolink { font-size: 12px; color: #22603f; white-space: nowrap; }
+.crash { margin: 24px; padding: 16px 18px; border: 1px solid var(--fail); border-radius: 8px; background: #fff5f5; }
+.crash pre { white-space: pre-wrap; font-size: 12px; margin: 8px 0 0; }
 .palettebar {
   display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
   padding: 8px 18px; background: #fbfbf8; border-bottom: 1px solid var(--line);
@@ -192,7 +195,7 @@ h4 { margin: 18px 0 8px; font-size: 12px; text-transform: uppercase; letter-spac
 .badge.warn { background: var(--warn); }
 .badge.fail { background: var(--fail); }
 .badge.info { background: var(--info); font-style: italic; font-family: Georgia, serif; }
-.rebuilds { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 12px; }
+.rebuilds { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(400px, 100%), 1fr)); gap: 12px; }
 .rebuild { margin: 0; padding: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
 .rebuild figcaption { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-weight: 500; margin-bottom: 10px; }
 .rebuild figcaption small { color: var(--muted); font-weight: 400; margin-left: auto; }
@@ -245,9 +248,12 @@ tr:hover td { background: #f8faf7; }
 
 @media (max-width: 900px) {
   .topbar { flex-wrap: wrap; height: auto; padding: 8px 12px; gap: 8px; }
-  .controls { margin-left: 0; }
+  .tabs { flex-wrap: wrap; }
+  .controls { margin-left: 0; flex-wrap: wrap; row-gap: 6px; }
+  .controls select { max-width: 150px; }
   .library, .compose { flex-direction: column; }
   .sidebar, .sidebar.wide, .detail { width: 100%; height: auto; position: static; border-right: 0; border-left: 0; border-bottom: 1px solid var(--line); }
   .canvaswrap { height: 80vh; position: static; }
   .recgrid { grid-template-columns: 1fr; }
+  .checks { padding: 16px; }
 }

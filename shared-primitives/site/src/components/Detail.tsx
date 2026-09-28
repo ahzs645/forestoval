@@ -24,11 +24,13 @@ export function Detail({ piece, view, onClose, onSelect }: Props) {
   const parts = partsOf(piece.file);
   const parent = piece.parent ? byFile.get(piece.parent) : null;
 
-  const copy = async (label: string, text: string) => {
-    await navigator.clipboard.writeText(text);
+  const flash = (label: string) => {
     setCopied(label);
     setTimeout(() => setCopied(''), 1400);
   };
+  // Clipboard access can be refused (permissions, insecure origin): say so.
+  const copy = (label: string, text: string) =>
+    navigator.clipboard.writeText(text).then(() => flash(label), () => flash(label + '-failed'));
 
   return (
     <aside className="detail">
@@ -85,8 +87,8 @@ export function Detail({ piece, view, onClose, onSelect }: Props) {
           <input type="number" min={64} max={6000} step={100} value={pngWidth} onChange={(e) => setPngWidth(Math.max(64, Math.min(6000, +e.target.value || 1200)))} />
           <span className="muted">px wide</span>
         </span>
-        <button className="ghost" onClick={() => copy('svg', svg)}>{copied === 'svg' ? 'Copied ✓' : 'Copy SVG markup'}</button>
-        <button className="ghost" onClick={() => copy('path', piece.file)}>{copied === 'path' ? 'Copied ✓' : 'Copy file path'}</button>
+        <button className="ghost" onClick={() => copy('svg', svg)}>{copied === 'svg' ? 'Copied ✓' : copied === 'svg-failed' ? 'Copy failed' : 'Copy SVG markup'}</button>
+        <button className="ghost" onClick={() => copy('path', piece.file)}>{copied === 'path' ? 'Copied ✓' : copied === 'path-failed' ? 'Copy failed' : 'Copy file path'}</button>
       </div>
 
       <button className="ghost codetoggle" onClick={() => setShowCode(!showCode)}>{showCode ? 'Hide' : 'Show'} SVG source</button>

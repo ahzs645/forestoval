@@ -4,6 +4,7 @@
 !/.gitignore
 !/.github/
 !/README.md
+!/requirements.txt
 !/shared-primitives/
 !/bc-ministry-primitives-v5/
 !/airtanker-operations/
@@ -12,3 +13,10 @@ node_modules/
 dist/
 __pycache__/
 .DS_Store
+
+# Build and test outputs: `python build.py` writes the standalone studio (the
+# site build publishes it at studio/); the browser tests write to tests/output/;
+# `extract_primitives.py --theme` writes recoloured copies to themes/.
+/bc-ministry-primitives-v5/bc-ministry-primitives-v5.html
+/bc-ministry-primitives-v5/tests/output/
+/shared-primitives/themes/

@@ -1,4 +1,5 @@
 import galleryJson from '../../gallery.json';
+import letteringJson from '../../lettering.json';
 import fitJson from '../../lettering-fit.json';
 import layout from '../../layout.json';
 import packageSvg from '../../../airtanker-operations/airtanker-operations-editable.svg?raw';
@@ -7,11 +8,12 @@ import { resolve } from './layers';
 import { apply, composite, parse, prefixIds, serialize, SVG_NS, unionBox, type M } from './svg';
 
 // Lettering is live text from the v5 studio's generated examples: the engine
-// fitted it to exactly this crest geometry. The artwork is our primitives.
-const examples = import.meta.glob<string>('../../../bc-ministry-primitives-v5/examples/*.svg', { query: '?raw', import: 'default', eager: true });
+// fitted it to exactly this crest geometry. The artwork is our primitives, so
+// extract_primitives.py keeps only each example's lettering (lettering.json).
+const examples = letteringJson as Record<string, string>;
 const example = (name: string) => {
-  const svg = examples[`../../../bc-ministry-primitives-v5/examples/${name}.svg`];
-  if (!svg) throw new Error('Missing v5 example ' + name);
+  const svg = examples[name];
+  if (!svg) throw new Error(`Missing lettering for v5 example ${name}; rerun extract_primitives.py`);
   return svg;
 };
 const refUrls = import.meta.glob<string>('../../references/*', { query: '?url', import: 'default', eager: true });
@@ -119,7 +121,7 @@ export const RECREATIONS: Recreation[] = [
     layers: ['band', 'wings', 'frame', 'tree', 'tree-ridge', 'diamond'],
     theme: 'airtanker',
     lettering: [
-      { from: 'airtanker', only: CREST_RUNS, shared: { rec: 'crest-tree' }, transform: toAirtanker, fill: '#FFCA05' },
+      { from: 'airtanker', only: CREST_RUNS, shared: { rec: 'crest-tree' }, transform: toAirtanker, fill: themes.airtanker.text },
       { from: 'package', only: ['airtanker-operations'] },
     ],
     note: 'Crest lettering is the shared tree-crest fit, scaled with the crest into this layout. The band lettering comes from the airtanker package master.',
@@ -153,7 +155,6 @@ export const referencesFor = (id: string): ReferenceImage[] =>
     .filter((r) => r.id === id)
     .map((r) => ({ ...r, role: r.role as ReferenceImage['role'], url: refUrls['../../' + r.file] }));
 
-export const referenceSource = galleryJson.source;
 
 // -------------------------------------------------------- lettering runs --
 /** A curved baseline as an ellipse arc: centre, radii, the angle (degrees) the
@@ -260,7 +261,7 @@ function arcLength(a: Arc, from: number, to: number) {
 }
 
 /** The baseline for a run after adjustment: symmetric about the (rotated) centre angle. */
-export function arcPath(a: Arc, dr: number, rot: number, dry = 0, dx = 0, dy = 0) {
+function arcPath(a: Arc, dr: number, rot: number, dry = 0, dx = 0, dy = 0) {
   const s = a.sweep ? 1 : -1, rx = a.rx + dr, ry = a.ry + dr + dry;
   const at = (deg: number) => [a.cx + dx + rx * Math.cos((deg * Math.PI) / 180), a.cy + dy + ry * Math.sin((deg * Math.PI) / 180)].map((v) => +v.toFixed(4));
   const [x1, y1] = at(a.mid + rot - s * a.half), [x2, y2] = at(a.mid + rot + s * a.half);
@@ -336,7 +337,7 @@ const capHeight = (family: string) => (/Roboto Condensed/.test(family) ? 1456 / 
  *  sets `fit`: tracking is added letter-spacing (units), and shrink < 1 scales
  *  letters, spacing and gaps evenly about the middle of the band when the words
  *  are too long for the tab. */
-export function sharedRun(run: Run, from: NonNullable<Lettering['shared']>, fit: TabFit = { shrink: 1 }): Run {
+function sharedRun(run: Run, from: NonNullable<Lettering['shared']>, fit: TabFit = { shrink: 1 }): Run {
   const key = from.run ?? `0:${run.key.split(':')[1]}`, src = fits[from.rec]?.runs[key];
   if (!src) throw new Error(`No saved fit for ${from.rec} ${key}: run fit_lettering.py ${from.rec}`);
   if (!from.tab) return { ...run, shared: from, fixed: src };
@@ -451,7 +452,8 @@ function lettering(rec: Recreation, spec: Lettering, index: number, prefix: stri
     if (baseline) defs += serialize(baseline);
     if (spec.fill) {
       t.setAttribute('fill', spec.fill);
-      if (t.getAttribute('stroke')) t.setAttribute('stroke', spec.fill);
+      const stroke = t.getAttribute('stroke');
+      if (stroke && stroke !== 'none') t.setAttribute('stroke', spec.fill);
     }
     over += serialize(t);
   }

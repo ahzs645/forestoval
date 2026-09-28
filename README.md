@@ -4,13 +4,15 @@ Reference-based reconstructions of the BC Ministry of Forests crest family, brok
 into shared vector primitives, with a browser viewer for comparing each logo
 against its reference images.
 
-**Site:** https://projects.ahmadjalil.com/forestoval/ (also reachable at https://ahzs645.github.io/forestoval/)
+**Site:** https://projects.ahmadjalil.com/forestoval/ (also reachable at https://ahzs645.github.io/forestoval/).
+The v5 studio is at https://projects.ahmadjalil.com/forestoval/studio/.
 
 - `shared-primitives/`: the isolated building blocks (SVG), the layout and
-  lettering data, the scripts that generate them, and `site/`, the viewer.
-  See [`shared-primitives/README.md`](shared-primitives/README.md).
+  lettering data, the scripts that generate them, the reference images, and
+  `site/`, the viewer. See [`shared-primitives/README.md`](shared-primitives/README.md),
+  which also lists where each shared value lives.
 - `bc-ministry-primitives-v5/`: the v5 studio the pieces are cut from; the site
-  takes its lettering from `examples/`.
+  takes its lettering from `examples/`. `python build.py` builds the standalone page.
 - `airtanker-operations/`: the Airtanker Operations badge package.
 
 ## Run locally
@@ -21,7 +23,12 @@ npm install
 npm run dev
 ```
 
-Pushing to `main` builds the site and deploys it to GitHub Pages
-(`.github/workflows/pages.yml`).
+Python tools beyond the standard library (reference gallery, lettering fit,
+studio browser tests) need `pip install -r requirements.txt`.
+
+Pushing to `main` checks that the generated files are up to date, builds the site
+(with the studio at `studio/`) and deploys it to GitHub Pages
+(`.github/workflows/pages.yml`). Pull requests run the same checks and build
+without deploying.
 
 These are reference-based reconstructions, not authenticated government identity masters.

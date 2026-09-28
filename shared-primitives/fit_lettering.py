@@ -11,9 +11,10 @@ waits for the result and saves it. Run build_gallery.py first.
   python fit_lettering.py long-wildfire forests-wildfire   # several
 
 Needs: npm install in site/, and Playwright with Chromium
-(python -m pip install playwright && python -m playwright install chromium).
+(python -m pip install -r ../requirements.txt && python -m playwright install chromium).
+Set CHROMIUM=/path/to/chromium to use an existing browser. Unknown ids are an error.
 """
-import json, socket, subprocess, sys, time, urllib.request
+import json, os, socket, subprocess, sys, time, urllib.request
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
@@ -21,6 +22,7 @@ from playwright.sync_api import sync_playwright
 HERE = Path(__file__).resolve().parent
 SITE = HERE / 'site'
 OUT = HERE / 'lettering-fit.json'
+TIMEOUT = 30 * 60  # seconds for the whole fit
 
 
 def free_port():
@@ -29,38 +31,65 @@ def free_port():
         return s.getsockname()[1]
 
 
+def vite_command(port):
+    """The site's own Vite (never a download through npx)."""
+    vite = SITE / 'node_modules' / '.bin' / ('vite.cmd' if os.name == 'nt' else 'vite')
+    if not vite.exists(): raise SystemExit('Vite is not installed: run npm install in %s first.' % SITE)
+    return [str(vite), '--host', '127.0.0.1', '--port', str(port), '--strictPort', '--logLevel', 'error']
+
+
+def wait_for_server(server, url):
+    for _ in range(150):
+        if server.poll() is not None: raise SystemExit('Vite exited (code %s) before it served %s' % (server.returncode, url))
+        try:
+            urllib.request.urlopen(url, timeout=1)
+            return
+        except OSError:
+            time.sleep(0.2)
+    raise SystemExit('Vite did not start at %s' % url)
+
+
 def main():
     only = ','.join(sys.argv[1:])
     port = free_port()
-    server = subprocess.Popen(['npx', 'vite', '--host', '127.0.0.1', '--port', str(port), '--strictPort', '--logLevel', 'error'], cwd=SITE)
+    url = 'http://127.0.0.1:%d/' % port
+    server = subprocess.Popen(vite_command(port), cwd=SITE)
     try:
-        url = 'http://127.0.0.1:%d/' % port
-        for _ in range(150):
-            try:
-                urllib.request.urlopen(url, timeout=1)
-                break
-            except OSError:
-                time.sleep(0.2)
-        else:
-            raise SystemExit('Vite did not start on port %d' % port)
+        wait_for_server(server, url)
         with sync_playwright() as p:
-            browser = p.chromium.launch()
+            exe = os.environ.get('CHROMIUM')
+            browser = p.chromium.launch(**({'executable_path': exe} if exe else {}))
             page = browser.new_page()
+            errors = []
             page.on('console', lambda m: m.type == 'error' and print('browser:', m.text))
+            page.on('pageerror', lambda e: errors.append(str(e)))
             page.goto(url + 'fit.html' + ('?only=' + only if only else ''))
-            page.wait_for_function('window.__fitDone === true', timeout=30 * 60 * 1000)
+            # Poll rather than wait blindly: a script that fails to load never
+            # sets __fitDone, and the server can die mid-run.
+            deadline = time.time() + TIMEOUT
+            while not page.evaluate('window.__fitDone === true'):
+                if errors: raise SystemExit('The fit page failed: ' + errors[0])
+                if server.poll() is not None: raise SystemExit('Vite exited during the fit (code %s)' % server.returncode)
+                if time.time() > deadline: raise SystemExit('The fit did not finish within %d minutes' % (TIMEOUT // 60))
+                page.wait_for_timeout(1000)
             print(page.inner_text('#log').rstrip())
             error = page.evaluate('window.__fitError')
             fits = page.evaluate('window.__fit')
             browser.close()
         if error:
             raise SystemExit(error)
-        merged = json.loads(OUT.read_text()) if only and OUT.exists() else {}
+        if not fits:
+            raise SystemExit('The fit page finished without a result')
+        merged = json.loads(OUT.read_text(encoding='utf-8')) if only and OUT.exists() else {}
         merged.update(fits)
         OUT.write_text(json.dumps(merged, indent=1) + '\n', encoding='utf-8')
         print('Wrote %s (%d recreations)' % (OUT.name, len(merged)))
     finally:
         server.terminate()
+        try:
+            server.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            server.kill()
 
 
 if __name__ == '__main__':

@@ -6,7 +6,6 @@ import {
   letteringRuns,
   RECREATIONS,
   referencesFor,
-  referenceSource,
   variantMembers,
   type Built,
   type LetteringFit,
@@ -33,7 +32,7 @@ export function Recreations({ view, onOpen }: { view: ViewSettings; onOpen: (fil
           <h2>Recreations</h2>
           <p className="muted">
             Each supplied reference next to the same logo rebuilt from the shared primitives. The artwork is our pieces; the lettering is the v5 studio’s live text for the same crest.
-            References are copied from <code>{referenceSource}</code>.
+            The references are the supplied images, kept in <code>shared-primitives/references/</code>.
           </p>
         </div>
         <div className="recswitches">
@@ -59,6 +58,11 @@ export function Recreations({ view, onOpen }: { view: ViewSettings; onOpen: (fil
 /** The lettering around the oval: one shared fit per crest variant. */
 function CrestVariants() {
   const name = (id: string) => RECREATIONS.find((r) => r.id === id)?.name ?? id;
+  // Parsing each variant's lettering is not free; it never changes.
+  const lines = useMemo(() => Object.fromEntries(CREST_VARIANTS.map((v) => {
+    const members = variantMembers(v.id);
+    return [v.id, members.length ? letteringRuns(members[0]).filter((r) => r.shared?.rec === v.id) : []];
+  })), []);
   return (
     <section className="variants">
       <h3>Lettering around the oval</h3>
@@ -72,11 +76,10 @@ function CrestVariants() {
           <tbody>
             {CREST_VARIANTS.map((v) => {
               const fit = fits[v.id], members = variantMembers(v.id);
-              const lines = members.length ? letteringRuns(members[0]).filter((r) => r.shared?.rec === v.id) : [];
               return (
                 <tr key={v.id}>
                   <td>{v.name[0].toUpperCase() + v.name.slice(1)}</td>
-                  <td>{lines.map((r) => <div key={r.key}>{r.text} <span className="muted small">· {r.family.split(',')[0].replace(/"/g, '')} {r.weight}</span></div>)}</td>
+                  <td>{lines[v.id].map((r) => <div key={r.key}>{r.text} <span className="muted small">· {r.family.split(',')[0].replace(/"/g, '')} {r.weight}</span></div>)}</td>
                   <td>
                     {members.map((m) => {
                       const s = fit?.members?.[m.id];
@@ -206,6 +209,8 @@ function Stage({ rec, built, reference, mode, t, setT, surface }: {
 
   const drag = (e: PointerEvent<SVGSVGElement>) => {
     if (mode !== 'wipe' || !(e.buttons & 1) || !svg.current) return;
+    // Keep following the pointer when it leaves the picture mid-drag.
+    if (e.type === 'pointerdown') svg.current.setPointerCapture(e.pointerId);
     const m = svg.current.getScreenCTM();
     if (!m) return;
     const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(m.inverse());
@@ -214,7 +219,7 @@ function Stage({ rec, built, reference, mode, t, setT, surface }: {
 
   return (
     <div className="stage-lg" style={surface}>
-      <svg ref={svg} viewBox={built.vb.join(' ')} style={{ isolation: 'isolate', cursor: mode === 'wipe' ? 'ew-resize' : undefined }} onPointerDown={drag} onPointerMove={drag}>
+      <svg ref={svg} viewBox={built.vb.join(' ')} style={{ isolation: 'isolate', cursor: mode === 'wipe' ? 'ew-resize' : undefined, touchAction: mode === 'wipe' ? 'none' : undefined }} onPointerDown={drag} onPointerMove={drag}>
         <defs>
           <clipPath id={id + '-l'}><rect x={x} y={y} width={split - x} height={h} /></clipPath>
           <clipPath id={id + '-r'}><rect x={split} y={y} width={x + w - split} height={h} /></clipPath>

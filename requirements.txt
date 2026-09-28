@@ -1,0 +1,4 @@
+# Python tools that need more than the standard library. extract_primitives.py,
+# airtanker-operations/generate.py and bc-ministry-primitives-v5/build.py need none.
+pillow>=10          # shared-primitives/build_gallery.py
+playwright>=1.40    # shared-primitives/fit_lettering.py, bc-ministry-primitives-v5/tests/test_browser.py

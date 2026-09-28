@@ -44,8 +44,10 @@ export function Library({ view, selected, onSelect }: Props) {
       if ((e.target as HTMLElement).closest('input, textarea, select')) return;
       if (e.key === 'Escape') onSelect(null);
       if (!current || !['ArrowRight', 'ArrowLeft'].includes(e.key)) return;
-      const i = visible.indexOf(current);
-      const next = visible[(i + (e.key === 'ArrowRight' ? 1 : visible.length - 1)) % visible.length];
+      const i = visible.indexOf(current), forward = e.key === 'ArrowRight';
+      // A piece not in the list (e.g. a hidden scene part opened from Compose)
+      // steps to the first or last one shown.
+      const next = i < 0 ? visible[forward ? 0 : visible.length - 1] : visible[(i + (forward ? 1 : visible.length - 1)) % visible.length];
       if (next) onSelect(next.file);
     };
     window.addEventListener('keydown', onKey);

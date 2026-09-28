@@ -3,7 +3,7 @@ import { REASSEMBLY, resolve } from './layers';
 import { composite, hasParseError, parse, rasterize, themedSvg } from './svg';
 
 export type Status = 'pass' | 'warn' | 'fail' | 'info';
-export interface Check {
+interface Check {
   status: Status;
   detail: string;
 }

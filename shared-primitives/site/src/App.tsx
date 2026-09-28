@@ -1,12 +1,31 @@
-import { useEffect, useState, type CSSProperties } from 'react';
+import { Component, lazy, Suspense, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { PRIMITIVE_TOKENS, themes, type Palette } from './data';
 import { Library } from './components/Library';
-import { Compose } from './components/Compose';
-import { Checks } from './components/Checks';
-import { Recreations } from './components/Recreations';
+
+// The other tabs load when first opened.
+const Recreations = lazy(() => import('./components/Recreations').then((m) => ({ default: m.Recreations })));
+const Compose = lazy(() => import('./components/Compose').then((m) => ({ default: m.Compose })));
+const Checks = lazy(() => import('./components/Checks').then((m) => ({ default: m.Checks })));
+
+/** Keeps a failing tab (e.g. a missing saved fit) from blanking the whole page. */
+class TabBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state = { error: null as Error | null };
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+  render() {
+    if (!this.state.error) return this.props.children;
+    return (
+      <div className="crash">
+        <strong>This tab failed to render.</strong> The other tabs still work.
+        <pre>{this.state.error.message}</pre>
+      </div>
+    );
+  }
+}
 
 type Tab = 'library' | 'recreations' | 'compose' | 'checks';
-export type Backdrop = 'checker' | 'white' | 'dark' | 'custom';
+type Backdrop = 'checker' | 'white' | 'dark' | 'custom';
 
 export interface ViewSettings {
   palette: Palette | null;
@@ -27,7 +46,7 @@ const readTab = (): Tab => {
   return t === 'recreations' || t === 'compose' || t === 'checks' ? t : 'library';
 };
 
-export function surfaceStyle(backdrop: Backdrop, colour: string): CSSProperties {
+function surfaceStyle(backdrop: Backdrop, colour: string): CSSProperties {
   switch (backdrop) {
     case 'white': return { background: '#ffffff' };
     case 'dark': return { background: '#1a1d1c' };
@@ -91,6 +110,7 @@ export default function App() {
             </select>
           </label>
           {backdrop === 'custom' && <input type="color" value={backdropColour} onChange={(e) => setBackdropColour(e.target.value)} />}
+          {import.meta.env.PROD && <a className="studiolink" href="./studio/" title="The v5 studio: live lettering engine">v5 studio ↗</a>}
         </div>
       </header>
 
@@ -111,10 +131,14 @@ export default function App() {
       )}
 
       <main className="main">
-        {tab === 'library' && <Library view={view} selected={selected} onSelect={setSelected} />}
-        {tab === 'recreations' && <Recreations view={view} onOpen={(f) => { setSelected(f); go('library'); }} />}
-        {tab === 'compose' && <Compose view={view} onOpen={(f) => { setSelected(f); go('library'); }} />}
-        {tab === 'checks' && <Checks onOpen={(f) => { setSelected(f); go('library'); }} />}
+        <TabBoundary key={tab}>
+          <Suspense fallback={<p className="empty">Loading…</p>}>
+            {tab === 'library' && <Library view={view} selected={selected} onSelect={setSelected} />}
+            {tab === 'recreations' && <Recreations view={view} onOpen={(f) => { setSelected(f); go('library'); }} />}
+            {tab === 'compose' && <Compose view={view} onOpen={(f) => { setSelected(f); go('library'); }} />}
+            {tab === 'checks' && <Checks onOpen={(f) => { setSelected(f); go('library'); }} />}
+          </Suspense>
+        </TabBoundary>
       </main>
     </div>
   );

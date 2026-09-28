@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react';
-import { FAMILIES, references, type FamilyId } from '../data';
+import { useEffect, useMemo, useState } from 'react';
+import { FAMILIES, references, type FamilyId, type VB } from '../data';
 import { LAYERS, PRESETS, resolve, type Preset } from '../layers';
-import { composite, dataUrl, download, downloadPng } from '../svg';
+import { dataUrl, download, downloadPng, finish, stack } from '../svg';
 import type { ViewSettings } from '../App';
 
 export function Compose({ view, onOpen }: { view: ViewSettings; onOpen: (file: string) => void }) {
@@ -18,16 +18,27 @@ export function Compose({ view, onOpen }: { view: ViewSettings; onOpen: (file: s
   const reference = references.find((r) => r.key === refKey && r.family === family) ?? null;
   const chosen = useMemo(() => resolve(family, layers), [family, layers]);
 
-  const clean = useMemo(() => composite(chosen, { palette: view.palette }), [chosen, view.palette]);
+  // The finished logo to overlay, fetched when first picked.
+  const [loaded, setLoaded] = useState<{ key: string; href: string; vb: VB } | null>(null);
+  useEffect(() => {
+    if (!reference || loaded?.key === reference.key) return;
+    let live = true;
+    reference.load().then(({ svg, vb }) => { if (live) setLoaded({ key: reference.key, href: dataUrl(svg), vb }); }, () => {});
+    return () => { live = false; };
+  }, [reference, loaded]);
+  const overlay = reference && loaded?.key === reference.key ? loaded : null;
+
+  // Stacking the pieces is the costly part; the overlay and guides are added on top.
+  const stacked = useMemo(() => stack(chosen, { palette: view.palette }), [chosen, view.palette]);
+  const clean = useMemo(() => finish(stacked), [stacked]);
   const shown = useMemo(
     () =>
-      composite(chosen, {
-        palette: view.palette,
-        overlay: reference ? { svg: reference.svg, vb: reference.vb, opacity, blend } : null,
+      finish(stacked, {
+        overlay: overlay ? { href: overlay.href, vb: overlay.vb, opacity, blend } : null,
         centre: showCentre ? FAMILIES[family].centre : null,
         bounds: showBounds,
       }),
-    [chosen, view.palette, reference, opacity, blend, showCentre, showBounds, family],
+    [stacked, overlay, opacity, blend, showCentre, showBounds, family],
   );
 
   const applyPreset = (p: Preset) => {
@@ -119,7 +130,7 @@ export function Compose({ view, onOpen }: { view: ViewSettings; onOpen: (file: s
           </span>
         </div>
         <div className="canvas" style={view.surface}>
-          {chosen.length || reference ? (
+          {chosen.length || overlay ? (
             <img src={dataUrl(shown.svg)} alt="Composite" style={zoom === 1 ? undefined : { height: `${zoom * 100}%`, maxHeight: 'none', maxWidth: 'none' }} />
           ) : (
             <p className="empty">Pick a preset or tick some layers.</p>

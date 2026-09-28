@@ -186,7 +186,12 @@ function inkSpan(t: SVGTextElement, run: Run, e: Ellipse, around: number): [numb
  *  shrunk: size, spacing and gaps scale evenly (glyphs never squeezed). */
 function upperTabFit(rec: Recreation, run: Run, host: SVGSVGElement): TabFit {
   const from = run.shared!;
-  const twin = letteringRuns({ ...rec, lettering: [{ from: from.rec, only: [from.run!.split(':')[1]], shared: { rec: from.rec, run: from.run } }] })[0];
+  // The same line placed as fitted on its source (not on the upper tab): from
+  // the same example the shared spec reads its text from.
+  const spec = rec.lettering.find((l) => l.shared === from);
+  if (!spec) throw new Error(`${rec.id}: no lettering spec for shared run ${run.key}`);
+  const key = from.run ?? `0:${run.key.split(':')[1]}`;
+  const twin = letteringRuns({ ...rec, lettering: [{ from: spec.from, only: [key.split(':')[1]], shared: { rec: from.rec, run: key } }] })[0];
   const place = (r: Run) => {
     const doc = new DOMParser().parseFromString(`<svg xmlns="${SVG_NS}">${r.xml}</svg>`, 'image/svg+xml');
     const t = document.importNode(doc.documentElement.firstElementChild!, true) as SVGTextElement;
@@ -598,6 +603,11 @@ export async function fitVariant(members: { rec: Recreation; ref: ReferenceImage
     const own: Lettering = { ...spec, shared: undefined };
     problems.push(await prepare({ ...rec, layers: ['frame'], lettering: [own] }, ref));
   }
+  if (!problems.length) throw new Error('A crest variant needs at least one member logo with a registered reference');
+  // search() pairs runs by index across references: they must be the same lines.
+  const ids = (pr: Problem) => pr.runs.map((r) => r.key.split(':')[1]).join(',');
+  for (const pr of problems)
+    if (ids(pr) !== ids(problems[0])) throw new Error(`Crest variant members disagree on their lines: ${ids(problems[0])} vs ${ids(pr)} (${pr.reference})`);
   const { P, before, after } = search(problems);
   const q = problems[0];
   const centres = q.runs.map((_, i) => q.centre(i, P));

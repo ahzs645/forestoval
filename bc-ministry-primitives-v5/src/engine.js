@@ -3,7 +3,7 @@
 (function(global){
 'use strict';
 const P=global.BCPrimitives, NS='http://www.w3.org/2000/svg', XL='http://www.w3.org/1999/xlink';
-const CX=338.36631,CY=420.96480;
+const [CX,CY]=P.SHAPES.centre;
 const clone=x=>JSON.parse(JSON.stringify(x));
 const round=x=>Math.round(x*1e5)/1e5;
 const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
@@ -110,7 +110,7 @@ function fitPlain(text,roleId,cap,width,s,tracking=0){
 }
 function plain(parent,f,x,y,colour,id,report){if(!f.text?.trim())return;const e=node('text',{...textAttrs(f,colour),x:round(x+f.left),y:round(y),'data-role':f.role,'data-face':f.face,'data-live-text':id},f.text);parent.append(e);report.push(f);return e;}
 function recolour(el,theme,scene){
- const map={'#000000':theme.ink,'#ffffff':theme.paper,'#fff':theme.paper,'#231f20':theme.ink,'#1f1a17':theme.ink,'#15864a':theme.tree,'#185192':theme.wildlife,'#478cca':theme.water,'#604b3d':theme.earth,'#70c6ea':theme.sky,'#93d0aa':theme.distant,'#008450':theme.tree,'#0091c4':theme.water,'#4b3216':theme.earth,'#6dc9ef':theme.sky};
+ const map=Object.fromEntries(Object.entries(P.RECOLOUR).map(([colour,token])=>[colour,theme[token]]));
  for(const e of [el,...el.querySelectorAll('*')])for(const attr of ['fill','stroke']){const c=e.getAttribute?.(attr);if(c&&map[c.toLowerCase()])e.setAttribute(attr,map[c.toLowerCase()]);}
 }
 function use(id,attrs={}){const e=node('use',{href:'#'+id,...attrs});e.setAttributeNS(XL,'xlink:href','#'+id);return e;}
@@ -119,16 +119,16 @@ function ribbon(defs,t,theme){
  const id='service-ribbon-primitive',g=node('g',{id,'data-primitive':'service-ribbon'}),source=node('g');source.append(fragment(ART.sourceRibbon));const d=source.querySelector('path').getAttribute('d');const outer=(d.match(/^\s*M[\s\S]*?(?=\s+M\s|$)/)||[])[0];if(outer)g.append(node('path',{d:outer,fill:theme.paper}));g.append(source);recolour(g,theme);defs.append(g);
  const transform=`translate(${CX} ${CY+t.y}) scale(${t.width} ${t.height}) translate(${-CX} ${-CY})`+(t.side==='top'?` rotate(180 ${CX} ${CY})`:'');return use(id,{transform,'data-layer':'tab-shape'});
 }
-function wings(){const g=node('g',{'data-layer':'tab-shape','data-fidelity':'photo-based approximation'});const d='M 106 350 L -297 350 Q -340 350 -326 383 Q -318 408 -270 410 Q -297 440 -241 448 Q -262 478 -205 482 Q -215 511 -149 516 L 112 516 L 160 438 Z';for(const mirror of [false,true]){const x=node('g',mirror?{transform:`translate(${2*CX} 0) scale(-1 1)`}:{});x.append(node('path',{d,fill:'#e4c681',stroke:'#172747','stroke-width':12,'stroke-linejoin':'round'}));for(const[a,b]of[[-279,402],[-249,440],[-212,478]])x.append(node('path',{d:`M ${a} ${b} H 106`,fill:'none',stroke:'#172747','stroke-width':5}));g.append(x);}g.append(node('path',{d:'M 27 656 Q 338 919 650 656 L 723 736 Q 338 1103 -46 736 Z',fill:'#ead49b',stroke:'#172747','stroke-width':13}));return g;}
+function wings(){const W=P.SHAPES.wings,g=node('g',{'data-layer':'tab-shape','data-fidelity':'photo-based approximation'});for(const mirror of [false,true]){const x=node('g',mirror?{transform:`translate(${2*CX} 0) scale(-1 1)`}:{});x.append(node('path',{d:W.outline,fill:W.fill,stroke:W.stroke,'stroke-width':W.strokeWidth,'stroke-linejoin':'round'}));for(const[a,b]of W.rules)x.append(node('path',{d:`M ${a} ${b} H ${W.ruleEnd}`,fill:'none',stroke:W.stroke,'stroke-width':W.ruleWidth}));g.append(x);}g.append(node('path',{d:W.band,fill:W.bandFill,stroke:W.stroke,'stroke-width':W.bandStrokeWidth}));return g;}
 function drawBadge(s,defs,theme,report){const crestId=effectiveCrest(s),c=P.CRESTS[crestId],t=P.TABS[s.tab],g=node('g',{'data-layer':'badge','data-crest':crestId});
  if(t.shape==='ribbon')g.append(ribbon(defs,t,theme));
- if(t.shape==='plate')g.append(node('rect',{'data-layer':'tab-shape','data-primitive':'plate',x:20,y:805,width:637,height:130,rx:3,fill:theme.paper,stroke:theme.ink,'stroke-width':16}));
+ if(t.shape==='plate'){const p=P.SHAPES.plate;g.append(node('rect',{'data-layer':'tab-shape','data-primitive':'plate',x:p.x,y:p.y,width:p.width,height:p.height,rx:p.rx,fill:theme.paper,stroke:theme.ink,'stroke-width':p.strokeWidth}));}
  if(t.shape==='wings')g.append(wings());
  const frame=sourceShape(defs,'frame-'+c.scene,c.scene==='wildlife'?ART.wildlifeFrame:ART.treeFrame,theme,c.scene);g.append(use(frame,{'data-layer':'frame'}));
  if(c.scene==='wildlife')defs.append(fragment(ART.wildlifeClip));
  const scene=sourceShape(defs,'scene-'+c.scene,c.scene==='wildlife'?ART.wildlifeScene:ART.treeInner,theme,c.scene);g.append(use(scene,{'data-layer':'scene'}));
- if(c.separator!=='none'){const y=c.separatorY,dx=266*Math.sqrt(Math.max(0,1-((y-CY)/369)**2)),r=c.separatorSize,marks=node('g',{'data-layer':'separators',fill:theme.text});for(const x of[CX-dx,CX+dx])marks.append(c.separator==='circle'?node('circle',{cx:x,cy:y,r}):node('path',{d:`M ${x} ${y-r} l ${r} ${r} -${r} ${r} -${r} -${r} Z`}));g.append(marks);}
- const letters=node('g',{'data-layer':'live-lettering'});curved(letters,defs,s.content.upper,c.upper,s,theme.text,'upper',report);curved(letters,defs,s.content.lower,c.lower,s,theme.text,'lower',report);if(t.slot)curved(letters,defs,s.content.service,t.slot,s,t.shape==='wings'?'#8e3d2b':theme.text,'service',report);g.append(letters);return g;
+ if(c.separator!=='none'){const band=P.SHAPES.separatorBand,y=c.separatorY,dx=band.rx*Math.sqrt(Math.max(0,1-((y-CY)/band.ry)**2)),r=c.separatorSize,marks=node('g',{'data-layer':'separators',fill:theme.text});for(const x of[CX-dx,CX+dx])marks.append(c.separator==='circle'?node('circle',{cx:x,cy:y,r}):node('path',{d:`M ${x} ${y-r} l ${r} ${r} -${r} ${r} -${r} -${r} Z`}));g.append(marks);}
+ const letters=node('g',{'data-layer':'live-lettering'});curved(letters,defs,s.content.upper,c.upper,s,theme.text,'upper',report);curved(letters,defs,s.content.lower,c.lower,s,theme.text,'lower',report);if(t.slot)curved(letters,defs,s.content.service,t.slot,s,t.shape==='wings'?P.SHAPES.wings.textFill:theme.text,'service',report);g.append(letters);return g;
 }
 function badgeBox(s){const t=P.TABS[s.tab];if(t.shape==='wings')return{x:-350,y:0,w:1376,h:965};if(t.side==='top')return{x:-20,y:-145,w:716,h:989};return{x:0,y:0,w:676,h:['plate','ribbon'].includes(t.shape)?945:844};}
 function blockMetrics(s,l){const c=s.content;return[[c.word,'wordmark-heavy',l.wordCap,0],[c.descriptor,'descriptor-slab',l.descCap,.012],[c.district,'district-slab',l.districtCap,.008]].filter(a=>a[0]?.trim()).map(([text,r,cap,tr])=>fitPlain(text,r,cap,l.wordWidth,s,tr));}

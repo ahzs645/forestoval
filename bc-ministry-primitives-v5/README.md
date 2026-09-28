@@ -1,6 +1,12 @@
 # BC Ministry — shared primitives studio v5
 
-Open **bc-ministry-primitives-v5.html** in a desktop browser. The application itself has no build-time or runtime package dependency. The scene and references are inside the file; the named fonts are not.
+Use the live copy at https://projects.ahmadjalil.com/forestoval/studio/, or build the standalone page and open **bc-ministry-primitives-v5.html** in a desktop browser:
+
+```sh
+python build.py
+```
+
+The built page is not tracked; `build.py` writes it from the readable sources (standard library only). The application itself has no build-time or runtime package dependency. The scene and references are inside the built file; the named fonts are not.
 
 Start with **Long ministry · Wildfire**. Change its ministry wording, then choose a different recipe. In **Shared typography roles**, change `crest-condensed`: the two long-name crests and the BCTS wildlife crest update together. The heavy Wildfire Service tab does not change. Use **Source**, **Overlay** and **Rules** to inspect the result. The overlay allows only a uniform whole-reference scale and translation.
 
@@ -15,6 +21,8 @@ The prior mixed model of per-preset font/width/curve overrides and optional char
 The wildlife and single-tree master artwork strings are unchanged. `data/art-sha256.json` records the imported master hashes. Recolouring is a fill/stroke mapping, not another copy or redraw of the scene. The source ribbon is one shared geometry instance, transformed for its upper-tab use. Parks and Airtanker retain their separate plate/wing component types.
 
 Ten raster references were refreshed from the current archive's original bytes. In particular, the long Wildfire PNG now retains its transparency instead of the earlier JPEG conversion's black background. `data/reference-provenance.json` records those mappings and checksums.
+
+Each reference image is stored once, as a file. `data/references.json` holds each one's name, size and registration, and its `file`: most are in `../shared-primitives/references/` (shared with the site); the three corrected source SVGs are in `data/references/`. `build.py` inlines them into the built page as data URLs.
 
 ## The component model
 
@@ -34,7 +42,7 @@ original scene + crest profile + text roles + tab + composition + content
 | Composition | Crest/wordmark arrangement, row gaps and width budgets | `LOCKUPS` |
 | Example recipe | Inheritance, component references and wording | `RECIPES` |
 
-All tables are in `src/primitives.js`, except the artwork. The tables are frozen. The UI owns validated patch maps and passes the same maps to all recipes. There are **14 active recipes, 11 shared typography roles, 12 baseline slots, 4 crest profiles and 7 composition types**. Fire Control remains an excluded catalogue entry, not a selectable family member or calibration target.
+All tables are in `src/primitives.js`, except the artwork. `SHAPES` (crest centre, separator band, Parks plate, airtanker wings) and `RECOLOUR` (source colour → theme token) hold the few shapes and colours the engine draws itself; `../shared-primitives/extract_primitives.py` reads the same tables, so the shared primitives cannot drift from the engine. The tables are frozen. The UI owns validated patch maps and passes the same maps to all recipes. There are **14 active recipes, 11 shared typography roles, 12 baseline slots, 4 crest profiles and 7 composition types**. Fire Control remains an excluded catalogue entry, not a selectable family member or calibration target.
 
 The basic inheritance is intentional:
 
@@ -111,18 +119,20 @@ console.table(result.report);
 To rebuild the standalone file from the readable source modules:
 
 ```sh
-python build.py
+python build.py                 # or: python build.py --out somewhere/studio.html
 ```
 
 To rerun the browser regressions:
 
 ```sh
-python -m pip install playwright
+python -m pip install -r ../requirements.txt
 python -m playwright install chromium
 python tests/test_browser.py
 ```
 
-The test runner also supports an existing browser through `CHROMIUM=/path/to/chromium`. It loads the generated HTML directly into a browser document, so no HTTP server is needed. Local-font test results will legitimately differ on a machine that does not have the named default weights installed.
+The test runner also supports an existing browser through `CHROMIUM=/path/to/chromium`. It builds the page into `tests/output/` and loads it directly into a browser document, so no HTTP server is needed. The screenshots, PNG export and `results.json` also go to `tests/output/` (not tracked); `--update` also refreshes the committed copies in `review/` and `tests/results.json`.
+
+The default faces (Open Sans ExtraBold, Roboto Condensed Bold, Roboto Slab Bold, Roboto Regular) must be installed locally, or pass `--network-fonts` to load them from Google Fonts. Without them the font check fails and three lettering-band checks measure fallback fonts, so 36/40 is the expected result on a machine without the faces. The results record where the faces came from.
 
 The recorded run passed **40/40 checks**, including all active recipes, exact inherited crest-typography equality, no stretched text, finite bounds, reference integrity, PNG/ZIP export, configuration round trip, 27 wording stress cases, all composition types, six pixel-mask checks that lettering remains inside its band, and a 390-pixel mobile viewport. The full results are in `tests/results.json`.
 

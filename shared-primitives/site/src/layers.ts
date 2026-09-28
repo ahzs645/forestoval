@@ -8,7 +8,12 @@ const place = (key: keyof typeof layout.separators): M[] => {
   const s = layout.separators[key];
   return s.at.map(([x, y]) => mul(T(x, y), S(s.scale)));
 };
+const separatorHint = (key: keyof typeof layout.separators, size: string) => {
+  const s = layout.separators[key];
+  return `y ${s.y}, ${size} ${s.size}`;
+};
 const toAirtanker = layout['airtanker-operations'].crestTransform as M;
+const wingMirror = layout['airtanker-operations'].wingMirror as M;
 
 const v5 = 'bc-ministry-v5/';
 const at = 'airtanker-operations/';
@@ -43,13 +48,13 @@ export const LAYERS: Record<FamilyId, Layer[]> = {
     { key: 'ribbon-upper', label: 'Service ribbon · upper tab', file: v5 + 'tabs/service-ribbon.svg', instances: [layout.upperTabTransform as M], hint: 'Same shape, upside down: rotate 180° about the crest centre' },
     { key: 'plate', label: 'Parks plate', file: v5 + 'tabs/parks-plate.svg' },
     ...crestLayers(),
-    { key: 'circle-caps', label: 'Separator circles · capitals crest', file: v5 + 'marks/separator-circle.svg', instances: place('circle-caps'), hint: 'y 446, radius 12.65' },
-    { key: 'circle-long', label: 'Separator circles · long ministry', file: v5 + 'marks/separator-circle.svg', instances: place('circle-long'), hint: 'y 215, radius 9' },
-    { key: 'diamond', label: 'Separator diamonds', file: v5 + 'marks/separator-diamond.svg', instances: place('diamond'), hint: 'y 397.65' },
+    { key: 'circle-caps', label: 'Separator circles · capitals crest', file: v5 + 'marks/separator-circle.svg', instances: place('circle-caps'), hint: separatorHint('circle-caps', 'radius') },
+    { key: 'circle-long', label: 'Separator circles · long ministry', file: v5 + 'marks/separator-circle.svg', instances: place('circle-long'), hint: separatorHint('circle-long', 'radius') },
+    { key: 'diamond', label: 'Separator diamonds', file: v5 + 'marks/separator-diamond.svg', instances: place('diamond'), hint: separatorHint('diamond', 'half-diagonal') },
   ],
   'airtanker-operations': [
     { key: 'band', label: 'Lower band', file: at + 'lower-band.svg' },
-    { key: 'wing', label: 'Wing master ×2 (mirrored)', file: at + 'wing.svg', instances: [[1, 0, 0, 1, 0, 0], mul(T(1448, 0), S(-1, 1))], hint: 'Master + translate(1448 0) scale(-1 1)' },
+    { key: 'wing', label: 'Wing master ×2 (mirrored)', file: at + 'wing.svg', instances: [[1, 0, 0, 1, 0, 0], wingMirror], hint: `Master + translate(${wingMirror[4]} 0) scale(-1 1)` },
     { key: 'wings', label: 'Wing pair', file: at + 'wings-pair.svg' },
     ...crestLayers(toAirtanker, false).map((l) => ({ ...l, hint: `Shared crest, scaled ×${layout['airtanker-operations'].crestScale.toFixed(3)} into this layout` })),
     {

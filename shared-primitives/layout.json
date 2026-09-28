@@ -22,7 +22,9 @@
      446
     ]
    ],
-   "scale": 1
+   "scale": 1.0,
+   "y": 446,
+   "size": 12.65
   },
   "circle-long": {
    "at": [
@@ -35,7 +37,9 @@
      215
     ]
    ],
-   "scale": 0.7114624505928854
+   "scale": 0.7114624505928854,
+   "y": 215,
+   "size": 9
   },
   "diamond": {
    "at": [
@@ -48,7 +52,9 @@
      397.65
     ]
    ],
-   "scale": 1
+   "scale": 1.0,
+   "y": 397.65,
+   "size": 16.76
   }
  },
  "upperTabTransform": [
@@ -70,6 +76,18 @@
   ],
   "crestScale": 1.024692,
   "crestTransformAttr": "translate(724 450.5) scale(1.024692) translate(-338.366 -420.965)",
+  "crestCentre": [
+   724.0,
+   450.5
+  ],
+  "wingMirror": [
+   -1.0,
+   0.0,
+   0.0,
+   1.0,
+   1448.0,
+   0.0
+  ],
   "diamonds": [
    [
     451.977,

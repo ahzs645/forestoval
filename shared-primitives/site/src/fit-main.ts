@@ -23,7 +23,10 @@ const log = (line: string) => {
 (async () => {
   try {
     await document.fonts.ready;
-    const only = new URLSearchParams(location.search).get('only')?.split(',');
+    const only = new URLSearchParams(location.search).get('only')?.split(',').filter(Boolean);
+    const known = [...CREST_VARIANTS.map((v) => v.id), ...RECREATIONS.map((r) => r.id)];
+    const unknown = only?.filter((id) => !known.includes(id)) ?? [];
+    if (unknown.length) throw new Error(`Unknown id(s): ${unknown.join(', ')}. Choose from: ${known.join(', ')}`);
     const out: Record<string, LetteringFit> = {};
     const primary = (id: string) => referencesFor(id).find((r) => r.role === 'primary' && r.registration);
     for (const v of CREST_VARIANTS) {

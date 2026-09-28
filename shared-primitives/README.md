@@ -4,8 +4,20 @@ Every reusable vector piece from the current work, one standalone SVG per piece.
 Open **index.html** for a contact sheet. `manifest.json` lists each file with its
 source and viewBox.
 
-Nothing in `../bc-ministry-primitives-v5` or `../airtanker-operations` was modified;
-this folder is generated from them.
+This folder is generated from `../bc-ministry-primitives-v5` and `../airtanker-operations`
+(read only). Each value lives in one place:
+
+| What | Its one home | Used by |
+|---|---|---|
+| Scene, frame and ribbon artwork | v5 `data/art.json` | v5 engine, `extract_primitives.py` |
+| Shapes the engine draws (crest centre, separator band, plate, wings), source colour → theme token map | v5 `src/primitives.js` `SHAPES`, `RECOLOUR` | v5 engine, `extract_primitives.py` (reads the tables) |
+| Separator sizes and heights, themes | v5 `src/primitives.js` `CRESTS`, `THEMES` | same |
+| Airtanker palette | `../airtanker-operations/generate.py` `Palette` | the package, the `airtanker` theme here |
+| Reference images | `references/` here | the site, and the v5 studio (its `data/references.json` points here) |
+| Placements, crest centres | `layout.json` (generated) | the site |
+| Crest lettering | v5 `examples/*.svg` → `lettering.json` (generated, text only) | the site |
+
+CI reruns `extract_primitives.py` and fails if the committed output differs.
 
 ## One crest
 
@@ -73,7 +85,7 @@ Lettering is not included. Text is live and font-dependent, and it is fitted per
 ## Viewer and test site
 
 `site/` is a React app for browsing and testing the pieces. It reads the SVGs,
-`manifest.json`, `themes.json` and `layout.json` from this folder directly, so it always shows
+`manifest.json`, `themes.json`, `layout.json` and `lettering.json` from this folder directly, so it always shows
 the current output.
 
 ```sh
@@ -83,22 +95,30 @@ npm run dev      # then open the printed URL
 npm run regen    # rerun extract_primitives.py; the page reloads
 ```
 
-- **Library:** the 15 building blocks, grouped as Crest, Scenes, Separators, Service tabs and Airtanker package. Scene parts are hidden by default. They appear in their scene's detail panel, with the *Show scene parts* toggle, or in search results. Click a piece to see its details and download it as SVG or PNG. The colour and backdrop menus apply to every view.
+- **Library:** the 15 building blocks, grouped as Crest, Scenes, Separators, Service tabs and Airtanker package. Scene parts are hidden by default. They appear in their scene's detail panel, with the *Show scene parts* toggle, or in search results. Click a piece to see its details and download it as SVG or PNG. The colour and backdrop menus apply here and in Compose; Recreations uses each logo's own theme and only takes the backdrop.
 - **Recreations:** each supplied reference next to the same logo rebuilt from the primitives. There are four views: side by side, a draggable wipe, an overlay and a difference blend. Each card lists the primitives used, where its lettering comes from, the reference file, how it was lined up, and any alternate copies in the folder.
-- **Compose:** stack pieces in their shared coordinates, with presets for each logo. You can overlay the finished logo; with *Difference blend* on, matching artwork turns black. There are also guides for the crest centre and each piece's viewBox.
+- **Compose:** stack pieces in their shared coordinates, with presets for each logo. You can overlay the finished logo (loaded when picked); with *Difference blend* on, matching artwork turns black. There are also guides for the crest centre and each piece's viewBox.
 - **Checks:** runs in the browser. For every file it checks the XML, viewBox, that the file is self-contained, internal references, unique ids and theme coverage. It also checks nothing falls outside the viewBox (rendered with a margin) and measures the padding. It stacks each set of parts and compares them pixel by pixel with the composite they came from.
 
-`npm run build` writes a static copy to `site/dist/`. Serve it with `npm run preview`; browsers block the module script if you open `index.html` directly from disk.
+`npm run build` writes a static copy to `site/dist/`, with the v5 studio built into `dist/studio/` (it runs `../bc-ministry-primitives-v5/build.py`, so it needs `python3`). Serve it with `npm run preview`; browsers block the module script if you open `index.html` directly from disk. The deployed site links the studio from its header.
 
 ## Reference images (Recreations)
 
 `build_gallery.py` copies the supplied reference folder into `references/` and
 writes `gallery.json`, which records the logo each image belongs to and the
-rectangle, in that logo's coordinates, where the image lines up with the rebuild:
+rectangle, in that logo's coordinates, where the image lines up with the rebuild.
+Images are recognised by content (SHA-256), so the folder can be the original
+one or `references/` itself, to re-register the current copies. The new
+`references/` is built beside the old one and swapped in only when the run
+succeeds. It needs Pillow (`pip install -r ../requirements.txt`).
 
 ```sh
-python build_gallery.py "/Users/ahmadjalil/Desktop/bcts/New Folder With Items 2"
+python build_gallery.py "path/to/supplied images"
+python build_gallery.py references     # re-register what is already here
 ```
+
+The v5 studio uses these files too (its `data/references.json` points at them),
+so keep the file names: the script checks that every studio reference still exists.
 
 - **v5 studio rectangles** (12 images): the image's SHA-256 matches `data/reference-provenance.json`, or it's one of the two supplied SVGs with an exact size match. The Airtanker rectangle is moved into the package layout using the shared-crest transform.
 - **Outline fit** (5 images): the transparent or white-background crests. Their visible outline is scaled by height to fit the crest's outline. All five match the crest's proportions to within 7% (width ratio 0.99–1.07).
@@ -156,23 +176,32 @@ Overlap with each reference's letters, before and after fitting: Long ministry 0
 The two upper-tab logos score lower because their tab lettering is shared rather than fitted to their own photos: Wildfire Management 0.67 → 0.71 (0.77 when its tab was fitted separately), Fire Control 0.46 → 0.60 (was 0.61). The patches use a narrower face on their top tabs, which fits more letters on the tab.
 
 The lettering in the recreations is the v5 studio's live text for the same crest,
-taken from `examples/*.svg`. For the airtanker, the band text comes from the package
+taken from the v5 `examples/*.svg` (only their text, baselines and the branch strip's bar are kept, in `lettering.json`;
+their artwork is the primitives). For the airtanker, the band text comes from the package
 master. The fonts (Open Sans 800, Roboto Condensed 700, Roboto Slab 700, Roboto 400)
 are bundled through `@fontsource`, so the page renders offline. Fire Control, which
 the v5 studio excluded, uses the Wildfire Management crest lettering; its tab uses the shared lettering above.
 The *v5 studio lettering* switch shows what the studio drew, including its own tab lettering.
 
 Build order: `extract_primitives.py`, then `build_gallery.py`, then `fit_lettering.py`.
+`fit_lettering.py` needs Playwright and Chromium (`pip install -r ../requirements.txt`, then
+`python -m playwright install chromium`, or set `CHROMIUM=/path/to/chromium`) and `npm install` in `site/`.
+Scores depend on the browser and its font rendering, so a refit on another machine can land slightly differently.
 
 ## Regenerate
 
-Requires Python 3.9 or later, standard library only:
+`extract_primitives.py` needs Python 3.9 or later, standard library only:
 
 ```sh
 python extract_primitives.py
 ```
 
-To also write the v5 pieces recoloured into `themes/<name>/`, use the themes in
+It writes the SVGs, `manifest.json`, `layout.json`, `themes.json`, `lettering.json`
+and `index.html`, and deletes pieces the previous manifest listed that it no longer
+writes.
+
+To also write the v5 pieces recoloured into `themes/<name>/` (not tracked; listed in
+`themes/manifest.json`, which the site does not read), use the themes in
 `src/primitives.js` (`wildlife`, `forest`, `mono`, `parks`, `gold`) or `airtanker`:
 
 ```sh
@@ -180,6 +209,6 @@ python extract_primitives.py --theme gold --theme mono
 ```
 
 The recolouring uses the same source-colour → theme-token map as `engine.js`
-`recolour()`. The airtanker package has its own palette flags in its `generate.py`.
+`recolour()` (`RECOLOUR` in `primitives.js`). The airtanker package has its own palette flags in its `generate.py`.
 
 These are reference-based reconstructions, not authenticated government identity masters.

@@ -10,10 +10,13 @@ export function Checks({ onOpen }: { onOpen: (file: string) => void }) {
   const [rebuilds, setRebuilds] = useState<ReassemblyResult[]>([]);
   const [progress, setProgress] = useState(0);
   const [running, setRunning] = useState(false);
-  const started = useRef(false);
+  // The current run's id: a newer run, or leaving the tab, makes older ones stop.
+  const current = useRef(0);
   const total = pieces.length + REASSEMBLY.length;
 
   const run = useCallback(async () => {
+    const id = ++current.current;
+    const live = () => current.current === id;
     setRunning(true);
     setProgress(0);
     setRebuilds([]);
@@ -27,11 +30,18 @@ export function Checks({ onOpen }: { onOpen: (file: string) => void }) {
       } catch (e) {
         px = { clip: { status: 'fail', detail: String(e) } };
       }
+      if (!live()) return;
       setReports((r) => ({ ...r, [p.file]: { ...r[p.file], ...px } }));
       setProgress(++done);
     }
     for (const t of REASSEMBLY) {
-      const result = await reassembly(t);
+      let result: ReassemblyResult;
+      try {
+        result = await reassembly(t);
+      } catch (e) {
+        result = { name: `${t.name}: ${e instanceof Error ? e.message : String(e)}`, status: 'fail', mismatch: 1, target: '', rebuilt: '', diff: '' };
+      }
+      if (!live()) return;
       setRebuilds((r) => [...r, result]);
       setProgress(++done);
     }
@@ -39,7 +49,8 @@ export function Checks({ onOpen }: { onOpen: (file: string) => void }) {
   }, []);
 
   useEffect(() => {
-    if (!started.current) { started.current = true; run(); }
+    run();
+    return () => { current.current++; }; // stop this run when the tab closes
   }, [run]);
 
   const statuses = [...Object.values(reports).flatMap((r) => Object.values(r).map((c) => c!.status)), ...rebuilds.map((r) => r.status)];
@@ -70,11 +81,13 @@ export function Checks({ onOpen }: { onOpen: (file: string) => void }) {
               <span className={`badge ${r.status}`}>{ICON[r.status]}</span> {r.name}
               <small>{(r.mismatch * 100).toFixed(2)}% of painted pixels differ</small>
             </figcaption>
-            <div className="triptych">
-              <div><img src={r.target} alt="" /><small>composite</small></div>
-              <div><img src={r.rebuilt} alt="" /><small>parts stacked</small></div>
-              <div><img src={r.diff} alt="" /><small>difference</small></div>
-            </div>
+            {r.diff && (
+              <div className="triptych">
+                <div><img src={r.target} alt="" /><small>composite</small></div>
+                <div><img src={r.rebuilt} alt="" /><small>parts stacked</small></div>
+                <div><img src={r.diff} alt="" /><small>difference</small></div>
+              </div>
+            )}
           </figure>
         ))}
         {rebuilds.length < REASSEMBLY.length && running && <p className="muted">Comparing…</p>}

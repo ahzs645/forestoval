@@ -3,6 +3,7 @@ name: Deploy site to GitHub Pages
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -11,7 +12,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -27,14 +28,24 @@ jobs:
           node-version: lts/*
           cache: npm
           cache-dependency-path: shared-primitives/site/package-lock.json
+      # The primitives, layout and lettering data are generated and committed;
+      # fail if they no longer match their sources (rerun extract_primitives.py).
+      - name: Check generated files are up to date
+        run: |
+          python3 ../extract_primitives.py
+          git diff --exit-code -- ..
       - run: npm ci
+      # Also builds the v5 studio into dist/studio/.
       - run: npm run build
       - uses: actions/configure-pages@v5
+        if: github.event_name != 'pull_request'
       - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
         with:
           path: shared-primitives/site/dist
 
   deploy:
+    if: github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
     environment:
