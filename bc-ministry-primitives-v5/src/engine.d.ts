@@ -24,6 +24,14 @@ declare global {
     readonly ROLES:Readonly<Record<BCRoleId,Readonly<BCRole>>>;
     readonly SLOTS:Readonly<Record<BCSlotId,Readonly<BCSlot>>>;
     readonly CRESTS:Readonly<Record<BCCrestId,{scene:'wildlife'|'tree';upper:BCSlotId;lower:BCSlotId;separator:string;separatorY:number;separatorSize:number}>>;
+    readonly SHAPES:{
+      readonly centre:readonly [number,number];
+      readonly separatorBand:{readonly rx:number;readonly ry:number};
+      readonly plate:{readonly x:number;readonly y:number;readonly width:number;readonly height:number;readonly rx:number;readonly strokeWidth:number};
+      readonly wings:{readonly outline:string;readonly rules:readonly (readonly [number,number])[];readonly ruleEnd:number;readonly fill:string;readonly stroke:string;readonly strokeWidth:number;readonly ruleWidth:number;readonly band:string;readonly bandFill:string;readonly bandStrokeWidth:number;readonly textFill:string};
+    };
+    /** Source artwork colour (lower case) -> the theme token that repaints it. */
+    readonly RECOLOUR:Readonly<Record<string,string>>;
     readonly TABS:Readonly<Record<BCTabId,{shape:string;slot?:BCSlotId;side?:string}>>;
     readonly THEMES:Readonly<Record<BCThemeId,Readonly<Record<string,string>>>>;
     readonly LOCKUPS:Readonly<Record<BCLayoutId,Readonly<Record<string,string|number>>>>;

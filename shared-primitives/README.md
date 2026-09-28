@@ -4,8 +4,21 @@ Every reusable vector piece from the current work, one standalone SVG per piece.
 Open **index.html** for a contact sheet. `manifest.json` lists each file with its
 source and viewBox.
 
-Nothing in `../bc-ministry-primitives-v5` or `../airtanker-operations` was modified;
-this folder is generated from them.
+This folder is generated from `../bc-ministry-primitives-v5` and `../airtanker-operations`
+(read only). Each value lives in one place:
+
+| What | Its one home | Used by |
+|---|---|---|
+| Scene, frame and ribbon artwork | v5 `data/art.json` | v5 engine, `extract_primitives.py` |
+| Shapes the engine draws (crest centre, separator band, plate, wings), source colour → theme token map | v5 `src/primitives.js` `SHAPES`, `RECOLOUR` | v5 engine, `extract_primitives.py` (reads the tables) |
+| Separator sizes and heights, themes | v5 `src/primitives.js` `CRESTS`, `THEMES` | same |
+| Airtanker palette | `../airtanker-operations/generate.py` `Palette` | the package, the `airtanker` theme here |
+| Reference images | `references/` here | the site, and the v5 studio (its `data/references.json` points here) |
+| Placements, crest centres, the tab's parameters | `layout.json` (generated) | the site |
+| Tab shape (span, depth, border, end lean) | `extract_primitives.py` `TAB` | the tab file, and `site/src/tab.ts` for grown tabs |
+| Crest lettering | v5 `examples/*.svg` → `lettering.json` (generated, text only) | the site |
+
+CI reruns `extract_primitives.py` and fails if the committed output differs.
 
 ## One crest
 
@@ -53,7 +66,7 @@ neck ends at the oval edge). Colours are the source colours.
   - `wildlife-parts/` — sky, mountains, distant-woodland, river, river-bank, large-tree, small-tree, eagle, elk, fish
 - `marks/` — separator circle (wildlife crests) and diamond (tree crest)
 - `tabs/`
-  - `service-ribbon` — the Wildfire Service tab, with the white backing the engine adds. The Wildfire Management upper tab is this same shape turned upside down (rotated 180° about the crest centre, same size), so it hugs the oval the way the lower tab does. The v5 engine also scaled it by 1.10 and moved it up 7, which left a gap of about 38 units at the top. Scaling by 1.10 about the top of the oval instead still lifts the tab's ends about 14 units off the oval.
+  - `service-ribbon` — the Wildfire Service tab. It is drawn from parameters, not traced: a paper face 85.5 units deep on the crest's outer oval, a 15-unit ink border that tucks 8 under the crest's ring, ends leaning 14° toward the middle, and a half-span of 49.7° of the oval's angle. Those numbers were fitted to the v5 traced ribbon (they differ only by slivers along its traced edges). Because it is a band around the oval, a tab can **grow**: a larger half-span wraps it further round (`TAB` in `extract_primitives.py`, copied to `layout.json` `tab`; `site/src/tab.ts` draws any span, and Checks confirms it draws exactly this file at the default). In Compose, *Tabs* sliders grow the lower and upper tab by hand. The Wildfire Management upper tab is this same shape turned upside down (rotated 180° about the crest centre, same size), so it hugs the oval the way the lower tab does. The v5 engine also scaled it by 1.10 and moved it up 7, which left a gap of about 38 units at the top. Scaling by 1.10 about the top of the oval instead still lifts the tab's ends about 14 units off the oval.
   - `parks-plate` — in Parks theme colours.
   - `airtanker-wings`, `airtanker-band` — the v5 engine's photo-based approximation. Its colours are fixed in the engine.
 
@@ -73,7 +86,7 @@ Lettering is not included. Text is live and font-dependent, and it is fitted per
 ## Viewer and test site
 
 `site/` is a React app for browsing and testing the pieces. It reads the SVGs,
-`manifest.json`, `themes.json` and `layout.json` from this folder directly, so it always shows
+`manifest.json`, `themes.json`, `layout.json` and `lettering.json` from this folder directly, so it always shows
 the current output.
 
 ```sh
@@ -83,26 +96,34 @@ npm run dev      # then open the printed URL
 npm run regen    # rerun extract_primitives.py; the page reloads
 ```
 
-- **Library:** the 15 building blocks, grouped as Crest, Scenes, Separators, Service tabs and Airtanker package. Scene parts are hidden by default. They appear in their scene's detail panel, with the *Show scene parts* toggle, or in search results. Click a piece to see its details and download it as SVG or PNG. The colour and backdrop menus apply to every view.
+- **Library:** the 15 building blocks, grouped as Crest, Scenes, Separators, Service tabs and Airtanker package. Scene parts are hidden by default. They appear in their scene's detail panel, with the *Show scene parts* toggle, or in search results. Click a piece to see its details and download it as SVG or PNG. The colour and backdrop menus apply here and in Compose; Recreations uses each logo's own theme and only takes the backdrop.
 - **Recreations:** each supplied reference next to the same logo rebuilt from the primitives. There are four views: side by side, a draggable wipe, an overlay and a difference blend. Each card lists the primitives used, where its lettering comes from, the reference file, how it was lined up, and any alternate copies in the folder.
-- **Compose:** stack pieces in their shared coordinates, with presets for each logo. You can overlay the finished logo; with *Difference blend* on, matching artwork turns black. There are also guides for the crest centre and each piece's viewBox.
+- **Compose:** stack pieces in their shared coordinates, with presets for each logo. You can overlay the finished logo (loaded when picked); with *Difference blend* on, matching artwork turns black. There are also guides for the crest centre and each piece's viewBox. With a tab in the stack, *Tabs* sliders grow it around the oval; downloads include the grown tab.
 - **Checks:** runs in the browser. For every file it checks the XML, viewBox, that the file is self-contained, internal references, unique ids and theme coverage. It also checks nothing falls outside the viewBox (rendered with a margin) and measures the padding. It stacks each set of parts and compares them pixel by pixel with the composite they came from.
 
-`npm run build` writes a static copy to `site/dist/`. Serve it with `npm run preview`; browsers block the module script if you open `index.html` directly from disk.
+`npm run build` writes a static copy to `site/dist/`, with the v5 studio built into `dist/studio/` (it runs `../bc-ministry-primitives-v5/build.py`, so it needs `python3`). Serve it with `npm run preview`; browsers block the module script if you open `index.html` directly from disk. The deployed site links the studio from its header.
 
 ## Reference images (Recreations)
 
 `build_gallery.py` copies the supplied reference folder into `references/` and
 writes `gallery.json`, which records the logo each image belongs to and the
-rectangle, in that logo's coordinates, where the image lines up with the rebuild:
+rectangle, in that logo's coordinates, where the image lines up with the rebuild.
+Images are recognised by content (SHA-256), so the folder can be the original
+one or `references/` itself, to re-register the current copies. The new
+`references/` is built beside the old one and swapped in only when the run
+succeeds. It needs Pillow (`pip install -r ../requirements.txt`).
 
 ```sh
-python build_gallery.py "/Users/ahmadjalil/Desktop/bcts/New Folder With Items 2"
+python build_gallery.py "path/to/supplied images"
+python build_gallery.py references     # re-register what is already here
 ```
 
+The v5 studio uses these files too (its `data/references.json` points at them),
+so keep the file names: the script checks that every studio reference still exists.
+
 - **v5 studio rectangles** (12 images): the image's SHA-256 matches `data/reference-provenance.json`, or it's one of the two supplied SVGs with an exact size match. The Airtanker rectangle is moved into the package layout using the shared-crest transform.
-- **Outline fit** (5 images): the transparent or white-background crests. Their visible outline is scaled by height to fit the crest's outline. All five match the crest's proportions to within 7% (width ratio 0.99–1.07).
-- **No overlay** (4 images): other photos, screenshots and exports of the same logos, and a banner showing BCTS in use. These show side by side only.
+- **Outline fit** (6 images): the transparent or white-background crests, and the greyscale photo of the Wildfire Management patch (on a flat grey backdrop, fitted to the crest plus its upper tab). The visible outline is scaled by height to fit the crest's outline. The five drawn crests match the crest's proportions to within 7% (width ratio 0.99–1.07); the patch is 13% wider (1.13), as embroidered patches are.
+- **No overlay** (3 images): other screenshots and exports of the same logos, and a banner showing BCTS in use. These show side by side only.
 
 ### Fitting the lettering to each reference
 
@@ -146,33 +167,42 @@ is laid out with the same fonts and SVG text engine as the site:
   `python fit_lettering.py crest-tree` refits one variant; then refit its logos too.
 - **Shared lettering.** The upper-tab lettering is not fitted per logo. It is the Forests · Wildfire Service lower tab as fitted, flipped onto the top tab, so it is the same on each logo that has one (Wildfire Management, Fire Control):
   - The fitted "WILDFIRE SERVICE" run goes through the upper-tab transform (`layout.json` `upperTabTransform`): baseline, size, letter-spacing, word gap and tracking carry over unchanged, and only the words change. Rotated, the letters would hang upside down, so the baseline runs the other way and moves to the inner edge of the same band of letters. The line is centred where the fitted line's middle lands; the fit records that angle as `centre`.
-  - *Too long for the tab.* Upright letters stand on the inner edge of the band and fan outward, so a line covers more of the tab than it does hanging from the outer edge. The words may only cover the stretch of tab that the fitted lower line covers, carried through the same transform. Anything longer is shrunk evenly: size, spacing and gaps scale together and the letters are never squeezed. The factor is recorded under `shared` in the fit. "FIRE CONTROL" fits at full size.
-  - *Wildfire Management* follows its patch, which letters the top tab end to end in a condensed bold face. Same placement, but in Roboto Condensed 700, with capitals the same height as the shared lettering and the letter-spacing set so the words cover exactly that stretch of tab (`face` and `fillTab` in `recreations.ts`). Even with no letter-spacing, "WILDFIRE MANAGEMENT" is a little too long, so it is shrunk to 84.0%. In Open Sans ExtraBold it needed 65.2%.
+  - *Too long for the tab.* Upright letters stand on the inner edge of the band and fan outward, so a line covers more of the tab than it does hanging from the outer edge. The words may only cover the stretch of tab that the fitted lower line covers, carried through the same transform. Anything longer **grows the tab** around the oval, keeping the same clearance to its ends, up to a half-span of 80°; only past that are the words shrunk evenly (size, spacing and gaps together, letters never squeezed). The grown half-span (`span`) and any shrink are recorded under `shared` in the fit, and the recreation draws its tab at that span. "FIRE CONTROL" fits the default tab at full size.
+  - *Wildfire Management* follows its patch, which letters the top tab end to end in a condensed bold face. Same placement, but in Roboto Condensed 700, with capitals the same height as the shared lettering and the letter-spacing set so the words cover exactly that stretch of tab (`face` and `fillTab` in `recreations.ts`). Even with no letter-spacing, "WILDFIRE MANAGEMENT" is too long for the default tab, so the tab grows from ±49.7° to ±57.8° and the words stay full size (they used to be shrunk to 84.0%). The patch's own top tab is longer still.
 
   When Forests · Wildfire Service is refitted, refit the logos that share its tab too (`python fit_lettering.py forests-wildfire wildfire-management fire-control`). Given several ids, the fitter fits the source first.
 
-Overlap with each reference's letters, before and after fitting: Long ministry 0.66 → 0.86, Long ministry · Wildfire 0.53 → 0.75, BCTS district 0.47 → 0.95, BC / Timber / Sales 0.58 → 0.92, BCTS wordmark 0.58 → 0.97. The photographed patches (Parks 0.32 → 0.48, Airtanker 0.52 → 0.62) stay rougher: their embroidered or painted letters are heavier than the substitute fonts.
+Overlap with each reference's letters, before and after fitting: Long ministry 0.66 → 0.86, Long ministry · Wildfire 0.53 → 0.75, BCTS district 0.47 → 0.95, BC / Timber / Sales 0.58 → 0.92. The photographed patches (Parks 0.32 → 0.48, Airtanker 0.52 → 0.62) stay rougher: their embroidered or painted letters are heavier than the substitute fonts.
 
 The two upper-tab logos score lower because their tab lettering is shared rather than fitted to their own photos: Wildfire Management 0.67 → 0.71 (0.77 when its tab was fitted separately), Fire Control 0.46 → 0.60 (was 0.61). The patches use a narrower face on their top tabs, which fits more letters on the tab.
 
 The lettering in the recreations is the v5 studio's live text for the same crest,
-taken from `examples/*.svg`. For the airtanker, the band text comes from the package
+taken from the v5 `examples/*.svg` (only their text, baselines and the branch strip's bar are kept, in `lettering.json`;
+their artwork is the primitives). For the airtanker, the band text comes from the package
 master. The fonts (Open Sans 800, Roboto Condensed 700, Roboto Slab 700, Roboto 400)
 are bundled through `@fontsource`, so the page renders offline. Fire Control, which
 the v5 studio excluded, uses the Wildfire Management crest lettering; its tab uses the shared lettering above.
 The *v5 studio lettering* switch shows what the studio drew, including its own tab lettering.
 
 Build order: `extract_primitives.py`, then `build_gallery.py`, then `fit_lettering.py`.
+`fit_lettering.py` needs Playwright and Chromium (`pip install -r ../requirements.txt`, then
+`python -m playwright install chromium`, or set `CHROMIUM=/path/to/chromium`) and `npm install` in `site/`.
+Scores depend on the browser and its font rendering, so a refit on another machine can land slightly differently.
 
 ## Regenerate
 
-Requires Python 3.9 or later, standard library only:
+`extract_primitives.py` needs Python 3.9 or later, standard library only:
 
 ```sh
 python extract_primitives.py
 ```
 
-To also write the v5 pieces recoloured into `themes/<name>/`, use the themes in
+It writes the SVGs, `manifest.json`, `layout.json`, `themes.json`, `lettering.json`
+and `index.html`, and deletes pieces the previous manifest listed that it no longer
+writes.
+
+To also write the v5 pieces recoloured into `themes/<name>/` (not tracked; listed in
+`themes/manifest.json`, which the site does not read), use the themes in
 `src/primitives.js` (`wildlife`, `forest`, `mono`, `parks`, `gold`) or `airtanker`:
 
 ```sh
@@ -180,6 +210,6 @@ python extract_primitives.py --theme gold --theme mono
 ```
 
 The recolouring uses the same source-colour → theme-token map as `engine.js`
-`recolour()`. The airtanker package has its own palette flags in its `generate.py`.
+`recolour()` (`RECOLOUR` in `primitives.js`). The airtanker package has its own palette flags in its `generate.py`.
 
 These are reference-based reconstructions, not authenticated government identity masters.

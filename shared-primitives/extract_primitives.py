@@ -3,16 +3,19 @@
 
 Sources (read only, never modified):
   ../bc-ministry-primitives-v5/data/art.json        artwork master strings
-  ../bc-ministry-primitives-v5/src/primitives.js    colour themes
+  ../bc-ministry-primitives-v5/src/primitives.js    themes, crest profiles, and the
+                                                    shapes the engine draws itself
   ../airtanker-operations/airtanker-operations-editable.svg
+  ../airtanker-operations/generate.py               the package palette
 
 The few v5 shapes that exist only as engine code (ribbon backing, Parks plate,
-wings, separators) are reproduced here from src/engine.js. Each output keeps
+wings, separators) are drawn from the same primitives.js tables the engine
+uses (SHAPES, CRESTS, RECOLOUR), so the two cannot drift. Each output keeps
 its original coordinates; only the viewBox is cropped, so any piece can be
 pasted back into its family's coordinate space and still line up.
 Standard library only.
 """
-import argparse, copy, json, math, re
+import argparse, copy, importlib.util, json, math, re, sys
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
@@ -23,7 +26,51 @@ AIR = ROOT / 'airtanker-operations'
 SVG, XL, INK = 'http://www.w3.org/2000/svg', 'http://www.w3.org/1999/xlink', 'http://www.inkscape.org/namespaces/inkscape'
 ET.register_namespace('', SVG)
 ET.register_namespace('xlink', XL)
-CX, CY = 338.36631, 420.96480  # v5 crest centre (engine.js)
+
+
+# ------------------------------------------------------- v5 source tables --
+def js_table(js, name):
+    """The object literal `const NAME={...};` in primitives.js, as Python data.
+    The tables are plain data (quoted strings, numbers, arrays, objects), so a
+    light conversion to JSON is enough; anything else fails loudly."""
+    m = re.search(r'\bconst %s=\{' % name, js)
+    if not m: raise SystemExit('primitives.js: no table %s' % name)
+    i, depth, quote, escaped = m.end() - 1, 0, None, False
+    for j in range(i, len(js)):
+        c = js[j]
+        if quote:
+            if escaped: escaped = False
+            elif c == '\\': escaped = True
+            elif c == quote: quote = None
+        elif c in '\'"': quote = c
+        elif c in '{[': depth += 1
+        elif c in '}]':
+            depth -= 1
+            if not depth: break
+    text = js[i:j + 1]
+    text = re.sub(r"'([^'\\\"]*)'", r'"\1"', text)                     # 'x' -> "x"
+    text = re.sub(r'([{,]\s*)([A-Za-z_$][\w$]*)\s*:', r'\1"\2":', text)  # key: -> "key":
+    text = re.sub(r'(?<=[:\[,\s-])\.(\d)', r'0.\1', text)                  # .5 -> 0.5
+    try: return json.loads(text)
+    except ValueError as e: raise SystemExit('primitives.js: table %s is not plain data (%s)' % (name, e))
+
+
+PRIMITIVES_JS = (V5 / 'src/primitives.js').read_text(encoding='utf-8')
+SHAPES = js_table(PRIMITIVES_JS, 'SHAPES')
+CRESTS = js_table(PRIMITIVES_JS, 'CRESTS')
+# engine.js recolour(): source paint -> theme token.
+SOURCE_TOKENS = js_table(PRIMITIVES_JS, 'RECOLOUR')
+CX, CY = SHAPES['centre']  # v5 crest centre
+
+
+def package_generator():
+    """airtanker-operations/generate.py as a module (for its palette)."""
+    name = 'airtanker_generate'
+    if name not in sys.modules:
+        spec = importlib.util.spec_from_file_location(name, AIR / 'generate.py')
+        sys.modules[name] = importlib.util.module_from_spec(spec)  # dataclasses look the module up while it loads
+        spec.loader.exec_module(sys.modules[name])
+    return sys.modules[name]
 
 
 def q(tag): return '{%s}%s' % (SVG, tag)
@@ -282,16 +329,13 @@ def fragment(xml, label):
 
 
 def load_themes():
-    js = (V5 / 'src/primitives.js').read_text(encoding='utf-8')
-    block = re.search(r'const THEMES=\{(.*?)\n\};', js, re.S).group(1)
-    return {name: dict(re.findall(r"(\w+):'(#[0-9a-fA-F]{6})'", body))
-            for name, body in re.findall(r"^\s*(\w+):\{(.*?)\}", block, re.M)}
-
-
-# engine.js recolour(): source paint -> theme token.
-SOURCE_TOKENS = {'#000000': 'ink', '#ffffff': 'paper', '#fff': 'paper', '#231f20': 'ink', '#1f1a17': 'ink',
-                 '#15864a': 'tree', '#185192': 'wildlife', '#478cca': 'water', '#604b3d': 'earth', '#70c6ea': 'sky',
-                 '#93d0aa': 'distant', '#008450': 'tree', '#0091c4': 'water', '#4b3216': 'earth', '#6dc9ef': 'sky'}
+    """The v5 themes, plus the airtanker package palette (generate.py defaults) as
+    a crest theme, so the shared crest matches the package's wings, band and diamonds."""
+    themes = js_table(PRIMITIVES_JS, 'THEMES')
+    p = package_generator().Palette()
+    themes['airtanker'] = {'ink': p.gold, 'paper': p.navy, 'text': p.gold, 'sky': p.navy, 'water': p.navy, 'wildlife': p.gold, 'distant': p.gold,
+                           'earth': p.gold, 'tree': p.gold, 'word': p.gold, 'descriptor': p.gold, 'strip': p.navy, 'stripText': p.gold}
+    return themes
 
 
 def recolour_map(theme):
@@ -377,10 +421,69 @@ def frame_check(art):
     return {'radius_deviation': dev, 'tree_offset': (float(clip.get('cx')) - icx, float(clip.get('cy')) - icy)}
 
 
+# Service tabs (the Wildfire Service ribbon and the upper tab) as a parametric
+# band hugging the crest's outer oval, so a tab can grow around the oval. The
+# numbers were fitted to the traced sourceRibbon in art.json (they differ only
+# by slivers along its traced edges). site/src/tab.ts draws the same band; the
+# site's Checks compare the two.
+TAB = {
+    'halfSpan': 49.7,  # degrees of the oval's parameter either side of the tab's middle
+    'depth': 85.5,     # the paper face, outward from the oval's outer edge
+    'border': 15,      # ink border around the face
+    'inset': 8,        # the border's inner edge tucks this far under the crest's ring
+    'tilt': 14,        # each end cut leans this far off square, toward the tab's middle
+}
+
+
+def tab_bands(oval, centre, half, tab=TAB):
+    """The tab as two outlines: the ink band and the paper face on it. oval:
+    (cx, cy, rx, ry) of the crest's outer oval; centre: 90 for a lower tab, 270
+    for an upper one; half: the half-span in degrees (TAB['halfSpan'] by default)."""
+    cx, cy, rx, ry = oval
+    c, tilt = math.radians(centre), math.radians(tab['tilt'])
+    def normal(t):
+        nx, ny = math.cos(t)/rx, math.sin(t)/ry; n = math.hypot(nx, ny)
+        return nx/n, ny/n
+    def at(t, d):
+        nx, ny = normal(t)
+        return cx + rx*math.cos(t) + d*nx, cy + ry*math.sin(t) + d*ny
+    def end(sign, shift):
+        # The cut through the end of the oval edge, leaning toward the middle,
+        # moved `shift` toward the middle (the face's end sits inside the border).
+        t = c + sign*math.radians(half); nx, ny = normal(t); a = -sign*tilt
+        dx, dy = nx*math.cos(a) - ny*math.sin(a), nx*math.sin(a) + ny*math.cos(a)
+        (px, py), (sx, sy) = at(t, 0), (dy*sign, -dx*sign)
+        return (px + sx*shift, py + sy*shift), (dx, dy)
+    def meet(line, d, sign):
+        # Where the offset curve at distance d crosses the cut (bisection on the angle).
+        (qx, qy), (dx, dy) = line
+        side = lambda t: (lambda o: (o[0] - qx)*dy - (o[1] - qy)*dx)(at(t, d))
+        lo, hi = c, c + sign*math.radians(half + 40)
+        for _ in range(60):
+            mid = (lo + hi)/2
+            if (side(mid) > 0) == (side(lo) > 0): lo = mid
+            else: hi = mid
+        return (lo + hi)/2
+    def band(d0, d1, shift):
+        l0, l1 = end(-1, shift), end(1, shift)
+        a0, a1, b0, b1 = meet(l0, d1, -1), meet(l1, d1, 1), meet(l0, d0, -1), meet(l1, d0, 1)
+        n = max(8, math.ceil(math.degrees(abs(a1 - a0))*2))
+        pts = [at(a0 + (a1 - a0)*i/n, d1) for i in range(n + 1)] + [at(b1 + (b0 - b1)*i/n, d0) for i in range(n + 1)]
+        return 'M ' + ' L '.join('%.2f %.2f' % p for p in pts) + ' Z'
+    return band(-tab['inset'], tab['depth'] + tab['border'], 0), band(0, tab['depth'], tab['border'])
+
+
 def separator_pair(y):
     """engine.js drawBadge separator positions on the crest band."""
-    dx = 266*math.sqrt(max(0, 1 - ((y - CY)/369)**2))
+    band = SHAPES['separatorBand']
+    dx = band['rx']*math.sqrt(max(0, 1 - ((y - CY)/band['ry'])**2))
     return [(CX - dx, y), (CX + dx, y)]
+
+
+def crest_oval(art):
+    """(cx, cy, rx, ry) of the shared frame's outer oval."""
+    e = fragment(art['wildlifeFrame'], '')['outer-black-oval']
+    return tuple(float(e.get(k)) for k in ('cx', 'cy', 'rx', 'ry'))
 
 
 def build_v5(w, base, themes, theme_name=None):
@@ -428,7 +531,9 @@ def build_v5(w, base, themes, theme_name=None):
     # and the artwork is shifted by that offset so it sits centred in the window.
     ti = fragment(art['treeInner'], src).root[0]
     parts = list(ti)
-    for el, name in zip(parts, ['own-sky', 'own-ring', 'distant-forest', 'mountains', 'trunk', 'canopy'] + ['canopy-notch-%d' % i for i in range(1, 7)]):
+    names = ['own-sky', 'own-ring', 'distant-forest', 'mountains', 'trunk', 'canopy'] + ['canopy-notch-%d' % i for i in range(1, 7)]
+    if len(parts) != len(names): raise SystemExit('art.json treeInner has %d parts; expected %d (%s)' % (len(parts), len(names), ', '.join(names)))
+    for el, name in zip(parts, names):
         el.set('id', 'tree-' + name)
     ti.remove(parts[0]); ti.remove(parts[1])
     dx, dy = check['tree_offset']
@@ -472,39 +577,43 @@ def build_v5(w, base, themes, theme_name=None):
     out('crest/wildlife-crest.svg', 'Wildlife crest · shared frame + wildlife scene', 'crest/frame.svg + scenes/wildlife.svg',
         [frame.wrapped(frame['oval-frame']), wl.wrapped(wl['landscape'])], wl.dependencies([wl['landscape']]), note='No lettering.')
 
-    # Separator marks (engine.js drawBadge) -------------------------------
+    # Separator marks (engine.js drawBadge; sizes and heights from CRESTS) --------
     wild_text = (theme or themes['wildlife'])['text']; forest_text = (theme or themes['forest'])['text']
-    r = 12.65
+    caps, long_, tree_heavy = CRESTS['wildlife-caps'], CRESTS['wildlife-long'], CRESTS['tree-heavy']
+    r = caps['separatorSize']
     out('marks/separator-circle.svg', 'Separator · circle (wildlife crests)', 'bc-ministry-primitives-v5/src/engine.js → drawBadge',
-        [ET.Element(q('circle'), {'cx': '0', 'cy': '0', 'r': str(r), 'fill': wild_text, 'data-fill-token': 'text'})], pad=2,
-        note='Radius 12.65 (wildlife-caps). wildlife-long uses radius 9. Placed at y=446 / y=215 on the crest in the engine.')
-    r = 16.76
+        [ET.Element(q('circle'), {'cx': '0', 'cy': '0', 'r': '%g' % r, 'fill': wild_text, 'data-fill-token': 'text'})], pad=2,
+        note='Radius %g (wildlife-caps). wildlife-long uses radius %g. Placed at y=%g / y=%g on the crest in the engine.'
+             % (r, long_['separatorSize'], caps['separatorY'], long_['separatorY']))
+    r = tree_heavy['separatorSize']
     out('marks/separator-diamond.svg', 'Separator · diamond (tree crest)', 'bc-ministry-primitives-v5/src/engine.js → drawBadge',
         [ET.Element(q('path'), {'d': 'M 0 %g l %g %g -%g %g -%g -%g Z' % (-r, r, r, r, r, r, r), 'fill': forest_text, 'data-fill-token': 'text'})], pad=2,
-        note='Half-diagonal 16.76. Placed at y=397.65 on the tree-heavy crest.')
+        note='Half-diagonal %g. Placed at y=%g on the tree-heavy crest.' % (r, tree_heavy['separatorY']))
 
     # Service components (engine.js ribbon / plate / wings) -----------------
-    rib = fragment(art['sourceRibbon'], src)
-    d = rib['service-ribbon-border'].get('d')
-    outer = re.match(r'^\s*M[\s\S]*?(?=\s+M\s|$)', d).group(0)
-    backing = ET.Element(q('path'), {'d': outer, 'fill': '#ffffff'})
-    out('tabs/service-ribbon.svg', 'Service ribbon (Wildfire Service lower tab)', src + ' → sourceRibbon + engine.js ribbon()',
-        [backing, rib.wrapped(rib['service-ribbon'])],
-        note='The Wildfire Management upper tab reuses this exact shape, turned upside down: rotate(180) about the crest centre.')
-    parks = theme or themes['parks']
+    ink_band, face = tab_bands(crest_oval(art), 90, TAB['halfSpan'])
+    ribbon = ET.Element(q('g'), {'id': 'service-ribbon'})
+    ET.SubElement(ribbon, q('path'), {'id': 'service-ribbon-border', 'd': ink_band, 'fill': '#000000'})
+    ET.SubElement(ribbon, q('path'), {'id': 'service-ribbon-face', 'd': face, 'fill': '#ffffff'})
+    out('tabs/service-ribbon.svg', 'Service ribbon (Wildfire Service lower tab)', src + ' → sourceRibbon, redrawn as a parametric band',
+        [ribbon],
+        note='A band hugging the crest\'s outer oval: half-span %g°, face %g deep, border %g, ends leaning %g°, fitted to the traced source ribbon. '
+             'It can grow around the oval (layout.json tab; site/src/tab.ts). The upper tab is this shape turned upside down: rotate(180) about the crest centre.'
+             % (TAB['halfSpan'], TAB['depth'], TAB['border'], TAB['tilt']))
+    parks, plate = theme or themes['parks'], SHAPES['plate']
     out('tabs/parks-plate.svg', 'Parks plate', 'bc-ministry-primitives-v5/src/engine.js → drawBadge plate',
-        [ET.Element(q('rect'), {'x': '20', 'y': '805', 'width': '637', 'height': '130', 'rx': '3', 'fill': parks['paper'], 'stroke': parks['ink'], 'stroke-width': '16',
-                                        'data-fill-token': 'paper', 'data-stroke-token': 'ink'})])
-    wing_d = 'M 106 350 L -297 350 Q -340 350 -326 383 Q -318 408 -270 410 Q -297 440 -241 448 Q -262 478 -205 482 Q -215 511 -149 516 L 112 516 L 160 438 Z'
+        [ET.Element(q('rect'), {**{k: '%g' % plate[k] for k in ('x', 'y', 'width', 'height', 'rx')}, 'fill': parks['paper'], 'stroke': parks['ink'],
+                                'stroke-width': '%g' % plate['strokeWidth'], 'data-fill-token': 'paper', 'data-stroke-token': 'ink'})])
+    wd = SHAPES['wings']
     wings = ET.Element(q('g'))
     for mirror in (False, True):
         side = ET.SubElement(wings, q('g'), {'transform': 'translate(%g 0) scale(-1 1)' % (2*CX)} if mirror else {})
-        ET.SubElement(side, q('path'), {'d': wing_d, 'fill': '#e4c681', 'stroke': '#172747', 'stroke-width': '12', 'stroke-linejoin': 'round'})
-        for a, b in ((-279, 402), (-249, 440), (-212, 478)):
-            ET.SubElement(side, q('path'), {'d': 'M %d %d H 106' % (a, b), 'fill': 'none', 'stroke': '#172747', 'stroke-width': '5'})
+        ET.SubElement(side, q('path'), {'d': wd['outline'], 'fill': wd['fill'], 'stroke': wd['stroke'], 'stroke-width': '%g' % wd['strokeWidth'], 'stroke-linejoin': 'round'})
+        for a, b in wd['rules']:
+            ET.SubElement(side, q('path'), {'d': 'M %g %g H %g' % (a, b, wd['ruleEnd']), 'fill': 'none', 'stroke': wd['stroke'], 'stroke-width': '%g' % wd['ruleWidth']})
     w.emit(base + 'tabs/airtanker-wings.svg', 'Airtanker wings (v5 engine, mirrored pair)', 'bc-ministry-primitives-v5/src/engine.js → wings()', [wings],
            note='Photo-based approximation; colours are fixed in the engine, not themed.')
-    band = ET.Element(q('path'), {'d': 'M 27 656 Q 338 919 650 656 L 723 736 Q 338 1103 -46 736 Z', 'fill': '#ead49b', 'stroke': '#172747', 'stroke-width': '13'})
+    band = ET.Element(q('path'), {'d': wd['band'], 'fill': wd['bandFill'], 'stroke': wd['stroke'], 'stroke-width': '%g' % wd['bandStrokeWidth']})
     w.emit(base + 'tabs/airtanker-band.svg', 'Airtanker lower service band (v5 engine)', 'bc-ministry-primitives-v5/src/engine.js → wings()', [band],
            note='Photo-based approximation; colours are fixed in the engine, not themed.')
 
@@ -524,21 +633,49 @@ def build_airtanker(w, base, art):
     outer_rx = float(fragment(art['wildlifeFrame'], '')['outer-black-oval'].get('rx'))
     k = (x1 - x0)/2/outer_rx
     m = mul(mul((1, 0, 0, 1, (x0 + x1)/2, (y0 + y1)/2), (k, 0, 0, k, 0, 0)), (1, 0, 0, 1, -CX, -CY))
-    diamonds = [apply(m, p) for p in separator_pair(397.65)]
+    diamonds = [apply(m, p) for p in separator_pair(CRESTS['tree-heavy']['separatorY'])]
+    mirror = s['right-wing'].get('transform')
 
     def out(rel, title, ids, note='', **attrs):
         nodes = [s.wrapped(s[i], **attrs) for i in ids]
         w.emit(base + rel, title, src + ' → #' + ' #'.join(ids), nodes, s.dependencies(nodes), note=note)
 
     out('lower-band.svg', 'Airtanker · lower service band', ['lower-band'])
-    out('wing.svg', 'Airtanker · wing master (left)', ['wing-master'], note='The right wing is this master mirrored: translate(1448 0) scale(-1 1).')
+    out('wing.svg', 'Airtanker · wing master (left)', ['wing-master'], note='The right wing is this master mirrored: %s.' % mirror)
     out('wings-pair.svg', 'Airtanker · mirrored wing pair', ['wings'])
-    out('diamond.svg', 'Airtanker · diamond marker', ['diamond'], fill='#EB001B',
+    out('diamond.svg', 'Airtanker · diamond marker', ['diamond'], fill=package_generator().Palette().red,
         note='Master at the origin; placed on the shared crest band at (%.1f, %.1f) and (%.1f, %.1f).' % (*diamonds[0], *diamonds[1]))
     return {'crestTransform': [round(v, 6) for v in m], 'crestScale': round(k, 6),
             'crestTransformAttr': 'translate(%g %g) scale(%.6f) translate(%g %g)' % ((x0 + x1)/2, (y0 + y1)/2, k, -CX, -CY),
+            'crestCentre': [round(v, 5) for v in apply(m, (CX, CY))],
+            'wingMirror': [round(v, 6) for v in parse_transform(mirror)],
             'diamonds': [[round(x, 3), round(y, 3)] for x, y in diamonds],
             'replaced': 'oval-frame, landscape and its parts (hero conifer, ridges, distant forest, ground, small pine)'}
+
+
+# ------------------------------------------------------------------ lettering --
+def lettering_sources():
+    """The v5 examples' lettering only: each example's live <text> runs, the
+    baselines their text paths follow, and the branch strip's bar, in an <svg>
+    with the example's viewBox. The site takes its lettering from these; the
+    artwork in the examples is the primitives, so it is left out."""
+    out = {}
+    for path in sorted((V5 / 'examples').glob('*.svg')):
+        src = ET.parse(path).getroot()
+        byid = {e.get('id'): e for e in src.iter() if e.get('id')}
+        texts = [e for e in src.iter(q('text'))]
+        bars = [e for e in src.iter() if e.get('data-layer') == 'branch-strip']
+        baselines = []
+        for t in texts:
+            for tp in t.iter(q('textPath')):
+                ref = (tp.get('href') or tp.get('{%s}href' % XL) or '#')[1:]
+                if ref not in byid: raise SystemExit('%s: text path refers to missing #%s' % (path.name, ref))
+                if byid[ref] not in baselines: baselines.append(byid[ref])
+        svg = ET.Element(q('svg'), {'viewBox': src.get('viewBox')})
+        if baselines: ET.SubElement(svg, q('defs')).extend(copy.deepcopy(b) for b in baselines)
+        svg.extend(copy.deepcopy(e) for e in bars + texts)
+        out[path.stem] = ET.tostring(svg, encoding='unicode')
+    return out
 
 
 # --------------------------------------------------------------- contact sheet --
@@ -565,11 +702,7 @@ def main():
     ap.add_argument('--theme', action='append', default=[], help='also write the v5 pieces recoloured with a theme: wildlife, forest, mono, parks, gold or airtanker (repeatable)')
     args = ap.parse_args()
     themes = load_themes()
-    # Package palette (airtanker-operations/generate.py defaults) as a crest theme,
-    # so the shared crest matches the package's own wings, band and diamonds.
-    navy, gold = '#002950', '#FFCA05'
-    themes['airtanker'] = {'ink': gold, 'paper': navy, 'text': gold, 'sky': navy, 'water': navy, 'wildlife': gold, 'distant': gold,
-                           'earth': gold, 'tree': gold, 'word': gold, 'descriptor': gold, 'strip': navy, 'stripText': gold}
+    args.theme = list(dict.fromkeys(args.theme))
     for t in args.theme:
         if t not in themes: ap.error('unknown theme %r; choose from %s' % (t, ', '.join(themes)))
     w = Writer(args.out)
@@ -586,19 +719,44 @@ def main():
     layout = {
         'crestCentre': [CX, CY],
         'frameCheck': {'radiusDeviation': round(check['radius_deviation'], 4), 'treeOffset': [round(v, 5) for v in check['tree_offset']]},
-        'separators': {'circle-caps': {'at': separator_pair(446), 'scale': 1},
-                       'circle-long': {'at': separator_pair(215), 'scale': 9/12.65},
-                       'diamond': {'at': separator_pair(397.65), 'scale': 1}},
+        # Each placed at the crest's separatorY; scale is relative to the master
+        # mark (the circle master is the capitals crest's size).
+        'separators': {key: {'at': separator_pair(c['separatorY']), 'scale': c['separatorSize']/master, 'y': c['separatorY'], 'size': c['separatorSize']}
+                       for key, c, master in [('circle-caps', CRESTS['wildlife-caps'], CRESTS['wildlife-caps']['separatorSize']),
+                                              ('circle-long', CRESTS['wildlife-long'], CRESTS['wildlife-caps']['separatorSize']),
+                                              ('diamond', CRESTS['tree-heavy'], CRESTS['tree-heavy']['separatorSize'])]},
         'upperTabTransform': [round(v, 6) for v in upper],
+        # The parametric tab (see TAB): the site draws grown tabs from this.
+        'tab': {'oval': list(crest_oval(art)), **TAB, 'lower': 90, 'upper': 270},
         'airtanker-operations': airtanker,
     }
     (args.out / 'layout.json').write_text(json.dumps(layout, indent=1) + '\n', encoding='utf-8')
     print('Frames agree within %.3f units; tree artwork re-centred by (%.2f, %.2f).' % (check['radius_deviation'], *check['tree_offset']))
-    for t in args.theme: build_v5(w, 'themes/%s/' % t, themes, t)
     (args.out / 'themes.json').write_text(json.dumps({'sourceTokens': SOURCE_TOKENS, 'themes': themes}, indent=1) + '\n', encoding='utf-8')
-    (args.out / 'manifest.json').write_text(json.dumps(w.manifest, indent=1, ensure_ascii=False) + '\n', encoding='utf-8')
+    (args.out / 'lettering.json').write_text(json.dumps(lettering_sources(), indent=1, ensure_ascii=False) + '\n', encoding='utf-8')
+    write_manifest(args.out, args.out / 'manifest.json', w.manifest)
     contact_sheet(args.out, w.manifest)
     print('%d files written to %s' % (len(w.manifest), args.out))
+    # Recoloured copies get their own manifest, so the site (which reads the main
+    # one) is not affected by them.
+    if args.theme:
+        tw = Writer(args.out)
+        for t in args.theme: build_v5(tw, 'themes/%s/' % t, themes, t)
+        write_manifest(args.out, args.out / 'themes/manifest.json', tw.manifest)
+        print('%d recoloured files written to %s' % (len(tw.manifest), args.out / 'themes'))
+
+
+def write_manifest(root, path, manifest):
+    """Write a manifest (file paths relative to root), first deleting files the
+    previous one listed that this run no longer writes (a renamed piece would
+    otherwise leave its old SVG behind)."""
+    if path.exists():
+        kept = {m['file'] for m in manifest}
+        for m in json.loads(path.read_text(encoding='utf-8')):
+            stale = root / m['file']
+            if m['file'] not in kept and stale.is_file(): stale.unlink()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + '\n', encoding='utf-8')
 
 
 if __name__ == '__main__':

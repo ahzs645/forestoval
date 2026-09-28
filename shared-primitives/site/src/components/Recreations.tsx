@@ -6,7 +6,6 @@ import {
   letteringRuns,
   RECREATIONS,
   referencesFor,
-  referenceSource,
   variantMembers,
   type Built,
   type LetteringFit,
@@ -26,6 +25,9 @@ const MODES: [Mode, string][] = [
 export function Recreations({ view, onOpen }: { view: ViewSettings; onOpen: (file: string) => void }) {
   const [mode, setMode] = useState<Mode>('side');
   const [fitted, setFitted] = useState(true);
+  const [showHidden, setShowHidden] = useState(false);
+  const hiddenCount = RECREATIONS.filter((r) => r.hidden).length;
+  const shown = RECREATIONS.filter((r) => showHidden || !r.hidden);
   return (
     <div className="recreations">
       <div className="rechead">
@@ -33,7 +35,7 @@ export function Recreations({ view, onOpen }: { view: ViewSettings; onOpen: (fil
           <h2>Recreations</h2>
           <p className="muted">
             Each supplied reference next to the same logo rebuilt from the shared primitives. The artwork is our pieces; the lettering is the v5 studio’s live text for the same crest.
-            References are copied from <code>{referenceSource}</code>.
+            The references are the supplied images, kept in <code>shared-primitives/references/</code>.
           </p>
         </div>
         <div className="recswitches">
@@ -48,17 +50,28 @@ export function Recreations({ view, onOpen }: { view: ViewSettings; onOpen: (fil
           </div>
         </div>
       </div>
-      <CrestVariants />
+      {hiddenCount > 0 && (
+        <label className="check small">
+          <input type="checkbox" checked={showHidden} onChange={(e) => setShowHidden(e.target.checked)} />
+          Show hidden logos ({hiddenCount}: the BCTS wordmark beside the crest)
+        </label>
+      )}
+      <CrestVariants showHidden={showHidden} />
       <div className="recgrid">
-        {RECREATIONS.map((r) => <RecreationCard key={r.id} rec={r} mode={mode} fitted={fitted} view={view} onOpen={onOpen} />)}
+        {shown.map((r) => <RecreationCard key={r.id} rec={r} mode={mode} fitted={fitted} view={view} onOpen={onOpen} />)}
       </div>
     </div>
   );
 }
 
 /** The lettering around the oval: one shared fit per crest variant. */
-function CrestVariants() {
+function CrestVariants({ showHidden }: { showHidden: boolean }) {
   const name = (id: string) => RECREATIONS.find((r) => r.id === id)?.name ?? id;
+  // Parsing each variant's lettering is not free; it never changes.
+  const lines = useMemo(() => Object.fromEntries(CREST_VARIANTS.map((v) => {
+    const members = variantMembers(v.id);
+    return [v.id, members.length ? letteringRuns(members[0]).filter((r) => r.shared?.rec === v.id) : []];
+  })), []);
   return (
     <section className="variants">
       <h3>Lettering around the oval</h3>
@@ -72,13 +85,12 @@ function CrestVariants() {
           <tbody>
             {CREST_VARIANTS.map((v) => {
               const fit = fits[v.id], members = variantMembers(v.id);
-              const lines = members.length ? letteringRuns(members[0]).filter((r) => r.shared?.rec === v.id) : [];
               return (
                 <tr key={v.id}>
                   <td>{v.name[0].toUpperCase() + v.name.slice(1)}</td>
-                  <td>{lines.map((r) => <div key={r.key}>{r.text} <span className="muted small">· {r.family.split(',')[0].replace(/"/g, '')} {r.weight}</span></div>)}</td>
+                  <td>{lines[v.id].map((r) => <div key={r.key}>{r.text} <span className="muted small">· {r.family.split(',')[0].replace(/"/g, '')} {r.weight}</span></div>)}</td>
                   <td>
-                    {members.map((m) => {
+                    {members.filter((m) => showHidden || !m.hidden).map((m) => {
                       const s = fit?.members?.[m.id];
                       return <div key={m.id}>{name(m.id)} <span className="muted small">{!s ? 'no registered reference' : s.before || s.after ? `${s.before.toFixed(2)} → ${s.after.toFixed(2)}` : 'crest too small in its reference to judge'}</span></div>;
                     })}
@@ -206,6 +218,8 @@ function Stage({ rec, built, reference, mode, t, setT, surface }: {
 
   const drag = (e: PointerEvent<SVGSVGElement>) => {
     if (mode !== 'wipe' || !(e.buttons & 1) || !svg.current) return;
+    // Keep following the pointer when it leaves the picture mid-drag.
+    if (e.type === 'pointerdown') svg.current.setPointerCapture(e.pointerId);
     const m = svg.current.getScreenCTM();
     if (!m) return;
     const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(m.inverse());
@@ -214,7 +228,7 @@ function Stage({ rec, built, reference, mode, t, setT, surface }: {
 
   return (
     <div className="stage-lg" style={surface}>
-      <svg ref={svg} viewBox={built.vb.join(' ')} style={{ isolation: 'isolate', cursor: mode === 'wipe' ? 'ew-resize' : undefined }} onPointerDown={drag} onPointerMove={drag}>
+      <svg ref={svg} viewBox={built.vb.join(' ')} style={{ isolation: 'isolate', cursor: mode === 'wipe' ? 'ew-resize' : undefined, touchAction: mode === 'wipe' ? 'none' : undefined }} onPointerDown={drag} onPointerMove={drag}>
         <defs>
           <clipPath id={id + '-l'}><rect x={x} y={y} width={split - x} height={h} /></clipPath>
           <clipPath id={id + '-r'}><rect x={split} y={y} width={x + w - split} height={h} /></clipPath>

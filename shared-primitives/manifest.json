@@ -201,9 +201,9 @@
   "file": "bc-ministry-v5/tabs/service-ribbon.svg",
   "family": "bc-ministry-v5",
   "title": "Service ribbon (Wildfire Service lower tab)",
-  "source": "bc-ministry-primitives-v5/data/art.json → sourceRibbon + engine.js ribbon()",
-  "note": "The Wildfire Management upper tab reuses this exact shape, turned upside down: rotate(180) about the crest centre.",
-  "viewBox": "12.13 677.772 652.287 264.078",
+  "source": "bc-ministry-primitives-v5/data/art.json → sourceRibbon, redrawn as a parametric band",
+  "note": "A band hugging the crest's outer oval: half-span 49.7°, face 85.5 deep, border 15, ends leaning 14°, fitted to the traced source ribbon. It can grow around the oval (layout.json tab; site/src/tab.ts). The upper tab is this shape turned upside down: rotate(180) about the crest centre.",
+  "viewBox": "13.8 677.13 649.07 265.1",
   "themable": true
  },
  {

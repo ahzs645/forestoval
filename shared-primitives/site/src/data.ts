@@ -1,5 +1,6 @@
 import manifestJson from '../../manifest.json';
 import themesJson from '../../themes.json';
+import layout from '../../layout.json';
 
 export type VB = [number, number, number, number];
 export type Palette = Record<string, string>;
@@ -24,9 +25,10 @@ export interface Piece extends ManifestEntry {
   parent: string | null;
 }
 
+/** centre: where the shared crest's centre lands in each family's space. */
 export const FAMILIES = {
-  'bc-ministry-v5': { label: 'BC Ministry v5', space: '676-unit crest space', centre: [338.36631, 420.9648] as [number, number] },
-  'airtanker-operations': { label: 'Airtanker package', space: '1448 × 1086 master', centre: [724, 470] as [number, number] },
+  'bc-ministry-v5': { label: 'BC Ministry v5', space: '676-unit crest space', centre: layout.crestCentre as [number, number] },
+  'airtanker-operations': { label: 'Airtanker package', space: '1448 × 1086 master', centre: layout['airtanker-operations'].crestCentre as [number, number] },
 };
 export type FamilyId = keyof typeof FAMILIES;
 
@@ -73,29 +75,28 @@ export const themes: Record<string, Palette> = themesJson.themes;
 export const PRIMITIVE_TOKENS = ['ink', 'paper', 'text', 'sky', 'water', 'wildlife', 'distant', 'earth', 'tree'];
 
 // Full logos to overlay in Compose. Both share the primitives' coordinates.
-const refsRaw = import.meta.glob<string>(
+// Loaded on demand: they are large, and only Compose shows them.
+const refsLazy = import.meta.glob<string>(
   ['../../../bc-ministry-primitives-v5/examples/*.svg', '../../../airtanker-operations/airtanker-operations.svg'],
-  { query: '?raw', import: 'default', eager: true },
+  { query: '?raw', import: 'default' },
 );
 
 export interface Reference {
   key: string;
   label: string;
   family: FamilyId;
-  svg: string;
-  vb: VB;
+  load: () => Promise<{ svg: string; vb: VB }>;
 }
 
-export const references: Reference[] = Object.entries(refsRaw)
-  .map(([path, svg]) => {
+export const references: Reference[] = Object.entries(refsLazy)
+  .map(([path, load]) => {
     const name = path.split('/').pop()!.replace(/\.svg$/, '');
     const family: FamilyId = path.includes('bc-ministry-primitives-v5') ? 'bc-ministry-v5' : 'airtanker-operations';
     return {
       key: `${family}:${name}`,
       label: family === 'bc-ministry-v5' ? `v5 example · ${name}` : 'Airtanker package · finished SVG',
       family,
-      svg,
-      vb: parseVB(/viewBox="([^"]+)"/.exec(svg)![1]),
+      load: () => load().then((svg) => ({ svg, vb: parseVB(/viewBox="([^"]+)"/.exec(svg)![1]) })),
     };
   })
   .sort((a, b) => a.label.localeCompare(b.label));

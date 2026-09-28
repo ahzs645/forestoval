@@ -1,7 +1,10 @@
-import { useMemo, useState } from 'react';
-import { FAMILIES, references, type FamilyId } from '../data';
+import { useEffect, useMemo, useState } from 'react';
+import { FAMILIES, references, type FamilyId, type VB } from '../data';
 import { LAYERS, PRESETS, resolve, type Preset } from '../layers';
-import { composite, dataUrl, download, downloadPng } from '../svg';
+import { dataUrl, download, downloadPng, finish, stack } from '../svg';
+import { MAX_HALF_SPAN, TAB, tabPiece, type TabSide } from '../tab';
+
+const TAB_LAYERS: Record<string, TabSide> = { 'ribbon-lower': 'lower', 'ribbon-upper': 'upper' };
 import type { ViewSettings } from '../App';
 
 export function Compose({ view, onOpen }: { view: ViewSettings; onOpen: (file: string) => void }) {
@@ -16,18 +19,40 @@ export function Compose({ view, onOpen }: { view: ViewSettings; onOpen: (file: s
   const [zoom, setZoom] = useState(1);
 
   const reference = references.find((r) => r.key === refKey && r.family === family) ?? null;
-  const chosen = useMemo(() => resolve(family, layers), [family, layers]);
+  // Tabs can grow around the oval: a span other than the default draws the band
+  // from tab.ts (already in place, so the upper tab's turn is not applied again).
+  const [spans, setSpans] = useState<Record<TabSide, number>>({ lower: TAB.halfSpan, upper: TAB.halfSpan });
+  const chosen = useMemo(
+    () =>
+      resolve(family, layers).map((c) => {
+        const side = TAB_LAYERS[c.layer.key];
+        return side && spans[side] !== TAB.halfSpan ? { layer: { ...c.layer, instances: undefined }, piece: tabPiece(side, spans[side]) } : c;
+      }),
+    [family, layers, spans],
+  );
+  const tabsShown = (Object.keys(TAB_LAYERS) as string[]).filter((k) => family === 'bc-ministry-v5' && layers.has(k));
 
-  const clean = useMemo(() => composite(chosen, { palette: view.palette }), [chosen, view.palette]);
+  // The finished logo to overlay, fetched when first picked.
+  const [loaded, setLoaded] = useState<{ key: string; href: string; vb: VB } | null>(null);
+  useEffect(() => {
+    if (!reference || loaded?.key === reference.key) return;
+    let live = true;
+    reference.load().then(({ svg, vb }) => { if (live) setLoaded({ key: reference.key, href: dataUrl(svg), vb }); }, () => {});
+    return () => { live = false; };
+  }, [reference, loaded]);
+  const overlay = reference && loaded?.key === reference.key ? loaded : null;
+
+  // Stacking the pieces is the costly part; the overlay and guides are added on top.
+  const stacked = useMemo(() => stack(chosen, { palette: view.palette }), [chosen, view.palette]);
+  const clean = useMemo(() => finish(stacked), [stacked]);
   const shown = useMemo(
     () =>
-      composite(chosen, {
-        palette: view.palette,
-        overlay: reference ? { svg: reference.svg, vb: reference.vb, opacity, blend } : null,
+      finish(stacked, {
+        overlay: overlay ? { href: overlay.href, vb: overlay.vb, opacity, blend } : null,
         centre: showCentre ? FAMILIES[family].centre : null,
         bounds: showBounds,
       }),
-    [chosen, view.palette, reference, opacity, blend, showCentre, showBounds, family],
+    [stacked, overlay, opacity, blend, showCentre, showBounds, family],
   );
 
   const applyPreset = (p: Preset) => {
@@ -84,6 +109,24 @@ export function Compose({ view, onOpen }: { view: ViewSettings; onOpen: (file: s
           ))}
         </ul>
 
+        {tabsShown.length > 0 && (
+          <>
+            <h4>Tabs</h4>
+            {tabsShown.map((k) => {
+              const side = TAB_LAYERS[k];
+              return (
+                <label key={k} className="range">
+                  {side === 'lower' ? 'Lower' : 'Upper'} tab span ±{spans[side].toFixed(1)}°{spans[side] === TAB.halfSpan ? ' (default)' : ''}
+                  <input type="range" min={30} max={MAX_HALF_SPAN} step={0.1} value={spans[side]} onChange={(e) => setSpans({ ...spans, [side]: +e.target.value })} />
+                </label>
+              );
+            })}
+            {(spans.lower !== TAB.halfSpan || spans.upper !== TAB.halfSpan) && (
+              <button className="small" onClick={() => setSpans({ lower: TAB.halfSpan, upper: TAB.halfSpan })}>Reset tabs</button>
+            )}
+          </>
+        )}
+
         <h4>Compare with a finished logo</h4>
         <select value={reference?.key ?? ''} onChange={(e) => setRefKey(e.target.value)}>
           <option value="">No overlay</option>
@@ -119,7 +162,7 @@ export function Compose({ view, onOpen }: { view: ViewSettings; onOpen: (file: s
           </span>
         </div>
         <div className="canvas" style={view.surface}>
-          {chosen.length || reference ? (
+          {chosen.length || overlay ? (
             <img src={dataUrl(shown.svg)} alt="Composite" style={zoom === 1 ? undefined : { height: `${zoom * 100}%`, maxHeight: 'none', maxWidth: 'none' }} />
           ) : (
             <p className="empty">Pick a preset or tick some layers.</p>

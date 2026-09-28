@@ -51,6 +51,19 @@ const CRESTS={
  'tree-heavy':{scene:'tree',upper:'tree-upper',lower:'tree-lower',separator:'diamond',separatorY:397.65,separatorSize:16.76},
  'tree-thin':{scene:'tree',upper:'thin-upper',lower:'thin-lower',separator:'none',separatorY:397.65,separatorSize:0}
 };
+// Shapes the engine draws itself, not taken from the artwork. The generator in
+// ../shared-primitives reads these tables too, so both draw the same pieces.
+// Separators sit on the ellipse separatorBand (about the crest centre) at their
+// crest's separatorY.
+const SHAPES={
+ centre:[338.36631,420.96480],
+ separatorBand:{rx:266,ry:369},
+ plate:{x:20,y:805,width:637,height:130,rx:3,strokeWidth:16},
+ wings:{outline:'M 106 350 L -297 350 Q -340 350 -326 383 Q -318 408 -270 410 Q -297 440 -241 448 Q -262 478 -205 482 Q -215 511 -149 516 L 112 516 L 160 438 Z',rules:[[-279,402],[-249,440],[-212,478]],ruleEnd:106,fill:'#e4c681',stroke:'#172747',strokeWidth:12,ruleWidth:5,
+  band:'M 27 656 Q 338 919 650 656 L 723 736 Q 338 1103 -46 736 Z',bandFill:'#ead49b',bandStrokeWidth:13,textFill:'#8e3d2b'}
+};
+// Recolouring: each source artwork colour and the theme token that replaces it.
+const RECOLOUR={'#000000':'ink','#ffffff':'paper','#fff':'paper','#231f20':'ink','#1f1a17':'ink','#15864a':'tree','#185192':'wildlife','#478cca':'water','#604b3d':'earth','#70c6ea':'sky','#93d0aa':'distant','#008450':'tree','#0091c4':'water','#4b3216':'earth','#6dc9ef':'sky'};
 const TABS={
  none:{shape:'none'},
  'wildfire-bottom':{shape:'ribbon',side:'bottom',slot:'service-bottom',width:1,height:1,y:0},
@@ -98,5 +111,5 @@ function recipe(id,seen=new Set()){
  const p=r.extends?recipe(r.extends,seen):{content:{},confidence:'Generated interpretation'};
  return {...p,...r,content:{...p.content,...r.content}};
 }
-global.BCPrimitives=deepFreeze({version:5,FACES,ROLES,SLOTS,CRESTS,TABS,THEMES,LOCKUPS,RECIPES,recipe});
+global.BCPrimitives=deepFreeze({version:5,FACES,ROLES,SLOTS,CRESTS,SHAPES,RECOLOUR,TABS,THEMES,LOCKUPS,RECIPES,recipe});
 })(window);

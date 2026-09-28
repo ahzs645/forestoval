@@ -3,7 +3,7 @@ import { REASSEMBLY, resolve } from './layers';
 import { composite, hasParseError, parse, rasterize, themedSvg } from './svg';
 
 export type Status = 'pass' | 'warn' | 'fail' | 'info';
-export interface Check {
+interface Check {
   status: Status;
   detail: string;
 }
@@ -118,7 +118,8 @@ export interface ReassemblyResult {
 
 export async function reassembly(test: (typeof REASSEMBLY)[number]): Promise<ReassemblyResult> {
   const target = byFile.get(test.target)!;
-  const rebuilt = composite(resolve(test.family, test.parts), { viewBox: target.vb }).svg;
+  const parts = test.drawn ? [{ layer: { key: 'drawn', label: test.name, file: test.target }, piece: test.drawn() }] : resolve(test.family, test.parts);
+  const rebuilt = composite(parts, { viewBox: target.vb }).svg;
   const W = 360, H = Math.round((W * target.vb[3]) / target.vb[2]);
   const [a, b] = await Promise.all([rasterize(target.svg, W, H), rasterize(rebuilt, W, H)]);
   const da = a.getContext('2d')!.getImageData(0, 0, W, H).data;

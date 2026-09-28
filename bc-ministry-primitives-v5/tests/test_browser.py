@@ -1,12 +1,23 @@
 #!/usr/bin/env python3
-"""Real-browser regressions for the standalone studio. No server is required."""
+"""Real-browser regressions for the standalone studio. No server is required.
+
+By default the page, screenshots, PNG export and results go to tests/output/
+(not tracked). --update also refreshes the committed copies in review/ and
+tests/results.json. The default faces must be installed locally, or pass
+--network-fonts to load them from Google Fonts."""
 from pathlib import Path
-import os,json,base64,sys,hashlib
+import argparse,os,json,base64,sys,hashlib,shutil
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 from build import build
-build()
+ap=argparse.ArgumentParser(description=__doc__.split('\n')[0])
+ap.add_argument('--update',action='store_true',help='also overwrite review/*.png and tests/results.json')
+ap.add_argument('--network-fonts',action='store_true',help='load the default faces from Google Fonts when they are not installed')
+ARGS=ap.parse_args()
+OUT=ROOT/'tests/output'
+OUT.mkdir(parents=True,exist_ok=True)
+PAGE=build(OUT/'studio.html')
 RESULTS=[]
 def record(name,passed,details=None):
     RESULTS.append({'name':name,'passed':bool(passed),'details':details})
@@ -16,9 +27,9 @@ with sync_playwright() as pw:
     browser=pw.chromium.launch(**({'executable_path':exe} if exe else {}),args=['--no-sandbox'])
     page=browser.new_page(viewport={'width':1450,'height':1120},device_scale_factor=1)
     errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-    page.set_content((ROOT/'bc-ministry-primitives-v5.html').read_text())
+    page.set_content(PAGE.read_text(encoding='utf-8'))
     page.wait_for_function('window.BCStudio && BCStudio.current!==null')
-    page.evaluate('BCLogo.ensureFonts(Object.keys(BCPrimitives.ROLES).map(k=>BCPrimitives.ROLES[k].face))')
+    page.evaluate('n=>BCLogo.ensureFonts(Object.keys(BCPrimitives.ROLES).map(k=>BCPrimitives.ROLES[k].face),n)',ARGS.network_fonts)
     font_status=page.evaluate('[...BCLogo.fontState].map(([id,v])=>({id,status:v.status,source:v.source}))')
     record('All default role faces load at their requested weight',all(f['status']=='ready' for f in font_status),font_status)
     data=page.evaluate('''()=>{
@@ -38,9 +49,9 @@ with sync_playwright() as pw:
     record('Crest-role changes do not alter the independent service role',all(role.values()),role)
     geom=page.evaluate('''()=>{function shape(theme){const s=BCLogo.recipeState('forests');s.theme=theme;const v=BCLogo.makeLogo(s).svg;return [...v.querySelectorAll('defs [data-primitive="scene-wildlife"] *')].map(e=>[e.tagName,...['d','points','x','y','width','height','rx','ry','transform'].map(k=>e.getAttribute(k))]);}return JSON.stringify(shape('wildlife'))===JSON.stringify(shape('mono'));}''')
     record('Recolouring leaves the source scene geometry identical',geom)
-    originals=json.loads((ROOT/'data/art.json').read_text())
+    originals=json.loads((ROOT/'data/art.json').read_text(encoding='utf-8'))
     hashes={k:hashlib.sha256(v.encode()).hexdigest() for k,v in originals.items()}
-    expected=json.loads((ROOT/'data/art-sha256.json').read_text())
+    expected=json.loads((ROOT/'data/art-sha256.json').read_text(encoding='utf-8'))
     record('Original artwork strings match the imported master hashes',hashes==expected)
     stress=page.evaluate('''()=>{let rows=[];const names=['A','FORESTS','ENVIRONMENT AND CLIMATE CHANGE','Forests, Lands and Natural Resource Operations','W'.repeat(160),'A'.repeat(320),'ÉCOLOGIE & PÊCHES','A < B & "C"',''];for(const recipe of ['forests','long-ministry','forest-service'])for(const lower of names){const s=BCLogo.recipeState(recipe);s.content.lower=lower;const r=BCLogo.makeLogo(s);document.body.append(r.svg);const t=r.svg.querySelector('text[data-live-text="lower"]'),run=r.report.find(x=>x.slot?.endsWith('lower'));rows.push({recipe,n:lower.length,preserved:lower?(t?.textContent===lower):!t,fit:!t||t.getComputedTextLength()<=run.available+.5,smallWarning:lower.length<160||r.warnings.some(w=>w.code==='SMALL_TEXT')});r.svg.remove();}return rows;}''')
     record('27 short, long, empty, accented and escaped-name cases preserve text and fit',all(all(r[k] for k in ['preserved','fit','smallWarning'])for r in stress),stress)
@@ -68,7 +79,7 @@ with sync_playwright() as pw:
     page.evaluate("BCStudio.startRecipe('bcts-tree')")
     page.wait_for_function("BCStudio.current.state.recipe==='bcts-tree'")
     png=page.evaluate('''async()=>{const b=await BCLogo.png(BCStudio.current,1000);return await new Promise(ok=>{const rd=new FileReader();rd.onload=()=>ok(rd.result);rd.readAsDataURL(b);});}''')
-    png_bytes=base64.b64decode(png.split(',')[1]);(ROOT/'review/png-export.png').write_bytes(png_bytes)
+    png_bytes=base64.b64decode(png.split(',')[1]);(OUT/'png-export.png').write_bytes(png_bytes)
     record('PNG export returns a real PNG image',png_bytes[:8]==b'\x89PNG\r\n\x1a\n' and len(png_bytes)>1000,{'bytes':len(png_bytes)})
     svg=page.evaluate('BCLogo.serialise(BCStudio.current)')
     record('Export has coherent live text and contains no font payload',all(x not in svg for x in ['data:font','data:application/font','spacingAndGlyphs','data-character-index']) and '<textPath' in svg)
@@ -83,13 +94,17 @@ with sync_playwright() as pw:
     page.locator('[data-mode="design"]').click()
     page.evaluate("BCStudio.startRecipe('long-wildfire')")
     page.wait_for_function("BCStudio.current.state.recipe==='long-wildfire'")
-    page.screenshot(path=str(ROOT/'review/studio-desktop.png'),full_page=True)
-    page.set_viewport_size({'width':390,'height':844});page.screenshot(path=str(ROOT/'review/studio-mobile.png'),full_page=True)
+    page.screenshot(path=str(OUT/'studio-desktop.png'),full_page=True)
+    page.set_viewport_size({'width':390,'height':844});page.screenshot(path=str(OUT/'studio-mobile.png'),full_page=True)
     record('390 px mobile viewport has no horizontal document overflow',page.evaluate('document.documentElement.scrollWidth<=window.innerWidth'))
     record('Excluded Fire Control is not in the selectable family',page.locator('#recipe option[value="fire-control"]').count()==0 and page.locator('#gallery [data-recipe="fire-control"]').count()==0)
     record('No uncaught browser errors',not errors,errors)
     browser.close()
-summary={'tests':len(RESULTS),'passed':sum(x['passed']for x in RESULTS),'failed':sum(not x['passed']for x in RESULTS),'environment':'Chromium via Playwright; installed local fonts; external font downloads were not verified in this environment','results':RESULTS}
-(ROOT/'tests/results.json').write_text(json.dumps(summary,indent=2))
+summary={'tests':len(RESULTS),'passed':sum(x['passed']for x in RESULTS),'failed':sum(not x['passed']for x in RESULTS),'environment':'Chromium via Playwright; default faces from '+(', '.join(sorted({f['source'] for f in font_status})) or 'nowhere')+(' (network fonts allowed)' if ARGS.network_fonts else ' (local fonts only)'),'results':RESULTS}
+(OUT/'results.json').write_text(json.dumps(summary,indent=2),encoding='utf-8')
+if ARGS.update:
+    for name in ['png-export.png','studio-desktop.png','studio-mobile.png']:shutil.copyfile(OUT/name,ROOT/'review'/name)
+    shutil.copyfile(OUT/'results.json',ROOT/'tests/results.json')
+    print('Updated review/ and tests/results.json')
 print(json.dumps({k:v for k,v in summary.items() if k!='results'},indent=2))
 sys.exit(1 if summary['failed'] else 0)

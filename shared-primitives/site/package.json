@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && npm run build:studio",
+    "build:studio": "python3 ../../bc-ministry-primitives-v5/build.py --out dist/studio/index.html",
     "preview": "vite preview",
     "regen": "cd .. && python3 extract_primitives.py"
   },

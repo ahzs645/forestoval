@@ -5,7 +5,7 @@ const XLINK_NS = 'http://www.w3.org/1999/xlink';
 
 // ---------------------------------------------------------------- matrices --
 export type M = [number, number, number, number, number, number];
-export const I: M = [1, 0, 0, 1, 0, 0];
+const I: M = [1, 0, 0, 1, 0, 0];
 export const mul = (a: M, b: M): M => [
   a[0] * b[0] + a[2] * b[1],
   a[1] * b[0] + a[3] * b[1],
@@ -16,14 +16,10 @@ export const mul = (a: M, b: M): M => [
 ];
 export const T = (x: number, y: number): M => [1, 0, 0, 1, x, y];
 export const S = (x: number, y = x): M => [x, 0, 0, y, 0, 0];
-export const R = (deg: number, cx = 0, cy = 0): M => {
-  const a = (deg * Math.PI) / 180;
-  return mul(mul(T(cx, cy), [Math.cos(a), Math.sin(a), -Math.sin(a), Math.cos(a), 0, 0]), T(-cx, -cy));
-};
 export const apply = (m: M, [x, y]: [number, number]): [number, number] => [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]];
 const matrixAttr = (m: M) => `matrix(${m.map((v) => +v.toFixed(6)).join(' ')})`;
 
-export const corners = ([x, y, w, h]: VB): [number, number][] => [
+const corners = ([x, y, w, h]: VB): [number, number][] => [
   [x, y],
   [x + w, y],
   [x + w, y + h],
@@ -104,21 +100,38 @@ export function prefixIds(doc: Document, prefix: string) {
   }
 }
 
-export interface CompositeOptions {
+export interface StackOptions {
   palette?: Palette | null;
   /** Prefix for every id, so several composites can share one HTML page. */
   idPrefix?: string;
-  viewBox?: VB;
-  overlay?: { svg: string; vb: VB; opacity: number; blend: 'normal' | 'difference' } | null;
-  centre?: [number, number] | null;
-  bounds?: boolean;
   /** Repaint a piece's colours outright (used to paint masks for analysis):
    *  given the piece file and a paint value, return the replacement or undefined. */
   repaint?: (file: string, paint: string) => string | undefined;
 }
 
+export interface FinishOptions {
+  viewBox?: VB;
+  /** href: the overlay image (a URL or data URL); vb: where it goes. */
+  overlay?: { href: string; vb: VB; opacity: number; blend: 'normal' | 'difference' } | null;
+  centre?: [number, number] | null;
+  bounds?: boolean;
+}
+
+export type CompositeOptions = StackOptions & FinishOptions;
+
+export interface Stacked {
+  defs: string;
+  body: string;
+  boxes: VB[];
+  outlines: string[];
+}
+
 /** Stack pieces in their shared coordinate space as one standalone SVG. */
-export function composite(layers: { layer: Layer; piece: Piece }[], opts: CompositeOptions = {}) {
+export const composite = (layers: { layer: Layer; piece: Piece }[], opts: CompositeOptions = {}) => finish(stack(layers, opts), opts);
+
+/** The pieces' shared defs and body, one copy per placed instance. The costly
+ *  part of a composite; keep it when only the overlay or guides change. */
+export function stack(layers: { layer: Layer; piece: Piece }[], opts: StackOptions = {}): Stacked {
   let defs = '', body = '';
   const boxes: VB[] = [], outlines: string[] = [];
   layers.forEach(({ layer, piece }, i) => {
@@ -145,12 +158,18 @@ export function composite(layers: { layer: Layer; piece: Piece }[], opts: Compos
       outlines.push(corners(piece.vb).map((p) => apply(m, p).map((v) => v.toFixed(2)).join(',')).join(' '));
     }
   });
+  return { defs, body, boxes, outlines };
+}
+
+/** A stack as a standalone SVG, with an optional overlay image and guides. */
+export function finish({ defs, body, boxes: stackBoxes, outlines }: Stacked, opts: FinishOptions = {}) {
+  const boxes = [...stackBoxes];
   if (opts.overlay) boxes.push(opts.overlay.vb);
   const vb = opts.viewBox ?? (boxes.length ? pad(unionBox(boxes), 16) : ([0, 0, 100, 100] as VB));
   let extra = '';
   if (opts.overlay) {
     const [x, y, w, h] = opts.overlay.vb;
-    extra += `<image href="${dataUrl(opts.overlay.svg)}" x="${x}" y="${y}" width="${w}" height="${h}" preserveAspectRatio="none" opacity="${opts.overlay.opacity}" style="mix-blend-mode:${opts.overlay.blend}"/>`;
+    extra += `<image href="${opts.overlay.href}" x="${x}" y="${y}" width="${w}" height="${h}" preserveAspectRatio="none" opacity="${opts.overlay.opacity}" style="mix-blend-mode:${opts.overlay.blend}"/>`;
   }
   const guide = 'fill="none" vector-effect="non-scaling-stroke"';
   if (opts.bounds) for (const pts of outlines) extra += `<polygon points="${pts}" ${guide} stroke="#0a84ff" stroke-width="1" stroke-dasharray="5 4"/>`;
@@ -195,12 +214,18 @@ export function download(name: string, data: Blob | string) {
   const url = URL.createObjectURL(blob);
   const a = Object.assign(document.createElement('a'), { href: url, download: name });
   a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  // Long enough for a slow save dialog (Safari reads the URL late).
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 export async function downloadPng(name: string, svg: string, vb: VB, width: number) {
-  const height = Math.max(1, Math.round((width * vb[3]) / vb[2]));
-  const canvas = await rasterize(svg, width, height);
-  const blob = await new Promise<Blob>((ok, bad) => canvas.toBlob((b) => (b ? ok(b) : bad(new Error('PNG export failed'))), 'image/png'));
-  download(name, blob);
+  try {
+    const height = Math.max(1, Math.round((width * vb[3]) / vb[2]));
+    const canvas = await rasterize(svg, width, height);
+    const blob = await new Promise<Blob>((ok, bad) => canvas.toBlob((b) => (b ? ok(b) : bad(new Error('the canvas could not be encoded'))), 'image/png'));
+    download(name, blob);
+  } catch (e) {
+    // Very large widths can exceed the browser's canvas limit.
+    window.alert(`PNG export failed: ${e instanceof Error ? e.message : String(e)}`);
+  }
 }

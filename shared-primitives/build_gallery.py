@@ -12,15 +12,19 @@ reference image is drawn into. Three sources, in order of preference:
 
 Run extract_primitives.py first (this reads its manifest.json and layout.json).
 Needs Pillow for the bbox fits.
+
+The source can be the original folder of supplied images or references/ itself
+(files are matched by content, not name). The new folder is built beside the
+old one and only swapped in once everything has been read and registered, so a
+failed run leaves references/ and gallery.json as they were.
 """
-import argparse, hashlib, json, re, shutil
+import argparse, hashlib, json, re, shutil, tempfile
 from pathlib import Path
 
 from PIL import Image
 
 HERE = Path(__file__).resolve().parent
 V5 = HERE.parent / 'bc-ministry-primitives-v5'
-DEFAULT_SOURCE = Path('/Users/ahmadjalil/Desktop/bcts/New Folder With Items 2')
 
 # SHA-256 prefix -> (recreation id, role, registration, note)
 # Registration: ('v5', references.json key) | ('bbox', target outline) | None
@@ -33,7 +37,7 @@ FILES = {
     '16125633930e359c': ('forests-wildfire', 'alternate', ('bbox', 'frame+ribbon'), 'Smaller copy.'),
     '80737ce18c38be7f': ('forest-service-mono', 'primary', ('bbox', 'frame'), 'Very small raster (69 × 88 px).'),
     '0bd6a56dfbd26e00': ('wildfire-management', 'primary', ('v5', 'wildfire-management'), 'Photograph of an embroidered patch.'),
-    '228ad8ccd01e9718': ('wildfire-management', 'alternate', None, 'Greyscale photograph of the same patch.'),
+    '228ad8ccd01e9718': ('wildfire-management', 'alternate', ('bbox', 'frame+upper-tab'), 'Greyscale photograph of the same patch.'),
     'd2899a886954c77e': ('fire-control', 'primary', ('v5', 'fire-control'), 'Photograph; the v5 studio excluded it from calibration as distorted.'),
     'bc36bf4f8a6ac2dd': ('parks', 'primary', ('v5', 'parks'), 'Photograph of an embroidered patch.'),
     '5de4b946c57a24a9': ('airtanker', 'primary', ('v5', 'airtanker'), 'Photograph of a decal.'),
@@ -44,6 +48,7 @@ FILES = {
     '8c9db6a9a369ad0d': ('bcts-tree', 'alternate', None, 'Illustrator export of the same lockup.'),
     '4c13727f165fb7c4': ('bcts-district', 'primary', ('v5', 'bcts-district'), ''),
     '454ab05bff1d00f9': ('bcts-stacked-words', 'primary', ('v5', 'bcts-stack'), ''),
+    # No recreation (it has no crest); kept because the v5 studio uses the image.
     '2666a7698cef9172': ('bcts-wordmark', 'primary', ('v5', 'bcts-only'), ''),
     '7c9068f058238cc8': ('branch-strip', 'primary', ('v5', 'branch-strip'), 'Supplied vector.'),
 }
@@ -62,8 +67,16 @@ def visible_box(path):
         mask = im.getchannel('A').point(lambda a: 255 if a > 24 else 0)
     else:
         grey = im.convert('L')
-        mask = grey.point(lambda v: 255 if v < 232 else 0)
-    return im.size, mask.getbbox()
+        w, h = grey.size
+        edge = sorted(grey.getpixel(p) for p in [(0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1), (w // 2, 0), (w // 2, h - 1), (0, h // 2), (w - 1, h // 2)])
+        bg = (edge[3] + edge[4]) / 2
+        if bg < 200:  # a flat non-white backdrop (e.g. a photographed patch on grey): anything well off it
+            mask = grey.point(lambda v: 255 if abs(v - bg) > 35 else 0)
+        else:
+            mask = grey.point(lambda v: 255 if v < 232 else 0)
+    box = mask.getbbox()
+    if not box: raise SystemExit('%s: no visible outline to fit (blank image?)' % path.name)
+    return im.size, box
 
 
 def fit(size, box, target):
@@ -79,14 +92,16 @@ def fit(size, box, target):
 def svg_size(path):
     head = re.search(r'<svg[^>]*>', path.read_text(encoding='utf-8', errors='replace')).group(0)
     vb = re.search(r'viewBox="([^"]+)"', head).group(1).split()
-    w, h = re.search(r'\swidth="([\d.]+)"', head), re.search(r'\sheight="([\d.]+)"', head)
+    # Plain or px sizes only; other units (pt, mm, %) fall back to the viewBox.
+    w, h = re.search(r'\swidth="([\d.]+)(?:px)?"', head), re.search(r'\sheight="([\d.]+)(?:px)?"', head)
     return (float(w.group(1)) if w else float(vb[2]), float(h.group(1)) if h else float(vb[3]))
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
-    ap.add_argument('source', nargs='?', type=Path, default=DEFAULT_SOURCE)
+    ap.add_argument('source', type=Path, help='folder of supplied reference images (or references/ to re-register the current copies)')
     args = ap.parse_args()
+    if not args.source.is_dir(): ap.error('%s is not a folder' % args.source)
 
     manifest = json.loads((HERE / 'manifest.json').read_text(encoding='utf-8'))
     layout = json.loads((HERE / 'layout.json').read_text(encoding='utf-8'))
@@ -96,25 +111,64 @@ def main():
 
     frame = content_box(manifest, 'bc-ministry-v5/crest/frame.svg')
     ribbon = content_box(manifest, 'bc-ministry-v5/tabs/service-ribbon.svg')
-    targets = {'frame': frame, 'frame+ribbon': (min(frame[0], ribbon[0]), frame[1], max(frame[2], ribbon[2]), max(frame[3], ribbon[3]))}
+    # The upper tab is the ribbon turned upside down about the crest centre.
+    a, b, c, d, e, f = layout['upperTabTransform']
+    corners = [(a*x + c*y + e, b*x + d*y + f) for x in (ribbon[0], ribbon[2]) for y in (ribbon[1], ribbon[3])]
+    upper = (min(p[0] for p in corners), min(p[1] for p in corners), max(p[0] for p in corners), max(p[1] for p in corners))
+    union = lambda *bs: (min(b[0] for b in bs), min(b[1] for b in bs), max(b[2] for b in bs), max(b[3] for b in bs))
+    targets = {'frame': frame, 'frame+ribbon': union(frame, ribbon), 'frame+upper-tab': union(frame, upper)}
     to_air = layout['airtanker-operations']['crestTransform']
 
     out_dir = HERE / 'references'
-    if out_dir.exists(): shutil.rmtree(out_dir)
-    out_dir.mkdir()
-    entries, unmatched, counts = [], [], {}
-    for path in sorted(args.source.iterdir()):
+    # Rerunning on references/ itself keeps the supplied file names on record.
+    previous = HERE / 'gallery.json'
+    originals = {e['sha256']: e['original'] for e in json.loads(previous.read_text(encoding='utf-8'))['references']} if previous.exists() else {}
+    stage = Path(tempfile.mkdtemp(prefix='references-', dir=HERE))
+    try:
+        entries, unmatched = register(args.source, stage, originals, v5refs, known, targets, to_air)
+    except BaseException:
+        shutil.rmtree(stage)
+        raise
+    old = out_dir.with_name('references-old')
+    if old.exists(): shutil.rmtree(old)
+    if out_dir.exists(): out_dir.rename(old)
+    stage.rename(out_dir)
+    if old.exists(): shutil.rmtree(old)
+
+    gallery = {'references': entries, 'unmatched': unmatched}
+    (HERE / 'gallery.json').write_text(json.dumps(gallery, indent=1, ensure_ascii=False) + '\n', encoding='utf-8')
+    for e in entries:
+        print('%-22s %-9s %-34s %s' % (e['id'], e['role'], e['original'][:34], e['method']))
+    if unmatched: print('Not in the table (skipped):', ', '.join(unmatched))
+    print('%d references copied to %s' % (len(entries), out_dir))
+    # The v5 studio reads most of its reference images from references/ too.
+    missing = [k for k, r in v5refs.items() if not (V5 / r['file']).is_file()]
+    if missing: raise SystemExit('The v5 studio\'s data/references.json now points at missing files for: ' + ', '.join(missing))
+
+
+def register(source, out_dir, originals, v5refs, known, targets, to_air):
+    """Copy each recognised image into out_dir and register it. Entries follow
+    the FILES table's order, so the result does not depend on file names."""
+    order = list(FILES)
+    found, unmatched = [], []
+    for path in sorted(source.iterdir()):
         if not path.is_file() or path.name.startswith('.'): continue
         sha = hashlib.sha256(path.read_bytes()).hexdigest()
-        spec = FILES.get(sha[:16])
-        if not spec:
-            unmatched.append(path.name); continue
-        rid, role, how, note = spec
+        if sha[:16] in FILES: found.append((order.index(sha[:16]), path, sha))
+        else: unmatched.append(path.name)
+    found.sort(key=lambda f: f[0])
+    seen = {}
+    for _, path, sha in found:
+        if sha in seen: raise SystemExit('%s and %s are the same image' % (seen[sha], path.name))
+        seen[sha] = path.name
+    entries, counts = [], {}
+    for _, path, sha in found:
+        rid, role, how, note = FILES[sha[:16]]
         n = counts[(rid, role)] = counts.get((rid, role), 0) + 1
         name = rid + ('' if role == 'primary' else '-%s%d' % ('alt' if role == 'alternate' else 'context', n)) + path.suffix.lower()
         shutil.copyfile(path, out_dir / name)
         size = svg_size(path) if path.suffix.lower() == '.svg' else Image.open(path).size
-        entry = {'id': rid, 'role': role, 'file': 'references/' + name, 'original': path.name, 'sha256': sha,
+        entry = {'id': rid, 'role': role, 'file': 'references/' + name, 'original': originals.get(sha, path.name), 'sha256': sha,
                  'width': size[0], 'height': size[1], 'registration': None, 'method': 'none', 'note': note}
         if how and how[0] == 'v5':
             ref = v5refs[how[1]]
@@ -134,13 +188,7 @@ def main():
         if entry['registration']:
             entry['registration'] = {k: round(v, 4) for k, v in entry['registration'].items()}
         entries.append(entry)
-
-    gallery = {'source': str(args.source), 'references': entries, 'unmatched': unmatched}
-    (HERE / 'gallery.json').write_text(json.dumps(gallery, indent=1, ensure_ascii=False) + '\n', encoding='utf-8')
-    for e in entries:
-        print('%-22s %-9s %-34s %s' % (e['id'], e['role'], e['original'][:34], e['method']))
-    if unmatched: print('Not in the table (skipped):', ', '.join(unmatched))
-    print('%d references copied to %s' % (len(entries), out_dir))
+    return entries, unmatched
 
 
 if __name__ == '__main__':
