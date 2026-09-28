@@ -121,8 +121,8 @@ The v5 studio uses these files too (its `data/references.json` points at them),
 so keep the file names: the script checks that every studio reference still exists.
 
 - **v5 studio rectangles** (12 images): the image's SHA-256 matches `data/reference-provenance.json`, or it's one of the two supplied SVGs with an exact size match. The Airtanker rectangle is moved into the package layout using the shared-crest transform.
-- **Outline fit** (5 images): the transparent or white-background crests. Their visible outline is scaled by height to fit the crest's outline. All five match the crest's proportions to within 7% (width ratio 0.99–1.07).
-- **No overlay** (4 images): other photos, screenshots and exports of the same logos, and a banner showing BCTS in use. These show side by side only.
+- **Outline fit** (6 images): the transparent or white-background crests, and the greyscale photo of the Wildfire Management patch (on a flat grey backdrop, fitted to the crest plus its upper tab). The visible outline is scaled by height to fit the crest's outline. The five drawn crests match the crest's proportions to within 7% (width ratio 0.99–1.07); the patch is 13% wider (1.13), as embroidered patches are.
+- **No overlay** (3 images): other screenshots and exports of the same logos, and a banner showing BCTS in use. These show side by side only.
 
 ### Fitting the lettering to each reference
 

@@ -144,8 +144,13 @@
    "sha256": "228ad8ccd01e97188ba9e85f4334058bca8fb96fbdc008670c30ccc14f302d3c",
    "width": 211,
    "height": 238,
-   "registration": null,
-   "method": "none",
+   "registration": {
+    "x": -80.2091,
+    "y": -105.9939,
+    "w": 849.1667,
+    "h": 957.8278
+   },
+   "method": "fitted: visible outline → frame + upper-tab, uniform scale by height (width ratio 1.133)",
    "note": "Greyscale photograph of the same patch."
   },
   {

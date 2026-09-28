@@ -37,7 +37,7 @@ FILES = {
     '16125633930e359c': ('forests-wildfire', 'alternate', ('bbox', 'frame+ribbon'), 'Smaller copy.'),
     '80737ce18c38be7f': ('forest-service-mono', 'primary', ('bbox', 'frame'), 'Very small raster (69 × 88 px).'),
     '0bd6a56dfbd26e00': ('wildfire-management', 'primary', ('v5', 'wildfire-management'), 'Photograph of an embroidered patch.'),
-    '228ad8ccd01e9718': ('wildfire-management', 'alternate', None, 'Greyscale photograph of the same patch.'),
+    '228ad8ccd01e9718': ('wildfire-management', 'alternate', ('bbox', 'frame+upper-tab'), 'Greyscale photograph of the same patch.'),
     'd2899a886954c77e': ('fire-control', 'primary', ('v5', 'fire-control'), 'Photograph; the v5 studio excluded it from calibration as distorted.'),
     'bc36bf4f8a6ac2dd': ('parks', 'primary', ('v5', 'parks'), 'Photograph of an embroidered patch.'),
     '5de4b946c57a24a9': ('airtanker', 'primary', ('v5', 'airtanker'), 'Photograph of a decal.'),
@@ -67,7 +67,13 @@ def visible_box(path):
         mask = im.getchannel('A').point(lambda a: 255 if a > 24 else 0)
     else:
         grey = im.convert('L')
-        mask = grey.point(lambda v: 255 if v < 232 else 0)
+        w, h = grey.size
+        edge = sorted(grey.getpixel(p) for p in [(0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1), (w // 2, 0), (w // 2, h - 1), (0, h // 2), (w - 1, h // 2)])
+        bg = (edge[3] + edge[4]) / 2
+        if bg < 200:  # a flat non-white backdrop (e.g. a photographed patch on grey): anything well off it
+            mask = grey.point(lambda v: 255 if abs(v - bg) > 35 else 0)
+        else:
+            mask = grey.point(lambda v: 255 if v < 232 else 0)
     box = mask.getbbox()
     if not box: raise SystemExit('%s: no visible outline to fit (blank image?)' % path.name)
     return im.size, box
@@ -105,7 +111,12 @@ def main():
 
     frame = content_box(manifest, 'bc-ministry-v5/crest/frame.svg')
     ribbon = content_box(manifest, 'bc-ministry-v5/tabs/service-ribbon.svg')
-    targets = {'frame': frame, 'frame+ribbon': (min(frame[0], ribbon[0]), frame[1], max(frame[2], ribbon[2]), max(frame[3], ribbon[3]))}
+    # The upper tab is the ribbon turned upside down about the crest centre.
+    a, b, c, d, e, f = layout['upperTabTransform']
+    corners = [(a*x + c*y + e, b*x + d*y + f) for x in (ribbon[0], ribbon[2]) for y in (ribbon[1], ribbon[3])]
+    upper = (min(p[0] for p in corners), min(p[1] for p in corners), max(p[0] for p in corners), max(p[1] for p in corners))
+    union = lambda *bs: (min(b[0] for b in bs), min(b[1] for b in bs), max(b[2] for b in bs), max(b[3] for b in bs))
+    targets = {'frame': frame, 'frame+ribbon': union(frame, ribbon), 'frame+upper-tab': union(frame, upper)}
     to_air = layout['airtanker-operations']['crestTransform']
 
     out_dir = HERE / 'references'
