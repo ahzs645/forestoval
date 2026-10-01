@@ -30,7 +30,7 @@ export interface Recipe {
 }
 export interface Catalogue {
   RECIPES: Recipe[];
-  CRESTS: Record<string, { upper: string; lower: string; separator: string }>;
+  CRESTS: Record<string, { upper: string; lower: string; separator: string; longer?: string; shorter?: string }>;
   TABS: Record<string, { slot?: string; shape?: string }>;
   LOCKUPS: Record<string, { kind: string }>;
   FACES: Record<string, { family: string; weight: number; advance?: number }>;

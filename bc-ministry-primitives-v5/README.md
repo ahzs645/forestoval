@@ -42,7 +42,7 @@ original scene + crest profile + text roles + tab + composition + content
 | Composition | Crest/wordmark arrangement, row gaps and width budgets | `LOCKUPS` |
 | Example recipe | Inheritance, component references and wording | `RECIPES` |
 
-All tables are in `src/primitives.js`, except the artwork. `SHAPES` (crest centre, separator band, Parks plate, airtanker wings) and `RECOLOUR` (source colour → theme token) hold the few shapes and colours the engine draws itself; `../shared-primitives/extract_primitives.py` reads the same tables, so the shared primitives cannot drift from the engine. The tables are frozen. The UI owns validated patch maps and passes the same maps to all recipes. There are **14 active recipes, 11 shared typography roles, 12 baseline slots, 4 crest profiles and 7 composition types**. Fire Control remains an excluded catalogue entry, not a selectable family member or calibration target.
+All tables are in `src/primitives.js`, except the artwork. `SHAPES` (crest centre, separator band, Parks plate, airtanker wings) and `RECOLOUR` (source colour → theme token) hold the few shapes and colours the engine draws itself; `../shared-primitives/extract_primitives.py` reads the same tables, so the shared primitives cannot drift from the engine. The tables are frozen. The UI owns validated patch maps and passes the same maps to all recipes. There are **14 active recipes, 11 shared typography roles, 12 baseline slots, 5 crest profiles and 7 composition types**. Fire Control remains an excluded catalogue entry, not a selectable family member or calibration target.
 
 The basic inheritance is intentional:
 
@@ -84,7 +84,7 @@ The saved vector-reference character measurements were used only as calibration 
 9. With `fanOut`, a crest with a `fan` profile (the long crest) spreads its upper line toward the capitals look when the lower line leaves room. Letter height (up to ×1.166), letter spacing and word spacing grow together until the line comes within 129 units of marks at home, or as close to pushed marks as the lower line is.
 10. With `centreInRing`, a crest line's baseline follows the frame's white ring (`SHAPES.rings`) rather than its slot ellipse, with its type body centred on the ring's centre line at every angle. The body is the cap height for capitals, and for lowercase the x-height plus 30% of the way to the cap height, blended by the share of lowercase letters. Slots with hand-set radii keep them.
 
-Changing output width scales the complete SVG. The family is designed in a shared 676-unit crest coordinate space. The optional measured-name switch (`autoProfile`) chooses the short or long wildlife profile; it does not force uppercase or replace the user's wording.
+Changing output width scales the complete SVG. The family is designed in a shared 676-unit crest coordinate space. The optional measured-name switch (`autoProfile`) chooses the short or long profile of a crest pair (wildlife capitals / long ministry, tree / long tree); it does not force uppercase or replace the user's wording.
 
 Manual shared-slot calibration is intentionally exposed, but extreme radius or cap changes can move text out of its intended band. The automatic defaults and stress cases were tested; arbitrary manual combinations are not a guarantee of an acceptable design.
 

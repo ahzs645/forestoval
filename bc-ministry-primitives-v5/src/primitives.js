@@ -148,14 +148,20 @@ const REFERENCE_LETTERING={
 // rasters, which agree, for the long crest).
 // separatorHomeY: where marks that follow the lettering sit while the lines
 // leave room (the sides; both wildlife crests share the capitals position).
+// longer / shorter: a crest pair's long and short profiles, picked from the
+// lower wording with autoProfile (engine effectiveCrest); switchCap is the cap
+// height the short profile measures it at. tree-long reuses the long-ministry
+// slots on the tree scene with diamonds scaled like the wildlife pair's marks
+// (no tree reference has long wording).
 // fan: how far the long crest's upper line may spread toward the capitals
 // look while its marks are at home (engine fanUpper): letter height x1.166
 // (the capitals upper cap height), spacing and word spacing, until its ends
 // are clearance units from the marks (BRITISH COLUMBIA in the Forests reference).
 const CRESTS={
- 'wildlife-caps':{scene:'wildlife',upper:'wildlife-upper',lower:'wildlife-lower',separator:'circle',separatorY:446,separatorSize:12.65,separatorInset:3.34,separatorHomeY:446},
- 'wildlife-long':{scene:'wildlife',upper:'long-upper',lower:'long-lower',separator:'circle',separatorY:215,separatorSize:9,separatorInset:7.67,separatorHomeY:446,fan:{capScale:1.166,trackingEm:.06,wordSpacingEm:0,span:200,clearance:129}},
- 'tree-heavy':{scene:'tree',upper:'tree-upper',lower:'tree-lower',separator:'diamond',separatorY:397.65,separatorSize:16.76,separatorHomeY:397.65},
+ 'wildlife-caps':{scene:'wildlife',upper:'wildlife-upper',lower:'wildlife-lower',separator:'circle',separatorY:446,separatorSize:12.65,separatorInset:3.34,separatorHomeY:446,longer:'wildlife-long',switchCap:46},
+ 'wildlife-long':{scene:'wildlife',upper:'long-upper',lower:'long-lower',separator:'circle',separatorY:215,separatorSize:9,separatorInset:7.67,separatorHomeY:446,fan:{capScale:1.166,trackingEm:.06,wordSpacingEm:0,span:200,clearance:129},shorter:'wildlife-caps'},
+ 'tree-heavy':{scene:'tree',upper:'tree-upper',lower:'tree-lower',separator:'diamond',separatorY:397.65,separatorSize:16.76,separatorHomeY:397.65,longer:'tree-long',switchCap:60},
+ 'tree-long':{scene:'tree',upper:'long-upper',lower:'long-lower',separator:'diamond',separatorY:215,separatorSize:11.92,separatorInset:7.67,separatorHomeY:397.65,fan:{capScale:1.166,trackingEm:.06,wordSpacingEm:0,span:200,clearance:129},shorter:'tree-heavy'},
  'tree-thin':{scene:'tree',upper:'thin-upper',lower:'thin-lower',separator:'none',separatorY:397.65,separatorSize:0}
 };
 // Shapes the engine draws itself, not taken from the artwork. The generator in

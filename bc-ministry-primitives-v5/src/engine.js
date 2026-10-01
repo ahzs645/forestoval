@@ -108,7 +108,9 @@ function referenceProfile(id,s){
 // ring's centre line at every angle. A slot whose radii were set by hand keeps them.
 function ringMid(id,s){
  if(!s.centreInRing||Number.isFinite(s.slots[id]?.rx)||Number.isFinite(s.slots[id]?.ry))return null;
- const crest=Object.values(P.CRESTS).find(c=>c.upper===id||c.lower===id),ring=crest&&P.SHAPES.rings?.[crest.scene];
+ // Profiles of one pair share their scene, so the configured crest names the ring.
+ if(!Object.values(P.CRESTS).some(c=>c.upper===id||c.lower===id))return null;
+ const ring=P.SHAPES.rings?.[P.CRESTS[s.crest]?.scene];
  return ring?{rx:(ring.inner[0]+ring.outer[0])/2,ry:(ring.inner[1]+ring.outer[1])/2}:null;
 }
 // The part of a line that is centred, as a fraction of its cap height: the cap
@@ -129,10 +131,15 @@ function slot(id,s){
  if(Number.isFinite(t.span))t.maxSpan=Math.max(t.span,t.maxSpan||t.span);
  return t;
 }
+// A crest pair declares its short and long profiles (CRESTS longer / shorter).
+// With autoProfile, the lower wording measured at the short profile's
+// switchCap picks the long one when it would need more than 92% of the short
+// lower slot's widest arc.
 function effectiveCrest(s){
- if(!s.autoProfile||!s.crest.startsWith('wildlife-'))return s.crest;
- const t=slot('wildlife-lower',s),r=role(t.role,s),m=metrics(s.content.lower||'',r.face),size=46/m.cap;
- const p=curve({...t,span:t.maxSpan},46);return m.width*size>p.length*.92?'wildlife-long':'wildlife-caps';
+ const base=P.CRESTS[s.crest],shortId=base.shorter||(base.longer?s.crest:null);
+ if(!s.autoProfile||!shortId)return s.crest;
+ const sc=P.CRESTS[shortId],t=slot(sc.lower,s),r=role(t.role,s),m=metrics(s.content.lower||'',r.face),size=sc.switchCap/m.cap;
+ const p=curve({...t,span:t.maxSpan},sc.switchCap);return m.width*size>p.length*.92?sc.longer:shortId;
 }
 function point(rx,ry,a){a*=Math.PI/180;return [CX+rx*Math.cos(a),CY+ry*Math.sin(a)];}
 function curve(t,cap=t.cap,span=t.span){

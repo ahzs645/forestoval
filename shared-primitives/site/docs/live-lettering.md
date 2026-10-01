@@ -55,6 +55,15 @@ drafts, let one preset become another by editing its text:
   Forests · Wildfire Service gives the long ministry badge, and *FORESTS* in
   Long ministry · Wildfire gives the capitals badge. The wording's case is kept.
   Choosing a crest profile by hand turns this off.
+
+  The tree crest uses the same switch. Crests come in pairs, declared in
+  `CRESTS` (`longer` / `shorter`, and the short profile's `switchCap`):
+  `wildlife-caps` / `wildlife-long` and `tree-heavy` / `tree-long`. No tree
+  reference has long wording, so `tree-long` reuses the long-ministry slots on
+  the tree scene. Its diamonds are scaled like the wildlife pair's marks
+  (16.76 → 11.92), and it has the same spreading profile. Every rule below
+  applies to the tree crest unchanged, with its diamonds as the marks. They
+  sit within 1.5 units of the Forest Service reference's diamonds.
 - **Separator dots: follow the lettering** (`separatorPlacement: 'follow-text'`).
   Each dot is placed from the visible ends of the two lines on its side:
   - *at home*: at the sides while both lines stay at least 50 units away
@@ -177,14 +186,14 @@ Playwright dependency from the repository requirements and Chromium (or
 Beyond the editing checks, it confirms that the crest follows its wording in
 both directions, that the dots sit where the references put them and halfway
 between squeezed lines, that the long crest spreads its upper line when there is
-room, that lines are centred in the ring (and that unticking restores the slots), that the dots move with
+room, that lines are centred in the ring (and that unticking restores the slots), that the tree crest follows the same rules with its diamonds, that the dots move with
 the wording and leave room when both lines are full, and that older drafts adopt
 the new defaults. It also confirms that every face loads from the bundle and
 matches its calibration advance, that the service backing defaults per preset,
 that exports with a fallback face need consent (it blocks the bundled Noto file
 and all local faces in a second page), and that the Recreations cards show the
 engine's lettering with the same advances, and that the font button reloads the
-bundled face once it is reachable again. All 49 checks passed against
+bundled face once it is reachable again. All 51 checks passed against
 `npm run dev` and against the production build on a machine with none of the
 faces installed. A separate check confirmed that the three engine scripts load
 from `assets/` when the build is served under a sub-path like `/forestoval/`, that

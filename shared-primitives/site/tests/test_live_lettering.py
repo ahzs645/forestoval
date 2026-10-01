@@ -42,7 +42,7 @@ def main():
   def dots():
    g=root.locator('[data-part="canvas"] [data-layer="separators"]')
    return {'placement':g.get_attribute('data-separator-placement'),'y':float(g.get_attribute('data-separator-y'))}
-  def gaps():return root.locator('[data-part="canvas"] [data-layer="separators"] circle').evaluate_all('(cs)=>cs.map(c=>[+c.getAttribute("data-clearance-upper"),+c.getAttribute("data-clearance-lower")])')
+  def gaps():return root.locator('[data-part="canvas"] [data-layer="separators"] > *').evaluate_all('(cs)=>cs.map(c=>[+c.getAttribute("data-clearance-upper"),+c.getAttribute("data-clearance-lower")])')
   def upper_size():return float(text('upper').get_attribute('font-size'))
   def resolved(slot):
    meta=json.loads(root.locator('[data-part="canvas"] svg metadata').text_content())
@@ -160,6 +160,16 @@ def main():
   reset();pick('forests')
   field('lower').fill('FORESTS, LANDS AND NATURAL RESOURCE OPERATIONS');wait()
   record('Capitals that fill both arcs leave room for the dots',crest()=='wildlife-long' and root.locator('[data-warning="SEPARATOR_CROWDED"]').count()==0 and root.locator('[data-warning="TEXT_FIT_OVERFLOW"]').count()==0,dots())
+  reset()
+  # The tree crest runs on the same rules, with diamonds as the marks.
+  pick('forest-service');reset()
+  marks=lambda:root.locator('[data-part="canvas"] [data-layer="separators"] path').count()
+  home=crest()=='tree-heavy' and marks()==2 and abs(dots()['y']-397.65)<.01 and root.get_by_label('Pick the short or long crest from the wording',exact=True).is_enabled()
+  field('lower').fill('Forests, Lands and Natural Resource Operations');wait()
+  state=root.locator('[data-layer="separators"]').get_attribute('data-separator-state')
+  record('The tree crest switches to its long profile and keeps its diamonds halfway between the lines',home and crest()=='tree-long' and marks()==2 and state=='centred' and all(abs(u-l)<.1 for u,l in gaps()) and resolved('long-lower')['ringCentred'],{'crest':crest(),'state':state,'gaps':gaps()})
+  field('lower').fill('BRITISH COLUMBIA');wait()
+  record('Short wording returns the tree crest and its diamonds to the sides',crest()=='tree-heavy' and abs(dots()['y']-397.65)<.01)
   reset()
   pick('long-wildfire')
   root.get_by_role('button',name='Reset this preset',exact=True).click();wait()

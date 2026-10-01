@@ -2,7 +2,7 @@ import type { Catalogue, Configuration, ContentKey, EditorOptions, LogoResult, R
 
 const STORAGE_KEY = 'forestoval-compose-lettering-v1';
 /** A new or reset draft: calibrated fitting, and a crest that follows its wording
- * (short/long wildlife profile, separator marks placed from the lines, and a
+ * (short/long crest profile, separator marks placed from the lines, and a
  * long-crest upper line that spreads out when the lower line leaves room, and
  * every line centred in the white ring). */
 export const NEW_DRAFT = { textFit: 'reference-calibrated', autoProfile: true, separatorPlacement: 'follow-text', fanOut: true, centreInRing: true } as const;
@@ -195,7 +195,8 @@ export class LetteringEditor {
     this.control('tabSizing').disabled = !ribbon;
     this.control('tabBacking').disabled = !ribbon;
     const auto = this.checkbox('autoProfile');
-    auto.checked = s.autoProfile; auto.disabled = !badge || !s.crest.startsWith('wildlife-');
+    const pair = P.CRESTS[s.crest];
+    auto.checked = s.autoProfile; auto.disabled = !badge || !(pair.longer || pair.shorter);
     const marks = badge && P.CRESTS[s.crest].separator !== 'none';
     this.control('separatorPlacement').disabled = !marks;
     // Spreading reads the marks' position, so it needs marks that follow the lettering.
@@ -352,7 +353,8 @@ export class LetteringEditor {
   private profileNote(result: LogoResult): string {
     const s = result.state, notes: string[] = [];
     if (this.runtime!.P.LOCKUPS[s.layout].kind === 'wordmark') return '';
-    if (s.autoProfile && s.crest.startsWith('wildlife-')) notes.push(`The wording uses the ${title(result.crest)} crest.`);
+    const pair = this.runtime!.P.CRESTS[s.crest];
+    if (s.autoProfile && (pair.longer || pair.shorter)) notes.push(`The wording uses the ${title(result.crest)} crest.`);
     const sep = result.separators;
     if (sep?.placement === 'follow-text') notes.push(sep.crowded ? 'The dots are crowded between the lines.'
       : sep.state === 'centred' ? 'The dots sit halfway between the upper and lower lines.'

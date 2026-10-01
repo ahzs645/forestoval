@@ -14,6 +14,11 @@
   pushed by a line that comes within 50 units, and exactly halfway between the
   lines once the gap is under 100. The lower arc narrows when the marks would
   touch a line. `'reference'` (the default) keeps `separatorY`.
+- Crest pairs: `CRESTS` declare `longer` / `shorter` (and the short profile's
+  `switchCap`), and `autoProfile` reads them instead of a wildlife-only check.
+  New `tree-long` (long-ministry slots on the tree scene, smaller diamonds,
+  the long crest's spreading profile) pairs with `tree-heavy`, so the tree
+  crest follows its wording with the same rules.
 - `centreInRing`: crest lines follow the white ring (`SHAPES.rings`, the
   frame's own ellipses) and centre their type body on its centre line: cap
   height for capitals, and x-height plus 30% toward the cap height for

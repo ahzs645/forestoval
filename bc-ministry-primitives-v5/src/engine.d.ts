@@ -3,7 +3,7 @@ export {};
 declare global {
   type BCFaceId = 'noto-condensed'|'open-heavy'|'open-bold'|'condensed-bold'|'condensed-heavy'|'inter-black'|'slab-bold'|'slab-medium'|'sans-regular'|'sans-bold';
   type BCRoleId = 'crest-heavy'|'crest-service-upper'|'crest-condensed'|'crest-thin'|'service-heavy'|'service-condensed'|'wordmark-heavy'|'descriptor-slab'|'district-slab'|'plain-label'|'branch-condensed';
-  type BCCrestId = 'wildlife-caps'|'wildlife-long'|'tree-heavy'|'tree-thin';
+  type BCCrestId = 'wildlife-caps'|'wildlife-long'|'tree-heavy'|'tree-long'|'tree-thin';
   type BCTabId = 'none'|'wildfire-bottom'|'management-top'|'parks'|'airtanker';
   type BCLayoutId = 'badge'|'horizontal'|'horizontal-compact'|'words'|'wordmark'|'strip'|'stacked';
   type BCThemeId = 'wildlife'|'forest'|'mono'|'parks'|'gold';
@@ -29,7 +29,7 @@ declare global {
     readonly FACES:Readonly<Record<BCFaceId,{family:string;weight:number;advance?:number;stretch?:string;locals:readonly string[];google:string;fallback:string;label:string}>>;
     readonly ROLES:Readonly<Record<BCRoleId,Readonly<BCRole>>>;
     readonly SLOTS:Readonly<Record<BCSlotId,Readonly<BCSlot>>>;
-    readonly CRESTS:Readonly<Record<BCCrestId,{scene:'wildlife'|'tree';upper:BCSlotId;lower:BCSlotId;separator:string;separatorY:number;separatorSize:number;separatorInset?:number;separatorHomeY?:number;fan?:{capScale:number;trackingEm:number;wordSpacingEm:number;span:number;clearance:number}}>>;
+    readonly CRESTS:Readonly<Record<BCCrestId,{scene:'wildlife'|'tree';upper:BCSlotId;lower:BCSlotId;separator:string;separatorY:number;separatorSize:number;separatorInset?:number;separatorHomeY?:number;longer?:BCCrestId;shorter?:BCCrestId;switchCap?:number;fan?:{capScale:number;trackingEm:number;wordSpacingEm:number;span:number;clearance:number}}>>;
     readonly SHAPES:{
       readonly centre:readonly [number,number];
       readonly separatorBand:{readonly rx:number;readonly ry:number};
