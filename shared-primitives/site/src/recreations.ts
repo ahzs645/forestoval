@@ -271,7 +271,27 @@ function arcPath(a: Arc, dr: number, rot: number, dry = 0, dx = 0, dy = 0) {
   return `M ${x1} ${y1} A ${+rx.toFixed(4)} ${+ry.toFixed(4)} 0 ${a.half * 2 > 180 ? 1 : 0} ${a.sweep} ${x2} ${y2}`;
 }
 
-export const letteringDoc = (spec: Lettering) => parse(spec.from === 'package' ? packageSvg : example(spec.from));
+export const letteringDoc = (spec: Lettering, live?: LiveLettering) =>
+  parse(spec.from === 'package' ? packageSvg : live ? liveExample(live, spec.from) : example(spec.from));
+
+/** Lettering drawn now by the live v5 engine (the Compose editor's default
+ *  configuration for each recipe), in place of the saved v5 examples. Same
+ *  coordinates as the examples, so it goes through the same spec handling. */
+export interface LiveLettering {
+  /** Recipe id -> the engine's SVG. */
+  svgs: Record<string, string>;
+  /** Recipe id -> the service holder's backing in that configuration. */
+  backing: Record<string, string>;
+  /** Recipe id -> engine warnings worth showing on the card. */
+  warnings: Record<string, string[]>;
+}
+const liveExample = (live: LiveLettering, recipe: string) => {
+  const svg = live.svgs[recipe];
+  if (!svg) throw new Error(`The live engine has no recipe ${recipe}`);
+  return svg;
+};
+/** The engine recipes whose lettering the live mode needs. */
+export const liveRecipes = () => [...new Set(RECREATIONS.flatMap((r) => (r.studio ?? r.lettering).map((l) => l.from)).filter((f) => f !== 'package'))];
 const runId = (t: Element) => t.getAttribute('data-live-text') ?? t.getAttribute('id') ?? '';
 const num = (v: string | null, d = 0) => (v === null || v === '' ? d : parseFloat(v));
 
@@ -433,8 +453,8 @@ export interface LetteringFit {
 export const fits = fitJson as Record<string, LetteringFit>;
 
 // ----------------------------------------------------------------- build --
-function lettering(rec: Recreation, spec: Lettering, index: number, prefix: string, adjust: Record<string, RunParams> | null, fitted: boolean) {
-  const doc = letteringDoc(spec);
+function lettering(rec: Recreation, spec: Lettering, index: number, prefix: string, adjust: Record<string, RunParams> | null, fitted: boolean, live?: LiveLettering) {
+  const doc = letteringDoc(spec, live);
   const runs = (spec.shared && fitted) || adjust ? specRuns(spec, index, savedTabFit(rec.id)) : [];
   prefixIds(doc, prefix);
   const find = (id: string) => doc.querySelector(`[id="${id}"]`);
@@ -486,6 +506,8 @@ export interface Built {
   parts: { key: string; label: string; file: string }[];
   letteringFrom: string[];
   fit: LetteringFit | null;
+  /** Live mode: the engine warnings for the recipes drawn. */
+  warnings?: string[];
 }
 
 const cache = new Map<string, Built>();
@@ -510,7 +532,8 @@ function source(l: Lettering, fit?: TabFit) {
 }
 
 /** fitted: apply the lettering fit saved for this recreation's reference, if
- *  any, and shared runs; otherwise show the lettering the v5 studio drew. */
+ *  any, and shared runs; otherwise show the lettering the v5 studio drew.
+ *  live: draw the lettering the engine draws now instead (see buildLive). */
 export function build(rec: Recreation, fitted = true, adjust?: Record<string, RunParams>): Built {
   const fit = fitted && !adjust ? fits[rec.id] ?? null : null;
   const use = adjust ?? (fit?.accepted ? fit.runs : null);
@@ -538,5 +561,59 @@ export function build(rec: Recreation, fitted = true, adjust?: Record<string, Ru
     fit: use ? fit : null,
   };
   cache.set(key, built);
+  return built;
+}
+
+/** A see-through holder: the tab's border band contains its face, so the border
+ *  becomes a ring (border and face, even-odd) and the face goes. */
+function seeThroughTab(body: string) {
+  if (!body.includes('service-ribbon-face')) return body;
+  const doc = parse(`<svg xmlns="${SVG_NS}">${body}</svg>`);
+  for (const face of Array.from(doc.querySelectorAll('[id$="service-ribbon-face"]'))) {
+    const border = face.parentElement?.querySelector('[id$="service-ribbon-border"]');
+    if (border) {
+      border.setAttribute('d', `${border.getAttribute('d')} ${face.getAttribute('d')}`);
+      border.setAttribute('fill-rule', 'evenodd');
+    }
+    face.remove();
+  }
+  return Array.from(doc.documentElement.children).map(serialize).join('');
+}
+
+const liveCache = new WeakMap<LiveLettering, Map<string, Built>>();
+
+/** The recreation with the live engine's lettering for the same recipes, the
+ *  way the v5 studio switch shows the saved examples (no saved fits applied),
+ *  and the service holder's backing as that configuration draws it. */
+export function buildLive(rec: Recreation, live: LiveLettering): Built {
+  const byRec = liveCache.get(live) ?? new Map<string, Built>();
+  liveCache.set(live, byRec);
+  const hit = byRec.get(rec.id);
+  if (hit) return hit;
+  const prefix = `r-${rec.id}-l-`;
+  const specs = rec.studio ?? rec.lettering;
+  const chosen = recreationLayers(rec, {});
+  const c = chosen.length ? composite(chosen, { palette: themes[rec.theme] ?? null, idPrefix: prefix }) : null;
+  const recipes = [...new Set(specs.map((l) => l.from).filter((f) => f !== 'package'))];
+  let body = c?.body ?? '';
+  if (recipes.some((r) => live.backing[r] === 'transparent')) body = seeThroughTab(body);
+  let defs = c?.defs ?? '', under = '', over = '';
+  const boxes: VB[] = c ? [c.vb] : [];
+  specs.forEach((spec, i) => {
+    const l = lettering(rec, spec, i, `${prefix}t${i}-`, null, false, live);
+    defs += l.defs;
+    under += l.under;
+    over += l.over;
+    if (l.vb) boxes.push(l.vb);
+  });
+  const built: Built = {
+    inner: `<defs>${defs}</defs>${under}${body}${over}`,
+    vb: unionBox(boxes),
+    parts: chosen.map(({ layer }) => ({ key: layer.key, label: layer.label, file: layer.file })),
+    letteringFrom: specs.map((l) => (l.from === 'package' ? source(l) : `live engine · ${l.from}${l.only ? ` (${l.only.join(', ')})` : l.skip ? ` (all but ${l.skip.join(', ')})` : ''}`)),
+    fit: null,
+    warnings: [...new Set(recipes.flatMap((r) => live.warnings[r] ?? []))],
+  };
+  byRec.set(rec.id, built);
   return built;
 }

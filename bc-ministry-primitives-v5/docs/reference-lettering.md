@@ -59,11 +59,26 @@ ExtraBold. The Noto face had the lowest fitting loss for both runs in those
 trials. This is a result for these masks and this objective, not proof that Noto
 was used in the source artwork. Uppercase remains an imperfect substitute too.
 
-The Noto entry uses a named local condensed face or a web request for Noto Sans
-width 75 / weight 800. Width is selected from the font itself; the engine does
-not horizontally scale individual glyphs. The supplied verification used local
-static faces; the network font-loading path and variable-font cross-renderer
-behavior have not been validated in this work. **No font files are bundled.**
+The Noto entry uses Noto Sans at width 75 / weight 800. Width is selected from
+the font itself; the engine does not horizontally scale individual glyphs.
+
+### Font delivery and verification
+
+The engine tries, in order: first-party files the host page supplies in
+`window.BC_FONT_SOURCES` (`{faceId: [{url, unicodeRange}]}`), named local faces,
+then Google Fonts when the user asks for it. The viewer site supplies all ten
+faces from pinned Fontsource packages (`site/src/lettering/fonts.ts`; Noto is the
+variable font, so weight and width come from its axes), so its editor and
+Recreations page fit with the same binaries on every machine. The standalone
+studio has no bundle and keeps the local/Google order.
+
+Each face in `FACES` records `advance`, the width (em) of `FACE_PROBE` in the
+calibration environment: the current Google Fonts static instances. Fontsource
+5.3 matches them (Open Sans and Roboto Condensed exactly; variable Noto within
+0.002%). A loaded face whose probe differs by more than 0.25% stays usable but
+emits `FONT_METRICS_MISMATCH`, so a different version, weight or width is
+reported rather than silently changing the fit. One reviewer's local Noto build
+measured about 0.1% from these, inside the tolerance.
 
 A profile contains cap/x-height, baseline radii, signed tracking, additional word
 spacing, preferred/maximum arc extent, and one whole-run arc-length bias. There

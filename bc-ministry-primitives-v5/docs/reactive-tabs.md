@@ -28,6 +28,15 @@ resetting a recipe intentionally keeps shared overrides and the selected tab
 mode, consistent with the existing family editor. To return fully to the original
 reference, clear the relevant overrides and choose **Reference holder (fixed)**.
 
+## Holder backing
+
+`tabBacking` is `paper` (an opaque face, the default) or `transparent`, where the
+background shows through the holder as in the Forests · Wildfire Service
+reference. It is a per-recipe default (`tabBacking` on the recipe) that the user
+can change; it never changes the lettering geometry. A see-through holder draws
+the border band and face together as one even-odd ring, for both the reference
+and the reactive holder.
+
 ## Layout rules
 
 `shared-primitives/tab-layout.js` accepts measured browser text metrics and the

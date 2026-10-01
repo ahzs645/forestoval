@@ -125,6 +125,43 @@ def main():
    record('Existing layer presets remain usable in the React Compose tab',page.locator('.fo-mode-panel:not([hidden]) .presets button').count()>0)
    page.get_by_role('button',name='Live lettering',exact=True).click();wait()
    record('Switching Compose modes preserves the editor',text('lower').text_content()=='Forests, Lands and Natural Resource Operations')
+   # The app ships its own faces: no local install or Google request is needed.
+   faces=page.evaluate("()=>[...BCLogo.fontState.values()].map(f=>({face:f.face,status:f.status,source:f.source,verified:f.verified}))")
+   record('Lettering faces load from the app bundle and match the calibration advances',faces and all(f['status']=='ready' and f['source']=='bundled' and f['verified'] for f in faces),faces)
+   pick('forests-wildfire')
+   backing=root.get_by_label('Service backing',exact=True)
+   faces_drawn=lambda:root.locator('[data-part="canvas"] [data-tab-part="face"]').count()
+   see_through=backing.input_value()=='transparent' and faces_drawn()==0
+   backing.select_option('paper');wait();paper=faces_drawn()==1
+   backing.select_option('transparent');wait()
+   pick('long-wildfire')
+   record('Service backing defaults per preset and can be changed',see_through and paper and backing.input_value()=='paper' and faces_drawn()==1)
+   # Fallback output needs consent: block the bundled Noto file and every local face.
+   probe=context.new_page();probe.on('pageerror',lambda e:errors.append(str(e)))
+   probe.add_init_script('''(()=>{const F=window.FontFace;window.FontFace=function(f,src,d){return new F(f,typeof src==='string'&&src.startsWith('local(')?'local("missing-face")':src,d)};window.FontFace.prototype=F.prototype;})()''')
+   # Only the engine's fetch of the font bytes (Vite dev also serves the import as a module).
+   probe.route('**/noto-sans-latin*',lambda route:route.abort() if route.request.resource_type=='fetch' else route.continue_())
+   probe.goto(a.url);probe.get_by_role('button',name='Live lettering',exact=True).click()
+   probe.wait_for_function('''()=>{const b=document.querySelector('.fo-editor [data-action="save"]');return b&&!b.disabled}''',timeout=30000)
+   proot=probe.locator('.fo-editor');proot.get_by_label('Current preset',exact=True).select_option('long-ministry')
+   probe.wait_for_function('''()=>document.querySelector('.fo-editor [data-warning="FONT_FALLBACK"]')&&!document.querySelector('.fo-editor [data-action="save"]').disabled''',timeout=30000)
+   svg_button=proot.get_by_role('button',name='SVG',exact=True)
+   blocked=svg_button.is_disabled() and proot.get_by_role('button',name='PNG',exact=True).is_disabled() and not proot.get_by_role('button',name='Save configuration',exact=True).is_disabled()
+   proot.locator('[data-part="font-ack-input"]').check()
+   record('Exports with a fallback face need explicit consent',blocked and svg_button.is_enabled())
+   probe.close()
+   # The Recreations page draws the same engine output as the editor's defaults.
+   page.goto(a.url.split('#')[0]+'#/recreations')
+   page.wait_for_function("document.querySelectorAll('.reccard svg text[data-live-text]').length>10",timeout=60000)
+   cards=page.evaluate('''async()=>{const out={},names={'forests':'Forests','forests-wildfire':'Forests · Wildfire Service','long-ministry':'Long ministry','long-wildfire':'Long ministry · Wildfire Service'};
+       for(const id of Object.keys(names)){
+       const r=await BCLogo.render(BCLogo.recipeState(id,{textFit:'reference-calibrated'}));
+       const card=[...document.querySelectorAll('.reccard')].find(c=>c.querySelector('h3').textContent===names[id]);
+       const shown=[...card.querySelectorAll('svg text[data-live-text]')].map(t=>[t.textContent,t.getComputedTextLength()]);
+       out[id]={expected:r.report.map(x=>[x.text,x.width]),shown};}return out;}''')
+   same=all(len(c['expected'])==len(c['shown']) and all(e[0]==v[0] and abs(e[1]-v[1])<.1 for e,v in zip(c['expected'],c['shown'])) for c in cards.values())
+   record('Recreations shows the live engine lettering with the editor configuration and advances',same,cards)
+   page.goto(a.url);page.get_by_role('button',name='Live lettering',exact=True).click();wait()
   root.get_by_role('button',name='Reset this preset',exact=True).click();wait()
   click_character('lower',0);dock.fill('Environmental Monitoring and Conservation');wait()
   page.screenshot(path=str(out/'live-lettering-desktop.png'),full_page=True)

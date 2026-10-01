@@ -64,8 +64,9 @@ with sync_playwright() as pw:
     containment=page.evaluate("""async()=>{
       const read=async(blob)=>{const url=URL.createObjectURL(blob);try{const img=new Image();await new Promise((ok,no)=>{img.onload=ok;img.onerror=no;img.src=url;});const c=document.createElement('canvas');c.width=img.width;c.height=img.height;const ctx=c.getContext('2d');ctx.drawImage(img,0,0);return ctx.getImageData(0,0,c.width,c.height).data;}finally{URL.revokeObjectURL(url);}};
       const rows=[];
+      // The band is found from paper pixels; a see-through holder has the same geometry.
       for(const recipe of ['forests','forests-wildfire','long-wildfire','forest-service','wildfire-management','parks']){
-        const s=BCLogo.recipeState(recipe),r=BCLogo.makeLogo(s),bg=r.svg.cloneNode(true),ink=r.svg.cloneNode(true);
+        const s={...BCLogo.recipeState(recipe),tabBacking:'paper'},r=BCLogo.makeLogo(s),bg=r.svg.cloneNode(true),ink=r.svg.cloneNode(true);
         bg.querySelectorAll('text').forEach(t=>t.remove());ink.querySelector('[data-layer="composition"]').querySelectorAll('path,ellipse,rect,use,circle').forEach(x=>x.remove());
         ink.querySelectorAll('text').forEach(t=>{t.setAttribute('fill','#ff0000');if(!t.dataset.slot)t.remove();});
         const a=await read(await BCLogo.png({...r,svg:bg},900)),b=await read(await BCLogo.png({...r,svg:ink},900));
@@ -76,6 +77,20 @@ with sync_playwright() as pw:
     }""")
     for row in containment:
         record('Glyph ink stays inside the lettering band: '+row['recipe'],row['outsidePaperPixels']==0,row)
+    backing=page.evaluate('''()=>{
+      const parts=(recipe,extra={})=>{const r=BCLogo.makeLogo({...BCLogo.recipeState(recipe),...extra});const ribbon=r.svg.querySelector('[data-tab-backing]');
+        return {backing:r.state.tabBacking,marked:ribbon?.getAttribute('data-tab-backing'),faces:ribbon?.querySelectorAll('[data-tab-part="face"]').length,
+          ring:[...r.svg.querySelectorAll('[data-primitive="reactive-service-ribbon"] [data-tab-part="border"]')].map(x=>x.getAttribute('fill-rule'))};};
+      return {fw:parts('forests-wildfire'),lw:parts('long-wildfire'),fwPaper:parts('forests-wildfire',{tabBacking:'paper'}),
+        fwReactive:parts('forests-wildfire',{tabSizing:'follow-text'}),bogus:BCLogo.normalise({recipe:'long-wildfire',tabBacking:'glass'}).tabBacking};}''')
+    record('Service holder backing follows the preset: Forests · Wildfire Service see-through, long ministry paper',
+           backing['fw']['backing']=='transparent' and backing['fw']['faces']==0 and backing['lw']['backing']=='paper' and backing['lw']['faces']==1 and backing['fwPaper']['faces']==1 and backing['bogus']=='paper',backing)
+    record('A see-through reactive holder is one even-odd ring',backing['fwReactive']['ring']==['evenodd'] and backing['fwReactive']['faces']==0,backing['fwReactive'])
+    faces=page.evaluate("async()=>{const ids=Object.keys(BCPrimitives.FACES);await BCLogo.ensureFonts(ids,false);return ids.map(id=>({id,...BCLogo.fontState.get(id),font:undefined}))}")
+    record('Ready faces are verified against the calibration advances',all(f.get('verified') for f in faces if f['status']=='ready'),[{k:f.get(k) for k in ('id','status','source','verified','advance')} for f in faces])
+    mismatch=page.evaluate('''()=>{const st=BCLogo.fontState.get('open-heavy'),saved={...st};Object.assign(st,{verified:false,advance:st.advance*1.01});
+      try{return BCLogo.makeLogo(BCLogo.recipeState('forests')).warnings.map(w=>w.code)}finally{BCLogo.fontState.set('open-heavy',saved)}}''')
+    record('A face whose advances differ is reported, not silently used',('FONT_METRICS_MISMATCH' in mismatch) or not any(f['id']=='open-heavy' and f['status']=='ready' for f in faces),mismatch)
     page.evaluate("BCStudio.startRecipe('bcts-tree')")
     page.wait_for_function("BCStudio.current.state.recipe==='bcts-tree'")
     png=page.evaluate('''async()=>{const b=await BCLogo.png(BCStudio.current,1000);return await new Promise(ok=>{const rd=new FileReader();rd.onload=()=>ok(rd.result);rd.readAsDataURL(b);});}''')

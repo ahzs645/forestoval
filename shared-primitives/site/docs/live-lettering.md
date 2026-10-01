@@ -76,19 +76,33 @@ latest edit is still rendering. Input nodes are not replaced during typing.
 
 ## Fonts and exports
 
-Font files are not included in this integration. Existing v5 local-face loading
-is used first. **Load reference fonts online** explicitly enables the engine's
-Google Fonts loader. A fallback warning stays visible when the requested face
-is not verified. Loading success and historical authenticity are distinct.
+The site ships its own copies of every lettering face (`lettering/fonts.ts`,
+pinned Fontsource packages, emitted by Vite) and hands them to the engine before
+it measures anything, so a machine without the fonts fits the same lettering.
+Each loaded face is checked against the advance recorded for the calibration
+face; *Resolved lettering measurements* lists each face's source and result.
+**Load reference fonts online** remains as a last resort if the bundled files
+cannot load. Loading success and historical authenticity are distinct.
 
-SVG uses `E.serialise()` and retains editable text, not embedded font binaries.
-PNG uses `E.png()`, which captures the current result. Font delivery, local font
-availability and other SVG consumers can change appearance. Test the live build
-with the intended fonts before accepting visual fidelity.
+Verified faces are the normal export path. When the latest render used a
+fallback face or one whose advances differ (`FONT_FALLBACK`,
+`FONT_METRICS_MISMATCH`), SVG and PNG stay disabled until the user ticks
+*Export with unverified fonts anyway*; saving the configuration is unaffected.
+
+SVG uses `E.serialise()`: editable text with local `@font-face` aliases, no font
+binaries, so the destination still needs the faces installed. PNG uses `E.png()`,
+which embeds the bundled face bytes in its transient rasterization.
+
+The **Service backing** control sets the holder's face to paper or see-through.
+It defaults per preset (Forests · Wildfire Service is see-through, as in its
+reference) and does not change the lettering.
+
+The Recreations tab draws the same engine output: each card renders its recipe
+with this editor's default configuration, with no saved corrections.
 
 ## Verification
 
-With the app running and the named reference fonts installed:
+With the app running:
 
 ```sh
 python3 tests/test_live_lettering.py --url http://localhost:5173/#/compose
@@ -100,12 +114,16 @@ Compose modes and the existing layer presets. It requires the normal Python
 Playwright dependency from the repository requirements and Chromium (or
 `CHROMIUM=/path/to/browser`). Results and screenshots go to `tests/output/`.
 
-All 31 checks passed against both `npm run dev` (React StrictMode) and the
-production build. A separate check confirmed that the three engine scripts load
+Beyond the editing checks, it confirms that every face loads from the bundle and
+matches its calibration advance, that the service backing defaults per preset,
+that exports with a fallback face need consent (it blocks the bundled Noto file
+and all local faces in a second page), and that the Recreations cards show the
+engine's lettering with the same advances. All 35 checks passed against
+`npm run dev` and against the production build on a machine with none of the
+faces installed. A separate check confirmed that the three engine scripts load
 from `assets/` when the build is served under a sub-path like `/forestoval/`, that
 native localStorage drafts survive a reload, and that the studio is still emitted
-at `studio/`. Without the named faces installed locally, the "no fallback" check
-fails by design.
+at `studio/`.
 
 `--html /path/to/live-lettering-demo.html` runs the controller and engine in a
 portable standalone fixture with an in-memory Storage implementation. It does

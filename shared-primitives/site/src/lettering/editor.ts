@@ -52,6 +52,9 @@ export class LetteringEditor {
   private working = false;
   private rendering = true;
   private composing = false;
+  /** The latest render used a fallback or mismatched face; SVG/PNG need consent. */
+  private unverified = false;
+  private fontAck = false;
 
   constructor(private host: HTMLElement, private options: EditorOptions) {
     this.palette = options.palette ?? null;
@@ -73,6 +76,9 @@ export class LetteringEditor {
         <label>Service holder<select data-control="tabSizing" aria-label="Service holder">
           <option value="reference">Keep the reference holder</option><option value="follow-text">Grow to follow service text</option>
         </select></label>
+        <label>Service backing<select data-control="tabBacking" aria-label="Service backing">
+          <option value="paper">Paper (opaque)</option><option value="transparent">Transparent (background shows through)</option>
+        </select></label>
         <details><summary>Change the composition</summary>
           <label>Crest profile<select data-control="crest" aria-label="Crest profile"></select></label>
           <label>Service tab<select data-control="tab" aria-label="Service tab"></select></label>
@@ -90,6 +96,8 @@ export class LetteringEditor {
             <button type="button" data-action="open">Open configuration</button>
             <input data-part="file" type="file" accept=".json,application/json" hidden></div>
         </header>
+        <label class="fo-ack" data-part="font-ack" hidden><input type="checkbox" data-part="font-ack-input">
+          Export with unverified fonts anyway (the lettering will not match the calibrated fit)</label>
         <div class="fo-canvas" data-part="canvas" aria-label="Live crest preview"><p>Loading…</p></div>
         <div class="fo-dock" data-part="dock" hidden>
           <label><span data-part="edit-label"></span><input data-part="inline-input" aria-label="Edit selected lettering" maxlength="320"></label>
@@ -164,8 +172,10 @@ export class LetteringEditor {
   private sync() {
     if (!this.state || !this.runtime) return;
     const { P } = this.runtime, s = this.state;
-    for (const key of ['recipe', 'textFit', 'crest', 'tab', 'layout', 'tabSizing'] as const) this.control(key).value = s[key];
-    this.control('tabSizing').disabled = P.TABS[s.tab].shape !== 'ribbon' || P.LOCKUPS[s.layout].kind === 'wordmark';
+    for (const key of ['recipe', 'textFit', 'crest', 'tab', 'layout', 'tabSizing', 'tabBacking'] as const) this.control(key).value = s[key];
+    const ribbon = P.TABS[s.tab].shape === 'ribbon' && P.LOCKUPS[s.layout].kind !== 'wordmark';
+    this.control('tabSizing').disabled = !ribbon;
+    this.control('tabBacking').disabled = !ribbon;
     this.part('name').textContent = P.recipe(s.recipe).name;
     this.part('confidence').textContent = P.recipe(s.recipe).confidence ?? 'Reference-based reconstruction';
     this.part('policy-note').textContent = this.runtime.E.TEXT_FIT_POLICIES[s.textFit].description;
@@ -187,7 +197,7 @@ export class LetteringEditor {
       if (!(target instanceof HTMLSelectElement) || !this.state) return;
       const key = target.dataset.control;
       if (key === 'recipe') { this.choose(target.value); return; }
-      if (key && ['textFit', 'crest', 'tab', 'layout', 'tabSizing'].includes(key)) {
+      if (key && ['textFit', 'crest', 'tab', 'layout', 'tabSizing', 'tabBacking'].includes(key)) {
         this.state = this.runtime!.E.normalise({ ...this.state, [key]: target.value }); this.sync(); this.schedule();
       }
     });
@@ -211,6 +221,9 @@ export class LetteringEditor {
       }
     });
     this.on(this.part<HTMLInputElement>('file'), 'change', () => { void this.openFile(); });
+    this.on(this.part<HTMLInputElement>('font-ack-input'), 'change', event => {
+      this.fontAck = (event.target as HTMLInputElement).checked; this.updateButtons();
+    });
   }
   private input(event: Event) {
     const input = event.target;
@@ -284,14 +297,28 @@ export class LetteringEditor {
       this.part('warnings').replaceChildren(...result.warnings.map(w => {
         const p = node('p', w.message); p.className = 'fo-warning'; p.dataset.warning = w.code; return p;
       }));
-      this.part('metrics').replaceChildren(...result.report.map(row => node('p', `${row.slot ?? row.role}: height ${row.cap.toFixed(1)} · tracking ${row.trackingEm.toFixed(3)} em · ${title(row.stage)}`)));
+      const { P, E } = this.runtime;
+      this.part('metrics').replaceChildren(
+        ...result.report.map(row => node('p', `${row.slot ?? row.role}: height ${row.cap.toFixed(1)} · tracking ${row.trackingEm.toFixed(3)} em · ${title(row.stage)}`)),
+        ...result.fontIds.map(id => {
+          const f = E.fontState.get(id);
+          const check = f?.verified === undefined ? '' : f.verified ? ' · advances match the calibration face' : ' · advances differ from the calibration face';
+          return node('p', `${P.FACES[id].family} ${P.FACES[id].weight}: ${f?.status === 'ready' ? f.source : 'fallback'}${check}`);
+        }));
       const missing = result.warnings.some(w => w.code === 'FONT_FALLBACK');
-      this.part('status').textContent = missing ? 'Preview is using an unverified font. Load the named reference fonts before judging fidelity.' : `${result.report.length} editable text runs · click a line to edit`;
+      this.unverified = result.warnings.some(w => w.code === 'FONT_FALLBACK' || w.code === 'FONT_METRICS_MISMATCH');
+      this.part('font-ack').hidden = !this.unverified;
+      this.part('status').textContent = missing ? 'Preview is using an unverified font. Load the named reference fonts before judging fidelity.'
+        : this.unverified ? 'A face differs from the calibration face; the fit is not the reference fit.'
+        : `${result.report.length} editable text runs · click a line to edit`;
       this.rendering = false; this.updateButtons();
     } catch (error) { if (!this.disposed && revision === this.revision) this.fail(error); }
   }
   private updateButtons() {
-    for (const b of this.root.querySelectorAll<HTMLButtonElement>('[data-action="svg"], [data-action="png"], [data-action="save"]')) b.disabled = !this.result || this.rendering || this.working;
+    const busy = !this.result || this.rendering || this.working;
+    this.root.querySelector<HTMLButtonElement>('[data-action="save"]')!.disabled = busy;
+    // Verified fonts are the normal path; fallback output needs explicit consent.
+    for (const b of this.root.querySelectorAll<HTMLButtonElement>('[data-action="svg"], [data-action="png"]')) b.disabled = busy || (this.unverified && !this.fontAck);
     this.root.querySelector<HTMLButtonElement>('[data-action="fonts"]')!.disabled = this.working || !this.runtime;
   }
   private fail(error: unknown) {
@@ -321,6 +348,7 @@ export class LetteringEditor {
       return;
     }
     if (!this.result || this.rendering || this.working) return;
+    if (action !== 'save' && this.unverified && !this.fontAck) return;
     const result = this.result; this.working = true; this.updateButtons();
     try {
       if (action === 'svg') download(`${result.state.recipe}-editable.svg`, this.runtime.E.serialise(result), 'image/svg+xml');

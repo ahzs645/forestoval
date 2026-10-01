@@ -9,6 +9,7 @@ export interface Configuration {
   theme: string;
   textFit: string;
   tabSizing: string;
+  tabBacking: string;
   autoProfile: boolean;
   referenceModelVersion?: number;
   outputWidth: number;
@@ -29,7 +30,7 @@ export interface Catalogue {
   CRESTS: Record<string, { upper: string; lower: string }>;
   TABS: Record<string, { slot?: string; shape?: string }>;
   LOCKUPS: Record<string, { kind: string }>;
-  FACES: Record<string, { family: string; weight: number }>;
+  FACES: Record<string, { family: string; weight: number; advance?: number }>;
   REFERENCE_LETTERING?: { version: number };
   recipe(id: string): Recipe;
 }
@@ -49,6 +50,7 @@ export interface Engine {
   serialise(result: LogoResult): string;
   png(result: LogoResult, width: number): Promise<Blob>;
   retryFonts(): void;
+  fontState: Map<string, { status: string; source: string; verified?: boolean; advance?: number }>;
 }
 export interface Runtime { P: Catalogue; E: Engine }
 export interface EditorOptions {

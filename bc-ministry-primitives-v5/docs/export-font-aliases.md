@@ -14,8 +14,9 @@ No font files, font bytes or network font URLs are included.
 
 This is not a portable-font or font-bundling solution. The receiving computer
 still needs the named font installed, and vector editors may interpret SVG CSS
-differently. A machine without the face still falls back. The web app still
-needs deterministic first-party loading of its calibrated Noto condensed face.
+differently. A machine without the face still falls back. (The viewer site now
+loads its own copies of the faces before measuring; see reference-lettering.md.
+Its PNG export embeds those bytes, its SVG export still references local faces.)
 Do not change the calibrated font family name to try to repair this: the
 required width/weight selection must also be preserved.
 

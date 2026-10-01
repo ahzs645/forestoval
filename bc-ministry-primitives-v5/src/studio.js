@@ -19,10 +19,16 @@ tabSizingField.append(tabSizingLabel,tabSizingNote);$('contentFields').before(ta
 select(tabSizingSelect,[['reference','Reference holder (fixed)'],['follow-text','Follow lettering (grow, then fit)']]);
 function syncTabSizing(){
  tabSizingSelect.value=state.tabSizing;
+ tabBackingSelect.value=state.tabBacking;
  tabSizingField.hidden=P.TABS[state.tab].shape!=='ribbon'||P.LOCKUPS[state.layout].kind==='wordmark';
  tabSizingNote.textContent=state.tabSizing==='follow-text'?'Letter height controls depth; wording controls span. At 80°, text shrinks with a warning. Baseline radii are automatic.':'Original holder and reference fitting are retained.';
 }
 tabSizingSelect.addEventListener('change',()=>{state.tabSizing=tabSizingSelect.value;syncTabSizing();syncTextFit();syncSlot();refresh();});
+// The holder's face is paper, or transparent where the reference shows the background through it.
+const tabBackingLabel=document.createElement('label'),tabBackingSelect=document.createElement('select');
+tabBackingLabel.htmlFor=tabBackingSelect.id='tabBacking';tabBackingLabel.textContent='Tab backing';tabBackingLabel.append(tabBackingSelect);tabSizingNote.before(tabBackingLabel);
+select(tabBackingSelect,[['paper','Paper (opaque)'],['transparent','Transparent (background shows through)']]);
+tabBackingSelect.addEventListener('change',()=>{state.tabBacking=tabBackingSelect.value;refresh();});
 // This is independent of holder sizing. Missing saved values stay in legacy mode.
 const textFitField=document.createElement('div'),textFitLabel=document.createElement('label');
 const textFitSelect=document.createElement('select'),textFitNote=document.createElement('small');

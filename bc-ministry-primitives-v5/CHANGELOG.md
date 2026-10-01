@@ -1,5 +1,13 @@
 # v5 — shared typography implementation
 
+## Later additions
+- First-party font sources (`BC_FONT_SOURCES`) tried before local and Google
+  faces; each loaded face is checked against its recorded probe advance
+  (`FACE_PROBE`, `FACES[id].advance`) and reported if it differs.
+- Editable SVG exports declare local `@font-face` aliases for their faces.
+- `tabBacking`: paper or see-through service holder, defaulting per recipe
+  (Forests · Wildfire Service is see-through, as in its reference).
+
 ## Replaced
 - Per-recipe numeric type overrides and repeated late preset mutations.
 - Optional per-character calibration output.
