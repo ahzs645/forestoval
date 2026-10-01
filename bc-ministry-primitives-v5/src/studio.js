@@ -61,7 +61,7 @@ function syncTextFit(){
 textFitSelect.addEventListener('change',()=>{state.textFit=textFitSelect.value;syncTextFit();syncRole();syncSlot();refresh();});
 // Reference controls store shared per-slot parameters, never phrase-specific offsets.
 const referenceControls=document.createElement('div');referenceControls.id='referenceTypeControls';
-const refFields=[['slotWordSpacing','wordSpacingEm','Added word spacing (em)',-.2,.3,.001],['slotAnchorBias','anchorBias','Arc centre bias (design units)',-40,40,.1],['slotSpan','span','Preferred arc span (degrees)',20,300,1],['slotMaxSpan','maxSpan','Maximum arc span (degrees)',20,330,1],['slotXHeight','xHeight','Lowercase x-height (design units)',4,80,.1]];
+const refFields=[['slotRadialOffset','radialOffset','Baseline outward offset (design units)',-20,20,.1],['slotWordSpacing','wordSpacingEm','Added word spacing (em)',-.2,.3,.001],['slotAnchorBias','anchorBias','Arc centre bias (design units)',-40,40,.1],['slotSpan','span','Preferred arc span (degrees)',20,300,1],['slotMaxSpan','maxSpan','Maximum arc span (degrees)',20,330,1],['slotXHeight','xHeight','Lowercase x-height (design units)',4,80,.1]];
 for(const[id,key,label,min,max,step]of refFields){
  const wrap=document.createElement('label');wrap.textContent=label;const input=document.createElement('input');input.id=id;input.type='number';input.min=min;input.max=max;input.step=step;wrap.append(input);referenceControls.append(wrap);
  input.addEventListener('input',()=>{

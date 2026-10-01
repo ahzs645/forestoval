@@ -9,7 +9,7 @@ const deepFreeze=o=>{for(const v of Object.values(o))if(v&&typeof v==='object')d
 // width is reported instead of silently changing the fit.
 const FACE_PROBE='Hamburgefonstiv FORESTS 1234';
 const FACES={
- 'kabel-black':{family:'Kabel Black',weight:900,advance:13.21998,locals:['Kabel Black','Kabel-Black'],fallback:'Arial, sans-serif',label:'Kabel Black · supplied OTF (tree oval)'},
+ 'kabel-black':{family:'Kabel Black',weight:900,advance:13.21998,capEm:.72,xHeightEm:.518,locals:['Kabel Black','Kabel-Black'],fallback:'Arial, sans-serif',label:'Kabel Black · supplied OTF (tree oval)'},
  'noto-condensed':{family:'Noto Sans Condensed',weight:800,advance:13.58798,stretch:'condensed',locals:['Noto Sans Condensed ExtraBold','NotoSans-CondensedExtraBold'],google:'Noto+Sans:wdth,wght@75,800',fallback:'"Arial Narrow", Arial, sans-serif',label:'Noto Sans Condensed ExtraBold · substitute'},
  'open-heavy':{family:'Open Sans',weight:800,advance:16.19873,locals:['Open Sans ExtraBold','OpenSans-Extrabold'],google:'Open+Sans:wght@800',fallback:'Arial, sans-serif',label:'Open Sans ExtraBold · substitute'},
  'open-bold':{family:'Open Sans',weight:700,advance:15.77198,locals:['Open Sans Bold','OpenSans-Bold'],google:'Open+Sans:wght@700',fallback:'Arial, sans-serif',label:'Open Sans Bold · substitute'},
@@ -201,31 +201,33 @@ const REFERENCE_LETTERING={
 // One face for both tree-oval runs. Long-tree layouts use the same face with the
 // generic fit limits, not the wildlife/Noto calibration.
 const KABEL_LETTERING={
-  "version": 1,
+  "version": 2,
   "slots": {
     "tree-upper": {
-      "referenceProfile": "kabel-tree-upper-v1",
+      "referenceProfile": "kabel-tree-upper-v2",
       "heightModel": "cap",
-      "cap": 60.227223,
-      "anchorCap": 60.227223,
-      "rx": 232.171389,
-      "ry": 321.351389,
-      "tracking": 0.03507646,
+      "cap": 60.582921323,
+      "anchorCap": 60.582921323,
+      "rx": 231.993539339,
+      "ry": 321.173539338,
+      "tracking": 0.020199071,
       "minTracking": -0.06,
-      "wordSpacingEm": 0.02117573,
-      "anchorBias": 3.396252
+      "wordSpacingEm": 0.094554217,
+      "anchorBias": 2.758338713,
+      "radialOffset": 2.33053693
     },
     "tree-lower": {
-      "referenceProfile": "kabel-tree-lower-v1",
+      "referenceProfile": "kabel-tree-lower-v2",
       "heightModel": "cap",
-      "cap": 60.5,
-      "anchorCap": 60.5,
-      "rx": 292.535,
-      "ry": 381.715,
-      "tracking": 0.18125,
+      "cap": 60.141174935,
+      "anchorCap": 60.141174935,
+      "rx": 292.355587468,
+      "ry": 381.535587467,
+      "tracking": 0.18174509,
       "minTracking": -0.025,
-      "wordSpacingEm": 0.1125,
-      "anchorBias": 18.0
+      "wordSpacingEm": 0.095052382,
+      "anchorBias": 18.755645994,
+      "radialOffset": 2.461207266
     }
   }
 };

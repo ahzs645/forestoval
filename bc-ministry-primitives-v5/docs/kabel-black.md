@@ -14,8 +14,8 @@ committed example SVGs remain historical comparison outputs; they are not
 rewritten to resemble the new live output.
 
 The source reference remains `data/references/tree-source.svg`. The new shared
-profile uses one cap height, tracking value, word gap and arc-centre bias per
-line. It uses ordinary editable text/textPath elements: no letter tracing,
+profile uses one cap height, tracking value, word gap, arc-centre bias and
+independent baseline-radius offset per line (v2). It uses ordinary editable text/textPath elements: no letter tracing,
 horizontal stretching, synthetic bold, or individual glyph placement. Residual
 letter-position differences against the supplied outline artwork remain. This
 is a font integration, not authentication of the historical font master.
@@ -181,3 +181,55 @@ SVG-derived ref-5 masks at fixed whole-logo registration. The fitting record is
 confidence, and the earlier individual-glyph overlap is not a full-composition
 accuracy score. Long-name tree layouts use the generic fit bounds and explicitly
 report that no reference calibration is available for those long slots.
+
+
+## Layout v2: measured cap height and independent line placement
+
+The selected OTF contains a 720-unit H and a 518-unit x in a 1000-unit em.
+The tested Chromium 144 large Canvas probe reported an H ascent of 734.375 at
+1000 px. A 60.227223 nominal cap was consequently drawn at about 59.05 units.
+`FACES` now pins `capEm` and `xHeightEm` for the loaded, non-mismatching selected
+face; missing fonts and all other faces retain the existing measurement route.
+This is an observed measurement discrepancy, not evidence for a different font.
+
+The two profile baselines now have `radialOffset`, bounded to [-20, 20] design
+units in saved slot overrides. Positive expands both baseline ellipse radii;
+negative contracts them. It applies after ring-centred or explicit baseline
+resolution, so it is independent of cap height. It is NOT a mathematically
+constant normal-distance offset of an ellipse. Flat slots ignore it.
+
+The standalone studio exposes **Baseline outward offset** under Shared slot
+calibration. Compose and Recreations consume the same fitted defaults and retain
+slot overrides in configurations; this change does not add a new Compose panel.
+Other wording stays one native editable textPath per phrase. No stretching,
+synthetic bold, traced letters, or phrase-specific optical adjustments are used.
+
+Correcting the metric in isolation worsened this already compensating v1
+profile. The cap heights, offsets, tracking, word spacing and arc biases were
+therefore refitted together. Do not cherry-pick the metric change without the
+new profiles. The fitted record is `data/kabel-layout-v2-fit.json`; the older
+`data/kabel-lettering-fit.json` is retained as the v1 fit history.
+
+At the fixed 676 x 945 reference-mask registration, binary IoU changed from
+0.6619 to 0.7354 (upper) and 0.6849 to 0.7162 (lower). This is still not an exact
+match. The new upper and lower ink ratios are about 0.993 and 0.950 respectively;
+matching ink area alone is not a substitute for matching letter placement.
+The prior 93.6% result fitted every glyph's pose independently and is not a
+composition-level benchmark. Residual spacing is consistent with source-specific
+optical placement, but the source does not establish the original production
+method. Several contours differ too. One global width multiplier cannot fix
+letters that disagree in different directions.
+
+Run the fixed-reference regression, preferably against an unmodified checkout:
+
+```sh
+python3 bc-ministry-primitives-v5/tests/test_kabel_layout.py --baseline /path/to/unmodified/repository
+python3 bc-ministry-primitives-v5/tests/test_kabel.py --baseline /path/to/unmodified/repository
+```
+
+The first test explicitly covers ref-5 because the old four-image fixture
+manifest did not list the tree lettering. Both tests run offline with the
+existing selected OTF. Font binaries and generated font-embedded studio HTML
+are not part of this patch. A full production Vite/React build is a separate
+check; these tests exercise the source engine, standalone studio and compiled
+Compose controller.

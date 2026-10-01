@@ -23,6 +23,13 @@
 - `fonts/Kabel-Black.otf` is now committed (un-ignored), so builds bundle it and
   new tree-crest drafts use Kabel by default. The Pages workflow checks it and
   only falls back to the secret when the file is absent.
+- Kabel layout v2: `FACES['kabel-black']` pins the OTF's outline cap/x-height
+  (`capEm` .72, `xHeightEm` .518) for the verified face, and slots take a
+  `radialOffset` (saved overrides clamp to ±20; studio: Baseline outward
+  offset) that moves a baseline outward or inward independently of its cap.
+  The two tree profiles were refitted together (`data/kabel-layout-v2-fit.json`):
+  IoU against the vector 0.662 → 0.735 (upper), 0.685 → 0.716 (lower).
+  `tests/test_kabel_layout.py` covers it.
 - Reference lettering model version 2: the tree crest is calibrated to the
   Forest Service vector (`tools/extract_tree_masks.py`, groups `tree-*`):
   Open Sans Bold for FOREST SERVICE and Raleway Black (new face; flat-apex A

@@ -10,12 +10,12 @@ declare global {
   type BCSlotId = 'wildlife-upper'|'wildlife-lower'|'long-upper'|'long-lower'|'tree-upper'|'tree-lower'|'thin-upper'|'thin-lower'|'service-bottom'|'management-top'|'plate-label'|'wings-label';
   type BCRecipeId = 'forests'|'forests-wildfire'|'long-ministry'|'long-wildfire'|'forest-service'|'wildfire-management'|'parks'|'bcts-wildlife'|'bcts-tree'|'bcts-district'|'bcts-stacked-words'|'bcts-wordmark'|'branch-strip'|'airtanker'|'fire-control';
   interface BCRole {face:BCFaceId; capScale:number; trackingEm:number}
-  interface BCSlot {role:BCRoleId; side:'top'|'bottom'|'flat'; cap:number; anchorCap:number; rx?:number; ry?:number; span?:number; maxSpan?:number; tracking:number; minTracking:number; endPad?:number; minCap:number; width?:number; y?:number}
+  interface BCSlot {role:BCRoleId; side:'top'|'bottom'|'flat'; cap:number; anchorCap:number; radialOffset?:number; rx?:number; ry?:number; span?:number; maxSpan?:number; tracking:number; minTracking:number; endPad?:number; minCap:number; width?:number; y?:number}
   interface BCContent {upper?:string;lower?:string;service?:string;word?:string;descriptor?:string;district?:string;lines?:string;branch?:string}
-  interface BCSharedRules {roles?:Partial<Record<BCRoleId,Partial<BCRole>>>;slots?:Partial<Record<BCSlotId,Partial<Pick<BCSlot,'cap'|'tracking'|'rx'|'ry'|'y'>>>>}
+  interface BCSharedRules {roles?:Partial<Record<BCRoleId,Partial<BCRole>>>;slots?:Partial<Record<BCSlotId,Partial<Pick<BCSlot,'cap'|'tracking'|'radialOffset'|'rx'|'ry'|'y'>>>>}
   interface BCConfiguration extends BCSharedRules {version:5;treeLettering:'reference-v2'|'kabel-black';recipe:BCRecipeId;crest:BCCrestId;tab:BCTabId;layout:BCLayoutId;theme:BCThemeId;tabSizing:'reference'|'follow-text';tabBacking:'paper'|'transparent';separatorPlacement:'reference'|'follow-text';fanOut:boolean;centreInRing:boolean;autoProfile:boolean;content:BCContent;colours:Record<string,string>;outputWidth:number}
   interface BCRecipe {id:BCRecipeId;name:string;extends?:BCRecipeId;crest?:BCCrestId;tab?:BCTabId;tabBacking?:'paper'|'transparent';layout?:BCLayoutId;theme?:BCThemeId;content:BCContent;reference?:string;confidence?:string;excluded?:boolean}
-  interface BCTypeReport {text:string;role:BCRoleId;slot?:BCSlotId;face:BCFaceId;weight:number;size:number;cap:number;preferredCap:number;tracking:number;trackingEm:number;width:number;widthBasis:'browser advance'|'visible ink';available:number;stage:'natural'|'tracking'|'arc-expanded'|'uniform-shrink';tooSmall:boolean;ascent:number;descent:number;curve?:{rx:number;ry:number;span:number}}
+  interface BCTypeReport {text:string;role:BCRoleId;slot?:BCSlotId;face:BCFaceId;weight:number;size:number;cap:number;radialOffset?:number;preferredCap:number;tracking:number;trackingEm:number;width:number;widthBasis:'browser advance'|'visible ink';available:number;stage:'natural'|'tracking'|'arc-expanded'|'uniform-shrink';tooSmall:boolean;ascent:number;descent:number;curve?:{rx:number;ry:number;span:number}}
   interface BCRenderResult {svg:SVGSVGElement;state:BCConfiguration;report:BCTypeReport[];warnings:{code:string;message:string}[];viewBox:{x:number;y:number;w:number;h:number};nominal:{x:number;y:number;w:number;h:number};crest:BCCrestId;separators:BCSeparatorLayout|null;fontIds:BCFaceId[]}
   interface BCSeparatorLayout {placement:'reference'|'reference-fallback'|'follow-text';state:'reference'|'home'|'pushed'|'centred';y:number;dx:number;angle:number;points:[number,number][];crowded:boolean;sides?:Record<'left'|'right',{angle:number;state:string;y:number;dx:number;crowded:boolean;clearance:{upper:number;lower:number}}>;clearance?:{upper:number;lower:number}}
   /** verified: the probe text's advance matches FACES[id].advance (ready faces with a known advance). */
@@ -26,7 +26,7 @@ declare global {
     readonly version:5;
     /** Text whose advance identifies each face (FACES[id].advance, in em). */
     readonly FACE_PROBE:string;
-    readonly FACES:Readonly<Record<BCFaceId,{family:string;weight:number;advance?:number;stretch?:string;locals:readonly string[];google?:string;fallback:string;label:string}>>;
+    readonly FACES:Readonly<Record<BCFaceId,{family:string;weight:number;advance?:number;capEm?:number;xHeightEm?:number;stretch?:string;locals:readonly string[];google?:string;fallback:string;label:string}>>;
     readonly ROLES:Readonly<Record<BCRoleId,Readonly<BCRole>>>;
     readonly SLOTS:Readonly<Record<BCSlotId,Readonly<BCSlot>>>;
     readonly CRESTS:Readonly<Record<BCCrestId,{scene:'wildlife'|'tree';upper:BCSlotId;lower:BCSlotId;separator:string;separatorY:number;separatorSize:number;separatorInset?:number;separatorHomeY?:number;longer?:BCCrestId;shorter?:BCCrestId;switchCap?:number;ringOffset?:number;fan?:{capScale:number;trackingEm:number;wordSpacingEm:number;span:number;clearance:number}}>>;

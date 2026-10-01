@@ -81,7 +81,7 @@ function settle(id,extra,generation,allowNetwork){
  // A load that started before retryFonts() must not overwrite the newer result.
  if(generation!==fontGeneration){for(const f of registered(extra))document.fonts.delete(f);return loadFace(id,allowNetwork);}
  const face=P.FACES[id],s={status:'ready',face:id,family:face.family,weight:face.weight,...extra};fontState.set(id,s);invalidateMetrics();
- if(face.advance&&P.FACE_PROBE){s.advance=metrics(P.FACE_PROBE,id).width;s.verified=Math.abs(s.advance-face.advance)/face.advance<=ADVANCE_TOLERANCE;}
+ if(face.advance&&P.FACE_PROBE){s.advance=metrics(P.FACE_PROBE,id).width;s.verified=Math.abs(s.advance-face.advance)/face.advance<=ADVANCE_TOLERANCE;if(!s.verified)invalidateMetrics();}
  return s;
 }
 // Start every face again from the top of the source order (supplied, local,
@@ -98,7 +98,12 @@ function metrics(text,faceId){
  ctx.font=`${f.weight} 1000px ${family}`;ctx.fontKerning='normal';ctx.fontStretch=f.stretch||'normal';
  const h=ctx.measureText('H'),x=ctx.measureText('x'),space=ctx.measureText(' '),m=ctx.measureText(text);
  const el=node('text',{'font-family':family,'font-weight':f.weight,'font-stretch':f.stretch,'font-size':1000,'font-kerning':'normal',style:'font-synthesis:none;white-space:pre'},text);measurementRoot().append(el);const width=el.getComputedTextLength()/1000;el.remove();
- const v={xHeight:(x.actualBoundingBoxAscent||536)/1000,spaceAdvance:space.width/1000,stretch:f.stretch,cap:(h.actualBoundingBoxAscent||714)/1000,ascent:Math.max(0,m.actualBoundingBoxAscent||0)/1000,descent:Math.max(0,m.actualBoundingBoxDescent||0)/1000,left:(m.actualBoundingBoxLeft||0)/1000,right:(m.actualBoundingBoxRight||m.width)/1000,width,family,weight:f.weight,faceId};cache.set(key,v);return v;
+ // The supplied Kabel outline has H=720 and x=518 in 1000 units/em.
+ // Large Canvas probes can quantize ink bounds (734.375 was observed for H).
+ // Use pinned outline metrics only for a loaded, non-mismatching face; keep
+ // the existing measurement route for fallbacks and all unpinned faces.
+ const status=fontState.get(faceId),pinned=status?.status==='ready'&&status.verified!==false;
+ const v={xHeight:pinned&&Number.isFinite(f.xHeightEm)?f.xHeightEm:(x.actualBoundingBoxAscent||536)/1000,spaceAdvance:space.width/1000,stretch:f.stretch,cap:pinned&&Number.isFinite(f.capEm)?f.capEm:(h.actualBoundingBoxAscent||714)/1000,ascent:Math.max(0,m.actualBoundingBoxAscent||0)/1000,descent:Math.max(0,m.actualBoundingBoxDescent||0)/1000,left:(m.actualBoundingBoxLeft||0)/1000,right:(m.actualBoundingBoxRight||m.width)/1000,width,family,weight:f.weight,faceId};cache.set(key,v);return v;
 }
 function clean(value,max=320){return String(value??'').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,'').normalize('NFC').slice(0,max);}
 function normalise(input={}){
@@ -116,7 +121,7 @@ function normalise(input={}){
  for(const [k,v]of Object.entries(input.content||{}))if(['upper','lower','service','word','descriptor','district','lines','branch'].includes(k))s.content[k]=clean(v);
  for(const k of ['crest','tab','layout','theme']){const t={crest:P.CRESTS,tab:P.TABS,layout:P.LOCKUPS,theme:P.THEMES}[k];if(!t[s[k]])throw Error('Unknown '+k+': '+s[k]);}
  for(const[id,v]of Object.entries(input.roles||{})){if(!P.ROLES[id]||!v||typeof v!=='object')continue;const out={};if(v.face&&P.FACES[v.face])out.face=v.face;if(Number.isFinite(v.capScale))out.capScale=clamp(v.capScale,.5,1.5);if(Number.isFinite(v.trackingEm))out.trackingEm=clamp(v.trackingEm,-.06,.18);s.roles[id]=out;}
- for(const[id,v]of Object.entries(input.slots||{})){if(!P.SLOTS[id]||!v||typeof v!=='object')continue;const out={};for(const[k,limits]of Object.entries({cap:[15,100],tracking:[-.06,.2],wordSpacingEm:[-.2,.3],anchorBias:[-40,40],xHeight:[4,80],span:[20,300],maxSpan:[20,330],rx:[100,550],ry:[150,650],y:[-300,1100]}))if(Number.isFinite(v[k]))out[k]=clamp(v[k],...limits);if(['cap','xHeight'].includes(v.heightModel))out.heightModel=v.heightModel;s.slots[id]=out;}
+ for(const[id,v]of Object.entries(input.slots||{})){if(!P.SLOTS[id]||!v||typeof v!=='object')continue;const out={};for(const[k,limits]of Object.entries({radialOffset:[-20,20],cap:[15,100],tracking:[-.06,.2],wordSpacingEm:[-.2,.3],anchorBias:[-40,40],xHeight:[4,80],span:[20,300],maxSpan:[20,330],rx:[100,550],ry:[150,650],y:[-300,1100]}))if(Number.isFinite(v[k]))out[k]=clamp(v[k],...limits);if(['cap','xHeight'].includes(v.heightModel))out.heightModel=v.heightModel;s.slots[id]=out;}
  for(const[k,v]of Object.entries(input.colours||{}))if(k in P.THEMES[s.theme]&&/^#[0-9a-f]{6}$/i.test(v))s.colours[k]=v;
  return s;
 }
@@ -177,6 +182,10 @@ function curve(t,cap=t.cap,span=t.span){
  let rx,ry;
  if(t.ringMid){const half=cap*(t.bodyRatio??1)/2*(t.side==='top'?-1:1);rx=t.ringMid.rx+half;ry=t.ringMid.ry+half;}
  else{const shift=(t.side==='top'?1:-1)*(t.anchorCap-cap)/2;rx=t.rx+shift;ry=t.ry+shift;}
+ // Independent line placement: positive expands the baseline ellipse.
+ // This is an equal-radii adjustment, not a mathematically constant normal
+ // offset of an ellipse. It never scales, stretches or emboldens the glyphs.
+ const radialOffset=t.radialOffset||0;rx+=radialOffset;ry+=radialOffset;
  const mid=t.side==='top'?-90:90,dir=t.side==='top'?1:-1,start=mid-dir*span/2,end=mid+dir*span/2;
  let a=point(rx,ry,start),b=point(rx,ry,end),last=a,length=0;
  for(let i=1;i<=360;i++){const next=point(rx,ry,start+(end-start)*i/360);length+=Math.hypot(next[0]-last[0],next[1]-last[1]);last=next;}
@@ -196,7 +205,7 @@ function fitRunLegacy(text,slotId,s){
  // again after each movement rather than scaling the glyph width or entire badge.
  for(let i=0;i<12;i++){c=curve(t,cap,span);size=cap/m.cap;const width=getWidth(size,tracking),available=Math.max(1,c.length-2*edge);if(width<=available+.001)break;cap*=available/width*.999;stage='uniform-shrink';}
  c=curve(t,cap,span);size=cap/m.cap;
- return {text,widthBasis:'browser advance',slot:slotId,role:t.role,face:r.face,family:m.family,weight:m.weight,...(m.stretch?{stretch:m.stretch}:{}),size,cap,...(t.ringMid?{bodyRatio:t.bodyRatio,ringCentred:true}:{}),preferredCap,tracking:tracking*size,trackingEm:tracking,width:getWidth(size,tracking),available:c.length-2*edge,curve:c,stage,tooSmall:cap<t.minCap,minimum:t.minCap,ascent:m.ascent*size,descent:m.descent*size};
+ return {text,widthBasis:'browser advance',slot:slotId,role:t.role,face:r.face,family:m.family,weight:m.weight,...(m.stretch?{stretch:m.stretch}:{}),size,cap,...(t.radialOffset?{radialOffset:t.radialOffset}:{}),...(t.ringMid?{bodyRatio:t.bodyRatio,ringCentred:true}:{}),preferredCap,tracking:tracking*size,trackingEm:tracking,width:getWidth(size,tracking),available:c.length-2*edge,curve:c,stage,tooSmall:cap<t.minCap,minimum:t.minCap,ascent:m.ascent*size,descent:m.descent*size};
 }
 // Measure the exact size/spacing written by textAttrs, not a scaled 1000px width.
 // A bounded cache avoids remeasuring identical gallery/export runs. Font loading
@@ -271,7 +280,7 @@ function fitRun(text,slotId,s){
  const c=curve(t,cap,span),size=cap/m.cap,resolvedWidth=width(cap,tracking),budget=available(cap,span);
  const stylePreserved=Math.abs(cap-preferredCap)<.0001&&Math.abs(tracking-preferredTrackingEm)<1e-8;
  return {text,widthBasis:'final-size browser advance',slot:slotId,role:t.role,face:r.face,family:m.family,weight:m.weight,...(m.stretch?{stretch:m.stretch}:{}),
-  size,cap,...(t.ringMid?{bodyRatio:t.bodyRatio,ringCentred:true}:{}),preferredCap,tracking:tracking*size,trackingEm:tracking,preferredTrackingEm,minimumTrackingEm,
+  size,cap,...(t.radialOffset?{radialOffset:t.radialOffset}:{}),...(t.ringMid?{bodyRatio:t.bodyRatio,ringCentred:true}:{}),preferredCap,tracking:tracking*size,trackingEm:tracking,preferredTrackingEm,minimumTrackingEm,
   ...(calibrated?{referenceProfile:t.referenceProfile,heightModel,xHeight:m.xHeight*size,preferredXHeight:usesXHeight?t.xHeight*r.capScale:null,wordSpacing:wordSpacingEm*size,wordSpacingEm,requestedWordSpacingEm,anchorBias,stretch:m.stretch}:{}),
   width:resolvedWidth,available:budget,curve:c,stage:adjustments.at(-1)||'natural',adjustments,fitPolicy:policy,
   preferredSpan,maxSpan,stylePreserved,overflow:Math.max(0,resolvedWidth-budget),
