@@ -149,6 +149,12 @@ def main():
    blocked=svg_button.is_disabled() and proot.get_by_role('button',name='PNG',exact=True).is_disabled() and not proot.get_by_role('button',name='Save configuration',exact=True).is_disabled()
    proot.locator('[data-part="font-ack-input"]').check()
    record('Exports with a fallback face need explicit consent',blocked and svg_button.is_enabled())
+   # Once the file is reachable again, the font button reloads it from the bundle.
+   probe.unroute('**/noto-sans-latin*')
+   proot.get_by_role('button',name='Load reference fonts online',exact=True).click()
+   probe.wait_for_function('''()=>!document.querySelector('.fo-editor [data-warning="FONT_FALLBACK"]')&&!document.querySelector('.fo-editor [data-action="save"]').disabled''',timeout=30000)
+   noto=probe.evaluate("()=>{const f=BCLogo.fontState.get('noto-condensed');return {source:f?.source,verified:f?.verified}}")
+   record('The font button reloads the bundled face once it is available',noto=={'source':'bundled','verified':True} and proot.locator('[data-part="font-ack"]').is_hidden() and svg_button.is_enabled(),noto)
    probe.close()
    # The Recreations page draws the same engine output as the editor's defaults.
    page.goto(a.url.split('#')[0]+'#/recreations')

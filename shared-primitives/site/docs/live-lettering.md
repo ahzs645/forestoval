@@ -118,7 +118,8 @@ Beyond the editing checks, it confirms that every face loads from the bundle and
 matches its calibration advance, that the service backing defaults per preset,
 that exports with a fallback face need consent (it blocks the bundled Noto file
 and all local faces in a second page), and that the Recreations cards show the
-engine's lettering with the same advances. All 35 checks passed against
+engine's lettering with the same advances, and that the font button reloads the
+bundled face once it is reachable again. All 36 checks passed against
 `npm run dev` and against the production build on a machine with none of the
 faces installed. A separate check confirmed that the three engine scripts load
 from `assets/` when the build is served under a sub-path like `/forestoval/`, that

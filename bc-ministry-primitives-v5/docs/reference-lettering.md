@@ -13,8 +13,8 @@ After applying the appropriate patch, rebuild from the repository root:
 python3 bc-ministry-primitives-v5/build.py
 ```
 
-Open the rebuilt studio and select **Lettering fit → Match supplied reference
-style**. Import `examples/reference-calibrated.json` for the long-ministry
+A fresh studio starts in **Lettering fit → Match supplied reference style**
+(a saved or imported configuration keeps its own policy). Import `examples/reference-calibrated.json` for the long-ministry
 Wildfire example. Keep automatic profile switching off when explicitly choosing
 one reference family. Change the wording through the usual content fields.
 

@@ -20,14 +20,14 @@ const ART=global.BC_ART||readData('art-data');
 let measureRoot,seq=0,advanceSeq=0;const cache=new Map(),advanceCache=new Map();
 function measurementRoot(){if(!measureRoot){measureRoot=node('svg',{width:1,height:1,'aria-hidden':'true'});measureRoot.style.cssText='position:fixed;left:-20000px;top:-20000px;visibility:hidden;overflow:visible';document.body.append(measureRoot);}return measureRoot;}
 const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');
-const fontState=new Map(),fontPromises=new Map();
+const fontState=new Map(),fontPromises=new Map();let fontGeneration=0;
 function invalidateMetrics(){cache.clear();advanceCache.clear();}
 const timeout=(promise,ms)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(Error('Font loading timed out')),ms))]);
 async function loadFace(id,allowNetwork=false){
  const face=P.FACES[id];if(!face)throw Error('Unknown face '+id);
  const known=fontState.get(id);if(known?.status==='ready')return known;
  const key=id+':'+allowNetwork;if(fontPromises.has(key))return fontPromises.get(key);
- const task=(async()=>{
+ const generation=fontGeneration,task=(async()=>{
   // First-party files from the host page (BC_FONT_SOURCES[id] = [{url, unicodeRange}])
   // come first: every browser then measures the same pinned binary.
   let bundledError;const bundled=global.BC_FONT_SOURCES?.[id];
@@ -35,9 +35,9 @@ async function loadFace(id,allowNetwork=false){
    const loaded=[];
    for(const item of bundled){const buf=await timeout(fetch(item.url).then(r=>{if(!r.ok)throw Error('Font file HTTP '+r.status);return r.arrayBuffer();}),8000);
     const f=new FontFace(face.family,buf,{weight:String(face.weight),style:'normal',...(face.stretch?{stretch:face.stretch}:{}),...(item.unicodeRange?{unicodeRange:item.unicodeRange}:{})});await f.load();document.fonts.add(f);loaded.push({font:f,bytes:buf,range:item.unicodeRange||null});}
-   return settle(id,{source:'bundled',loaded});
+   return settle(id,{source:'bundled',loaded},generation,allowNetwork);
   }catch(e){bundledError='Bundled face failed: '+e.message;}}
-  for(const name of face.locals){try{const f=new FontFace(face.family,`local("${name}")`,{weight:String(face.weight),style:'normal',...(face.stretch?{stretch:face.stretch}:{})});await timeout(f.load(),1800);document.fonts.add(f);return settle(id,{source:'local',font:f});}catch{}}
+  for(const name of face.locals){try{const f=new FontFace(face.family,`local("${name}")`,{weight:String(face.weight),style:'normal',...(face.stretch?{stretch:face.stretch}:{})});await timeout(f.load(),1800);document.fonts.add(f);return settle(id,{source:'local',font:f},generation,allowNetwork);}catch{}}
   if(allowNetwork){try{
    const css=await timeout(fetch('https://fonts.googleapis.com/css2?family='+face.google+'&display=block').then(r=>{if(!r.ok)throw Error('Font CSS HTTP '+r.status);return r.text();}),6500);
    // Request full available latin/latin-extended subsets, never a text-subset tied
@@ -47,8 +47,9 @@ async function loadFace(id,allowNetwork=false){
     const url=u[1].replace(/["']/g,''),buf=await timeout(fetch(url).then(r=>{if(!r.ok)throw Error('Font bytes HTTP '+r.status);return r.arrayBuffer();}),6500);
     const f=new FontFace(face.family,buf,{weight:String(face.weight),style:'normal',...(face.stretch?{stretch:face.stretch}:{}),...(range?{unicodeRange:range[1]}:{})});await f.load();document.fonts.add(f);loaded.push({font:f,bytes:buf,range:range?.[1]||null});
    }
-   if(!loaded.length)throw Error('No font faces in stylesheet');return settle(id,{source:'web',loaded});
-  }catch(e){fontState.set(id,{status:'fallback',source:'fallback',face:id,family:face.family,weight:face.weight,error:e.message});}}
+   if(!loaded.length)throw Error('No font faces in stylesheet');return settle(id,{source:'web',loaded},generation,allowNetwork);
+  }catch(e){if(generation===fontGeneration)fontState.set(id,{status:'fallback',source:'fallback',face:id,family:face.family,weight:face.weight,error:e.message});}}
+  if(generation!==fontGeneration)return loadFace(id,allowNetwork);
   const s=fontState.get(id)||{status:'fallback',source:'fallback',face:id,family:face.family,weight:face.weight,error:bundledError||'Exact face not found locally'};fontState.set(id,s);return s;
  })();fontPromises.set(key,task);return task;
 }
@@ -56,12 +57,21 @@ async function loadFace(id,allowNetwork=false){
 // the calibration face (FACES[id].advance). A different version, weight or
 // width of the same family stays usable but is reported (FONT_METRICS_MISMATCH).
 const ADVANCE_TOLERANCE=.0025;
-function settle(id,extra){
+const registered=s=>[s?.font,...(s?.loaded||[]).map(x=>x.font)].filter(Boolean);
+function settle(id,extra,generation,allowNetwork){
+ // A load that started before retryFonts() must not overwrite the newer result.
+ if(generation!==fontGeneration){for(const f of registered(extra))document.fonts.delete(f);return loadFace(id,allowNetwork);}
  const face=P.FACES[id],s={status:'ready',face:id,family:face.family,weight:face.weight,...extra};fontState.set(id,s);invalidateMetrics();
  if(face.advance&&P.FACE_PROBE){s.advance=metrics(P.FACE_PROBE,id).width;s.verified=Math.abs(s.advance-face.advance)/face.advance<=ADVANCE_TOLERANCE;}
  return s;
 }
-function retryFonts(){fontPromises.clear();}
+// Start every face again from the top of the source order (supplied, local,
+// Google): a face that settled on a lower source can then be replaced.
+function retryFonts(){
+ fontGeneration++;fontPromises.clear();
+ for(const s of fontState.values())for(const f of registered(s))document.fonts.delete(f);
+ fontState.clear();invalidateMetrics();
+}
 async function ensureFonts(ids,allowNetwork=false){const r=await Promise.all([...new Set(ids)].map(id=>loadFace(id,allowNetwork)));await document.fonts.ready;return r;}
 function metrics(text,faceId){
  const f=P.FACES[faceId];if(!f)throw Error('Unknown font face');const key=faceId+'|'+text;if(cache.has(key))return cache.get(key);

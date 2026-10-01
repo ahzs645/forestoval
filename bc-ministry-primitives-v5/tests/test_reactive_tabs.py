@@ -152,8 +152,9 @@ def main() -> int:
         record('Derived ribbon baseline radii are disabled in reactive mode',page.locator('#slotRX').is_disabled() and page.locator('#slotRY').is_disabled())
         page.locator('#slotCap').fill('');page.wait_for_timeout(200)
         record('Temporary empty number input does not overwrite the last valid size',page.evaluate("BCStudio.state.slots['service-bottom'].cap===64"))
+        # The default is the current fitting policy's slot (the studio starts calibrated).
         page.locator('#resetSlot').click();page.wait_for_function("!BCStudio.current.state.slots['service-bottom']")
-        record('Slot reset removes the override and restores default cap height',page.evaluate("BCStudio.current.report.find(r=>r.tab).preferredCap===BCPrimitives.SLOTS['service-bottom'].cap"))
+        record('Slot reset removes the override and restores default cap height',page.evaluate("BCStudio.current.report.find(r=>r.tab).preferredCap===BCLogo.makeLogo({...BCStudio.current.state,slots:{}}).report.find(r=>r.tab).preferredCap"))
         page.select_option('#typeRole','service-heavy');page.locator('#roleCap').fill('1.15');page.wait_for_function("BCStudio.current.state.roles['service-heavy']?.capScale===1.15")
         record('Role multiplier updates reactively without a change event',page.evaluate("document.activeElement.id==='roleCap'"))
         page.evaluate('''()=>{window.originalRender=BCLogo.render;BCLogo.render=async(s,o)=>{const r=await originalRender(s,o);if(s.roles['service-heavy']?.capScale===1.05)await new Promise(ok=>window.releaseOld=ok);return r;};}''')

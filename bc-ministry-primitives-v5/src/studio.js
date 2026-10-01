@@ -1,7 +1,7 @@
 /* UI owns the shared patch maps. Every recipe renders through the same engine. */
 (function(){'use strict';
 const P=BCPrimitives,E=BCLogo,$=id=>document.getElementById(id),R=JSON.parse($('reference-data').textContent),STORAGE='bc-shared-primitives-v5';
-let state=E.recipeState('long-wildfire'),mode='design',current,revision=0,toastTimer,renderTimer;
+let state=E.recipeState('long-wildfire',{textFit:'reference-calibrated'}),mode='design',current,revision=0,toastTimer,renderTimer;
 let alignment={scale:1,x:0,y:0};
 try{const raw=localStorage.getItem(STORAGE);if(raw)state=E.normalise(JSON.parse(raw));}catch{}
 const label=s=>s.replace(/-/g,' ');

@@ -7,6 +7,11 @@
 - Editable SVG exports declare local `@font-face` aliases for their faces.
 - `tabBacking`: paper or see-through service holder, defaulting per recipe
   (Forests · Wildfire Service is see-through, as in its reference).
+- A fresh studio starts with reference-calibrated fitting, like the site's
+  editor and Recreations page; saved configurations keep their own policy.
+- `retryFonts()` starts every face again from the top of the source order
+  (dropping cached faces and their registered `FontFace`s), and a load that was
+  in flight before the retry can no longer overwrite the newer result.
 
 ## Replaced
 - Per-recipe numeric type overrides and repeated late preset mutations.
