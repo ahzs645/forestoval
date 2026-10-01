@@ -89,7 +89,7 @@ function normalise(input={}){
  if(typeof textFit!=='string'||!Object.hasOwn(TEXT_FIT_POLICIES,textFit))throw Error('Unknown lettering fit policy: '+textFit);
  const referenceModelVersion=input.referenceModelVersion??P.REFERENCE_LETTERING?.version;
  if(textFit==='reference-calibrated'&&referenceModelVersion!==P.REFERENCE_LETTERING?.version)throw Error('Unsupported reference lettering model version: '+referenceModelVersion);
- const s={version:5,textFit,...(textFit==='reference-calibrated'?{referenceModelVersion}:{}),tabSizing:input.tabSizing==='follow-text'?'follow-text':'reference',tabBacking:['paper','transparent'].includes(input.tabBacking)?input.tabBacking:r.tabBacking||'paper',separatorPlacement:input.separatorPlacement==='follow-text'?'follow-text':'reference',recipe:rid,crest:input.crest||r.crest,tab:input.tab||r.tab,layout:input.layout||r.layout,theme:input.theme||r.theme,autoProfile:input.autoProfile===true,content:{...r.content},roles:{},slots:{},colours:{},outputWidth:clamp(Number(input.outputWidth)||1200,100,6000)};
+ const s={version:5,textFit,...(textFit==='reference-calibrated'?{referenceModelVersion}:{}),tabSizing:input.tabSizing==='follow-text'?'follow-text':'reference',tabBacking:['paper','transparent'].includes(input.tabBacking)?input.tabBacking:r.tabBacking||'paper',separatorPlacement:input.separatorPlacement==='follow-text'?'follow-text':'reference',fanOut:input.fanOut===true,recipe:rid,crest:input.crest||r.crest,tab:input.tab||r.tab,layout:input.layout||r.layout,theme:input.theme||r.theme,autoProfile:input.autoProfile===true,content:{...r.content},roles:{},slots:{},colours:{},outputWidth:clamp(Number(input.outputWidth)||1200,100,6000)};
  for(const [k,v]of Object.entries(input.content||{}))if(['upper','lower','service','word','descriptor','district','lines','branch'].includes(k))s.content[k]=clean(v);
  for(const k of ['crest','tab','layout','theme']){const t={crest:P.CRESTS,tab:P.TABS,layout:P.LOCKUPS,theme:P.THEMES}[k];if(!t[s[k]])throw Error('Unknown '+k+': '+s[k]);}
  for(const[id,v]of Object.entries(input.roles||{})){if(!P.ROLES[id]||!v||typeof v!=='object')continue;const out={};if(v.face&&P.FACES[v.face])out.face=v.face;if(Number.isFinite(v.capScale))out.capScale=clamp(v.capScale,.5,1.5);if(Number.isFinite(v.trackingEm))out.trackingEm=clamp(v.trackingEm,-.06,.18);s.roles[id]=out;}
@@ -273,40 +273,92 @@ function reactiveRibbon(layout,theme,backing='paper'){
  return g;
 }
 // Separator marks sit on the separator band drawn in by the crest's
-// separatorInset. 'reference' keeps the crest's separatorY. 'follow-text' puts
-// the mirrored pair at the crest's separatorGap fraction of the angular gap
-// between the ends of the upper and lower runs (about the crest centre, at
-// each run's ink midline, both sides averaged), so the default wording lands
-// on separatorY and other wording moves the marks with the gap. A mark keeps
-// SEPARATOR_CLEARANCE units plus its own size clear of both runs; a gap too
-// small for that centres it and reports SEPARATOR_CROWDED.
-const SEPARATOR_CLEARANCE=10;
+// separatorInset. 'reference' keeps the crest's separatorY. 'follow-text'
+// places the mirrored pair from the visible ends of the upper and lower runs:
+//  - home: at separatorHomeY (the sides) while both runs stay at least
+//    SEPARATOR_COMFORT units (along the band, mark centre to ink) away;
+//  - pushed: a run that comes closer pushes the marks along the band;
+//  - centred: once the gap is under twice that, exactly halfway between the
+//    two runs' ink, so both lines are the same distance from the marks.
+// Under SEPARATOR_MIN_GAP plus the mark's size on either side the marks are
+// crowded: the lower arc narrows to make room (roomForSeparators), else a
+// warning. Measured on the references: Forests keeps its marks 129 units from
+// BRITISH COLUMBIA (home); the long ministry's sit about 40 units from each line.
+const SEPARATOR_COMFORT=50,SEPARATOR_MIN_GAP=6;
 const wrap180=a=>((a+180)%360+360)%360-180;
 function bandRadius(a,inset=0){const b=P.SHAPES.separatorBand,r=a*Math.PI/180;return 1/Math.hypot(Math.cos(r)/(b.rx-inset),Math.sin(r)/(b.ry-inset));}
+// Length along the (inset) band between two polar angles on the same side.
+function arcUnits(a,b,inset=0){return Math.abs(b-a)*Math.PI/180*bandRadius((a+b)/2,inset);}
+const unitsToDeg=(u,a,inset=0)=>u/bandRadius(a,inset)*180/Math.PI;
 // Polar angles (degrees, screen y down) of a curved run's first and last
-// visible glyph edges, at its ink midline. Both crest baselines run left to right.
+// visible ink edges, at its ink midline: the advance less the final letter
+// spacing and the end glyphs' side bearings. Both crest baselines run left to right.
 function runEnds(f){
  const c=f.curve;if(!c||c.side==='flat'||!(f.width>0))return null;
- const shift=(c.side==='top'?1:-1)*f.cap/2,mid=c.length/2+(f.anchorBias||0);
+ const m=metrics(f.text,f.face),size=f.size,shift=(c.side==='top'?1:-1)*f.cap/2,start=c.length/2+(f.anchorBias||0)-f.width/2;
  const at=dist=>{let last=point(c.rx,c.ry,c.start),acc=0;
   for(let i=1;i<=360;i++){const a=c.start+(c.end-c.start)*i/360,next=point(c.rx,c.ry,a),d=Math.hypot(next[0]-last[0],next[1]-last[1]);
    if(acc+d>=dist||i===360){const prev=c.start+(c.end-c.start)*(i-1)/360,u=d?clamp((dist-acc)/d,0,1):0,p=point(c.rx+shift,c.ry+shift,prev+(a-prev)*u);return Math.atan2(p[1]+(c.y||0)-CY,p[0]-CX)*180/Math.PI;}
    acc+=d;last=next;}};
- return {left:at(Math.max(0,mid-f.width/2)),right:at(Math.min(c.length,mid+f.width/2-(f.tracking||0)))};
+ const inkStart=start-m.left*size,inkEnd=start+f.width-(f.tracking||0)-Math.max(0,m.width-m.right)*size;
+ return {left:at(clamp(inkStart,0,c.length)),right:at(clamp(inkEnd,0,c.length))};
 }
+// Each side's gap, as right-side angles: the upper run's end and the lower
+// run's end (the left side mirrored in). Each mark is placed in its own gap,
+// since the end letters differ; the references' pairs are not mirror images either.
+function runGap(upper,lower){
+ const u=upper&&runEnds(upper),l=lower&&runEnds(lower);if(!u||!l)return null;
+ return {left:{top:wrap180(180-u.left),bottom:wrap180(180-l.left)},right:{top:u.right,bottom:l.right}};
+}
+const STATE_ORDER=['home','pushed','centred'];
 function separatorLayout(c,s,upper,lower){
- const inset=c.separatorInset||0,fixed=placement=>{const b=P.SHAPES.separatorBand,y=c.separatorY,dx=(b.rx-inset)*Math.sqrt(Math.max(0,1-((y-CY)/(b.ry-inset))**2));return {placement,y,dx,angle:Math.atan2(y-CY,dx)*180/Math.PI,crowded:false};};
+ const inset=c.separatorInset||0,b=P.SHAPES.separatorBand;
+ const onBand=y=>{const dx=(b.rx-inset)*Math.sqrt(Math.max(0,1-((y-CY)/(b.ry-inset))**2));return {y,dx,angle:Math.atan2(y-CY,dx)*180/Math.PI};};
+ const fixed=placement=>{const o=onBand(c.separatorY);return {placement,...o,points:[[CX-o.dx,o.y],[CX+o.dx,o.y]],state:'reference',crowded:false};};
  if(s.separatorPlacement!=='follow-text')return fixed('reference');
- const u=upper&&runEnds(upper),l=lower&&runEnds(lower);
+ const g=runGap(upper,lower);
  // A missing run leaves no gap to follow: keep the reference position.
- if(!u||!l||!Number.isFinite(c.separatorGap))return fixed('reference-fallback');
- // Mirror the left side onto the right so the pair stays symmetric.
- const top=(u.right+wrap180(180-u.left))/2,bottom=(l.right+wrap180(180-l.left))/2,gap=bottom-top;
- const clear=(c.separatorSize+SEPARATOR_CLEARANCE)/bandRadius((top+bottom)/2,inset)*180/Math.PI;
- let angle=top+c.separatorGap*gap,crowded=false;
- if(gap<2*clear){angle=top+gap/2;crowded=true;}else angle=clamp(angle,top+clear,bottom-clear);
- angle=clamp(angle,-85,85);const r=bandRadius(angle,inset),a=angle*Math.PI/180;
- return {placement:'follow-text',y:CY+r*Math.sin(a),dx:r*Math.cos(a),angle,crowded,upper:top,lower:bottom,fraction:c.separatorGap};
+ if(!g)return fixed('reference-fallback');
+ const home=onBand(c.separatorHomeY??c.separatorY).angle,need=c.separatorSize+SEPARATOR_MIN_GAP;
+ const place=({top,bottom})=>{
+  const comfortTop=unitsToDeg(SEPARATOR_COMFORT,top,inset),comfortBottom=unitsToDeg(SEPARATOR_COMFORT,bottom,inset);
+  let angle=home,state='home';
+  if(bottom-top<comfortTop+comfortBottom){
+   // Halfway by length along the band (its radius changes across the gap).
+   let lo=top,hi=bottom;for(let i=0;i<30;i++){const mid=(lo+hi)/2;if(arcUnits(top,mid,inset)<arcUnits(mid,bottom,inset))lo=mid;else hi=mid;}
+   angle=(lo+hi)/2;state='centred';}
+  else if(home<top+comfortTop){angle=top+comfortTop;state='pushed';}
+  else if(home>bottom-comfortBottom){angle=bottom-comfortBottom;state='pushed';}
+  angle=clamp(angle,-85,85);
+  const up=arcUnits(top,angle,inset),down=arcUnits(angle,bottom,inset),r=bandRadius(angle,inset),a=angle*Math.PI/180;
+  return {angle,state,top,bottom,dx:r*Math.cos(a),y:CY+r*Math.sin(a),clearance:{upper:up,lower:down},crowded:up<need||down<need};
+ };
+ const L=place(g.left),R=place(g.right),state=STATE_ORDER[Math.max(STATE_ORDER.indexOf(L.state),STATE_ORDER.indexOf(R.state))];
+ return {placement:'follow-text',state,y:(L.y+R.y)/2,dx:(L.dx+R.dx)/2,angle:(L.angle+R.angle)/2,points:[[CX-L.dx,L.y],[CX+R.dx,R.y]],
+  crowded:L.crowded||R.crowded,sides:{left:L,right:R},
+  clearance:{upper:Math.min(L.clearance.upper,R.clearance.upper),lower:Math.min(L.clearance.lower,R.clearance.lower)}};
+}
+// A crest with a fan profile (the long crest) spreads its upper line toward the
+// fanned capitals look when the lower line leaves room: letter height, spacing
+// and word spacing move together toward fan.capScale / trackingEm /
+// wordSpacingEm until the fan target is reached or the line's ends come
+//  - within fan.clearance units of marks at home (the Forests reference's 129), or
+//  - as close to marks the lower line has pushed as that line is, so the marks
+//    end up halfway between the two lines.
+function fanUpper(c,s,upper,lower){
+ const fan=c.fan;if(!fan||!s.fanOut||s.separatorPlacement!=='follow-text'||!upper||!lower)return upper;
+ const inset=c.separatorInset||0;
+ const room=f=>{const sep=separatorLayout(c,s,f,lower);if(!sep.sides)return false;
+  if(sep.state==='home')return sep.clearance.upper>=fan.clearance;
+  return sep.state==='pushed'&&Object.values(sep.sides).every(x=>x.state==='centred'||x.clearance.upper>=x.clearance.lower);};
+ if(!room(upper))return upper;
+ const id=c.upper,base=slot(id,s),k=t=>1+(fan.capScale-1)*t,ws=base.wordSpacingEm||0;
+ const at=t=>fitRun(upper.text,id,{...s,slots:{...s.slots,[id]:{...(s.slots[id]||{}),cap:base.cap*k(t),...(Number.isFinite(base.xHeight)?{xHeight:base.xHeight*k(t)}:{}),
+  tracking:base.tracking+(fan.trackingEm-base.tracking)*t,wordSpacingEm:ws+(fan.wordSpacingEm-ws)*t,span:Math.max(base.span,fan.span),maxSpan:Math.max(base.maxSpan||0,fan.span)}}});
+ let lo=0,hi=1,best=null;const full=at(1);
+ if(room(full)){best=full;lo=1;}
+ else for(let i=0;i<10;i++){const mid=(lo+hi)/2,f=at(mid);if(room(f)){lo=mid;best=f;}else hi=mid;}
+ return best?{...best,stage:'fanned',adjustments:[...(best.adjustments||[]),'fanned'],fan:round(lo)}:upper;
 }
 // Following marks need room between the lines. When both runs reach each other,
 // narrow the lower run's arc (its fit then tightens or shrinks as usual) until
@@ -327,11 +379,12 @@ function drawBadge(s,defs,theme,report,tabLayout=null,layout=null){const crestId
  if(c.scene==='wildlife')defs.append(fragment(ART.wildlifeClip));
  const scene=sourceShape(defs,'scene-'+c.scene,c.scene==='wildlife'?ART.wildlifeScene:ART.treeInner,theme,c.scene);g.append(use(scene,{'data-layer':'scene'}));
  // The marks follow the fitted lettering, so fit both crest runs first.
- const letters=node('g',{'data-layer':'live-lettering'}),upper=s.content.upper?.trim()?fitRun(s.content.upper,c.upper,s):null;
+ const letters=node('g',{'data-layer':'live-lettering'});let upper=s.content.upper?.trim()?fitRun(s.content.upper,c.upper,s):null;
  let lower=s.content.lower?.trim()?fitRun(s.content.lower,c.lower,s):null,sep=c.separator==='none'?null:separatorLayout(c,s,upper,lower);
  if(sep?.crowded){lower=roomForSeparators(c,s,upper,lower);sep=separatorLayout(c,s,upper,lower);}
+ if(sep?.state==='home'||sep?.state==='pushed'){const fanned=fanUpper(c,s,upper,lower);if(fanned!==upper){upper=fanned;sep=separatorLayout(c,s,upper,lower);}}
  curved(letters,defs,s.content.upper,c.upper,s,theme.text,'upper',report,upper);curved(letters,defs,s.content.lower,c.lower,s,theme.text,'lower',report,lower);
- if(sep){const {y,dx}=sep,r=c.separatorSize,marks=node('g',{'data-layer':'separators',fill:theme.text,'data-separator-placement':sep.placement,'data-separator-y':round(y)});for(const x of[round(CX-dx),round(CX+dx)])marks.append(c.separator==='circle'?node('circle',{cx:x,cy:round(y),r}):node('path',{d:`M ${x} ${round(y-r)} l ${r} ${r} -${r} ${r} -${r} -${r} Z`}));g.append(marks);if(layout)layout.separators=sep;}
+ if(sep){const r=c.separatorSize,marks=node('g',{'data-layer':'separators',fill:theme.text,'data-separator-placement':sep.placement,'data-separator-state':sep.state,'data-separator-y':round(sep.y)});sep.points.forEach(([px,py],i)=>{const x=round(px),y=round(py),side=sep.sides?.[i?'right':'left'],gap=side?{'data-clearance-upper':round(side.clearance.upper),'data-clearance-lower':round(side.clearance.lower)}:{};marks.append(c.separator==='circle'?node('circle',{cx:x,cy:y,r,...gap}):node('path',{d:`M ${x} ${round(y-r)} l ${r} ${r} -${r} ${r} -${r} -${r} Z`,...gap}));});g.append(marks);if(layout)layout.separators=sep;}
  if(t.slot)curved(letters,defs,s.content.service,t.slot,s,t.shape==='wings'?P.SHAPES.wings.textFill:theme.text,'service',report,tabLayout?.fit);g.append(letters);return g;
 }
 function badgeBox(s,tabLayout=null){
@@ -401,7 +454,7 @@ async function png(result,width=1600){
  const w=clamp(Math.round(width),100,6000),h=Math.round(w*result.viewBox.h/result.viewBox.w);if(w*h>32000000)throw Error('PNG is too large; reduce export width.');svg.setAttribute('width',w);svg.setAttribute('height',h);
  const url=URL.createObjectURL(new Blob([serialise(svg)],{type:'image/svg+xml'}));try{const img=new Image();await new Promise((ok,bad)=>{img.onload=ok;img.onerror=()=>bad(Error('SVG rasterization failed'));img.src=url;});const c=document.createElement('canvas');c.width=w;c.height=h;const context=c.getContext('2d');context.drawImage(img,0,0,w,h);return await new Promise((ok,bad)=>c.toBlob(b=>b?ok(b):bad(Error('PNG export failed')),'image/png'));}finally{URL.revokeObjectURL(url);}
 }
-function recipeState(id,shared={}){return normalise({recipe:id,textFit:shared.textFit,referenceModelVersion:shared.referenceModelVersion,tabSizing:shared.tabSizing,autoProfile:shared.autoProfile,separatorPlacement:shared.separatorPlacement,roles:shared.roles||{},slots:shared.slots||{}});}
+function recipeState(id,shared={}){return normalise({recipe:id,textFit:shared.textFit,referenceModelVersion:shared.referenceModelVersion,tabSizing:shared.tabSizing,autoProfile:shared.autoProfile,separatorPlacement:shared.separatorPlacement,fanOut:shared.fanOut,roles:shared.roles||{},slots:shared.slots||{}});}
 function dependencies(roleId){return P.RECIPES.filter(x=>!x.excluded).filter(r=>{const s=recipeState(r.id),c=P.CRESTS[s.crest],t=P.TABS[s.tab],l=P.LOCKUPS[s.layout];return [...(l.kind!=='wordmark'?[P.SLOTS[c.upper]?.role,P.SLOTS[c.lower]?.role,P.SLOTS[t.slot]?.role]:[]),...(l.kind==='wordmark'||l.kind==='horizontal'||l.kind==='stacked'?['wordmark-heavy','descriptor-slab',...(s.content.district?['district-slab']:[])]:[]),...(l.kind==='words'?['plain-label']:[]),...(l.kind==='strip'?['branch-condensed']:[])].includes(roleId);}).map(x=>x.name);}
 global.BCLogo={P,ART,TEXT_FIT_POLICIES,normalise,recipeState,makeLogo,render,serialise,png,metrics,fitRun,fitPlain,curve,effectiveCrest,separatorLayout,role,slot,referenceProfile,dependencies,ensureFonts,retryFonts,fontState,invalidateMetrics,node,clone};
 })(window);

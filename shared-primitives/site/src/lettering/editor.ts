@@ -2,8 +2,9 @@ import type { Catalogue, Configuration, ContentKey, EditorOptions, LogoResult, R
 
 const STORAGE_KEY = 'forestoval-compose-lettering-v1';
 /** A new or reset draft: calibrated fitting, and a crest that follows its wording
- * (short/long wildlife profile, and separator marks placed between the runs). */
-export const NEW_DRAFT = { textFit: 'reference-calibrated', autoProfile: true, separatorPlacement: 'follow-text' } as const;
+ * (short/long wildlife profile, separator marks placed from the lines, and a
+ * long-crest upper line that spreads out when the lower line leaves room). */
+export const NEW_DRAFT = { textFit: 'reference-calibrated', autoProfile: true, separatorPlacement: 'follow-text', fanOut: true } as const;
 const LABELS: Record<ContentKey, string> = {
   upper: 'Upper oval text', lower: 'Lower / ministry text', service: 'Service tab text',
   word: 'Acronym / wordmark', descriptor: 'Descriptor', district: 'District',
@@ -80,6 +81,7 @@ export class LetteringEditor {
         <label>Separator dots<select data-control="separatorPlacement" aria-label="Separator dots">
           <option value="follow-text">Follow the lettering</option><option value="reference">Keep the reference position</option>
         </select></label>
+        <label class="fo-check"><input type="checkbox" data-control="fanOut"> Spread the upper line when there is room</label>
         <p class="fo-muted fo-small" data-part="profile-note"></p>
         <label>Service holder<select data-control="tabSizing" aria-label="Service holder">
           <option value="reference">Keep the reference holder</option><option value="follow-text">Grow to follow service text</option>
@@ -145,10 +147,12 @@ export class LetteringEditor {
       let active = 'long-wildfire';
       try {
         const saved = JSON.parse(this.storage?.getItem(STORAGE_KEY) ?? 'null');
-        if ((saved?.version === 1 || saved?.version === 2) && saved.drafts && typeof saved.drafts === 'object') {
+        if ([1, 2, 3].includes(saved?.version) && saved.drafts && typeof saved.drafts === 'object') {
           for (const [id, draft] of Object.entries(saved.drafts)) {
-            // Version 1 drafts predate the profile and separator controls; they take the new defaults.
-            const raw = saved.version === 1 && draft && typeof draft === 'object' ? { ...draft, autoProfile: NEW_DRAFT.autoProfile, separatorPlacement: NEW_DRAFT.separatorPlacement } : draft;
+            // Older drafts predate some of the dynamic controls; they take the new defaults
+            // (version 1: profile and separators; versions 1–2: spreading the upper line).
+            const adopt = { ...(saved.version === 1 ? { autoProfile: NEW_DRAFT.autoProfile, separatorPlacement: NEW_DRAFT.separatorPlacement } : {}), ...(saved.version < 3 ? { fanOut: NEW_DRAFT.fanOut } : {}) };
+            const raw = draft && typeof draft === 'object' ? { ...draft, ...adopt } : draft;
             try { const s = this.validate(raw); if (s.recipe === id) this.drafts.set(id, s); } catch { /* Ignore only this invalid saved draft. */ }
           }
           if (this.drafts.has(saved.active)) active = saved.active;
@@ -169,7 +173,7 @@ export class LetteringEditor {
   private remember() {
     if (!this.state) return;
     this.drafts.set(this.state.recipe, this.runtime!.E.normalise(this.state));
-    try { this.storage?.setItem(STORAGE_KEY, JSON.stringify({ version: 2, active: this.state.recipe, drafts: Object.fromEntries(this.drafts) })); }
+    try { this.storage?.setItem(STORAGE_KEY, JSON.stringify({ version: 3, active: this.state.recipe, drafts: Object.fromEntries(this.drafts) })); }
     catch { /* Restricted/full storage: the live in-memory draft is still usable. */ }
   }
   private choose(id: string) {
@@ -189,7 +193,11 @@ export class LetteringEditor {
     this.control('tabBacking').disabled = !ribbon;
     const auto = this.checkbox('autoProfile');
     auto.checked = s.autoProfile; auto.disabled = !badge || !s.crest.startsWith('wildlife-');
-    this.control('separatorPlacement').disabled = !badge || P.CRESTS[s.crest].separator === 'none';
+    const marks = badge && P.CRESTS[s.crest].separator !== 'none';
+    this.control('separatorPlacement').disabled = !marks;
+    // Spreading reads the marks' position, so it needs marks that follow the lettering.
+    const fan = this.checkbox('fanOut');
+    fan.checked = s.fanOut; fan.disabled = !marks || s.separatorPlacement !== 'follow-text';
     this.part('name').textContent = P.recipe(s.recipe).name;
     this.part('confidence').textContent = P.recipe(s.recipe).confidence ?? 'Reference-based reconstruction';
     this.part('policy-note').textContent = this.runtime.E.TEXT_FIT_POLICIES[s.textFit].description;
@@ -209,8 +217,8 @@ export class LetteringEditor {
     this.on(this.root, 'change', event => {
       const target = event.target;
       if (!this.state) return;
-      if (target instanceof HTMLInputElement && target.dataset.control === 'autoProfile') {
-        this.state = this.runtime!.E.normalise({ ...this.state, autoProfile: target.checked }); this.sync(); this.schedule(); return;
+      if (target instanceof HTMLInputElement && (target.dataset.control === 'autoProfile' || target.dataset.control === 'fanOut')) {
+        this.state = this.runtime!.E.normalise({ ...this.state, [target.dataset.control]: target.checked }); this.sync(); this.schedule(); return;
       }
       if (!(target instanceof HTMLSelectElement)) return;
       const key = target.dataset.control;
@@ -341,7 +349,11 @@ export class LetteringEditor {
     if (this.runtime!.P.LOCKUPS[s.layout].kind === 'wordmark') return '';
     if (s.autoProfile && s.crest.startsWith('wildlife-')) notes.push(`The wording uses the ${title(result.crest)} crest.`);
     const sep = result.separators;
-    if (sep?.placement === 'follow-text') notes.push(sep.crowded ? 'The dots are crowded between the lines.' : 'The dots sit between the upper and lower lines.');
+    if (sep?.placement === 'follow-text') notes.push(sep.crowded ? 'The dots are crowded between the lines.'
+      : sep.state === 'centred' ? 'The dots sit halfway between the upper and lower lines.'
+      : sep.state === 'pushed' ? 'The lettering has pushed the dots along the band.'
+      : 'The lines leave room, so the dots stay at the sides.');
+    if (result.report.some(r => r.stage === 'fanned')) notes.push('The upper line is spread out to use the room.');
     if (sep?.placement === 'reference-fallback') notes.push('With one line empty the dots keep their reference position.');
     return notes.join(' ');
   }

@@ -11,6 +11,7 @@ export interface Configuration {
   tabSizing: string;
   tabBacking: string;
   separatorPlacement: string;
+  fanOut: boolean;
   autoProfile: boolean;
   referenceModelVersion?: number;
   outputWidth: number;
@@ -43,7 +44,7 @@ export interface LogoResult {
   fontIds: string[];
   /** The crest profile actually drawn (autoProfile can differ from state.crest). */
   crest: string;
-  separators: { placement: string; y: number; angle: number; crowded: boolean } | null;
+  separators: { placement: string; state: string; y: number; angle: number; crowded: boolean } | null;
   viewBox: { x: number; y: number; w: number; h: number };
 }
 export interface Engine {

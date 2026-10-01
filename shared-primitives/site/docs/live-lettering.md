@@ -45,7 +45,7 @@ lettering has received reference calibration.
 
 ## The crest follows its wording
 
-A preset is a starting point, not a fixed layout. Two options, both on for new
+A preset is a starting point, not a fixed layout. Three options, all on for new
 drafts, let one preset become another by editing its text:
 
 - **Pick the short or long crest from the wording** (`autoProfile`). On the
@@ -56,15 +56,23 @@ drafts, let one preset become another by editing its text:
   Long ministry · Wildfire gives the capitals badge. The wording's case is kept.
   Choosing a crest profile by hand turns this off.
 - **Separator dots: follow the lettering** (`separatorPlacement: 'follow-text'`).
-  The dots sit in the gap between the end of the upper line and the start of
-  the lower line, at the crest's `separatorGap` fraction of that gap. Each
-  fraction is measured from the reference wording. The reference wording
-  therefore puts the dots back on the crest's `separatorY`, and other wording
-  moves them with the gap. When both lines run into each other, the lower
-  line's arc narrows until the dots have room. If the dots still don't fit,
-  they are centred and `SEPARATOR_CROWDED` is reported. With one line empty,
-  the dots keep their reference position. *Keep the reference position*
-  restores the fixed heights.
+  Each dot is placed from the visible ends of the two lines on its side:
+  - *at home*: at the sides while both lines stay at least 50 units away
+    (Forests keeps BRITISH COLUMBIA 129 units from its dots);
+  - *pushed*: a line that comes closer pushes the dot along the band;
+  - *halfway*: once the gap is under 100 units, the dot sits exactly halfway
+    between the two lines (the long ministry badge: about 39 units each side).
+
+  Each side is placed on its own, since the end letters differ. The references'
+  pairs aren't mirror images either. When the dots would touch a line, the
+  lower line's arc narrows until they fit; otherwise `SEPARATOR_CROWDED` is
+  reported. With one line empty the dots keep their reference position.
+  *Keep the reference position* restores the fixed heights.
+- **Spread the upper line when there is room** (`fanOut`). On the long crest,
+  a short lower line leaves the top of the band mostly empty. The upper line
+  then grows toward the capitals look (letter height up to ×1.166, plus letter
+  and word spacing) until its ends come within 129 units of dots at home, or
+  as close to pushed dots as the lower line is. The dots then end up halfway.
 
 Either way the dots sit on the separator band drawn in by the crest's
 `separatorInset`: 3.34 units on the capitals crest, measured from
@@ -72,9 +80,9 @@ Either way the dots sit on the separator band drawn in by the crest's
 long-crest rasters, which agree. The shared band alone put them 3–8 units too
 far out, mostly sideways.
 
-The note under these controls names the crest the wording picked. Drafts saved
-before these controls existed (storage payload version 1) adopt both defaults
-when loaded.
+The note under these controls names the crest the wording picked and what the
+dots and upper line are doing. Drafts saved before these controls existed
+(storage payload versions 1 and 2) adopt the new defaults when loaded.
 
 A mouse click on a text character or keyboard Enter/Space opens the selected
 line's HTML input below the preview. The caret remains in a conventional input;
@@ -83,7 +91,7 @@ updates while typing. Escape/Done returns focus to the sidebar. Multiline stacke
 wordmarks use their textarea. Empty inscriptions remain recoverable there.
 
 Each preset keeps its own normalized draft using a separate localStorage key,
-`forestoval-compose-lettering-v1` (payload version 2); restricted storage leaves an in-memory draft.
+`forestoval-compose-lettering-v1` (payload version 3); restricted storage leaves an in-memory draft.
 Reset restores only the current preset. Opening a v5 configuration validates the
 version and preset before replacing the draft. The engine's own normalization
 still validates fitting policies and geometry overrides.
@@ -148,15 +156,16 @@ Playwright dependency from the repository requirements and Chromium (or
 `CHROMIUM=/path/to/browser`). Results and screenshots go to `tests/output/`.
 
 Beyond the editing checks, it confirms that the crest follows its wording in
-both directions with the dots on their reference heights, that the dots sit
-where the references put them, that the dots move with
+both directions, that the dots sit where the references put them and halfway
+between squeezed lines, that the long crest spreads its upper line when there is
+room, that the dots move with
 the wording and leave room when both lines are full, and that older drafts adopt
 the new defaults. It also confirms that every face loads from the bundle and
 matches its calibration advance, that the service backing defaults per preset,
 that exports with a fallback face need consent (it blocks the bundled Noto file
 and all local faces in a second page), and that the Recreations cards show the
 engine's lettering with the same advances, and that the font button reloads the
-bundled face once it is reachable again. All 45 checks passed against
+bundled face once it is reachable again. All 47 checks passed against
 `npm run dev` and against the production build on a machine with none of the
 faces installed. A separate check confirmed that the three engine scripts load
 from `assets/` when the build is served under a sub-path like `/forestoval/`, that

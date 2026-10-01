@@ -9,18 +9,21 @@
   (Forests · Wildfire Service is see-through, as in its reference).
 - A fresh studio starts with reference-calibrated fitting, like the site's
   editor and Recreations page; saved configurations keep their own policy.
-- `separatorPlacement: 'follow-text'` places the separator marks between the
-  upper and lower lettering (at each crest's `separatorGap` fraction of the
-  gap, measured from its reference wording), narrowing the lower arc when the
-  lines meet; `'reference'` (the default) keeps `separatorY`.
-  `recipeState()` carries `autoProfile` and `separatorPlacement`.
+- `separatorPlacement: 'follow-text'` places each separator mark from the
+  lettering on its side: at `separatorHomeY` while the lines leave room,
+  pushed by a line that comes within 50 units, and exactly halfway between the
+  lines once the gap is under 100. The lower arc narrows when the marks would
+  touch a line. `'reference'` (the default) keeps `separatorY`.
+- `fanOut`: the long crest's upper line spreads toward the capitals look
+  (height, spacing, word spacing) when the lower line leaves room.
+  `recipeState()` carries `autoProfile`, `separatorPlacement` and `fanOut`;
+  the site's editor and a fresh studio turn all three on.
 - `separatorInset` per crest: the marks sit on the separator band drawn in by
   3.34 (capitals, from `wildfire-source.svg`) or 7.67 units (long, from both
   long-crest rasters). The long crest's marks were about 8 units too far out.
 - The long-ministry · Wildfire raster (`wildlife-long-ribbon`) now uses the
   registration the lettering calibration fitted. The previous one was 3.6% too
-  large and made overlays show the lettering offset outwards. The site's
-  editor and a fresh studio turn both on.
+  large and made overlays show the lettering offset outwards.
 - `retryFonts()` starts every face again from the top of the source order
   (dropping cached faces and their registered `FontFace`s), and a load that was
   in flight before the retry can no longer overwrite the newer result.
