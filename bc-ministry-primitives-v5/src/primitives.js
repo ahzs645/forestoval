@@ -5,6 +5,7 @@
 'use strict';
 const deepFreeze=o=>{for(const v of Object.values(o))if(v&&typeof v==='object')deepFreeze(v);return Object.freeze(o);};
 const FACES={
+ 'noto-condensed':{family:'Noto Sans Condensed',weight:800,stretch:'condensed',locals:['Noto Sans Condensed ExtraBold','NotoSans-CondensedExtraBold'],google:'Noto+Sans:wdth,wght@75,800',fallback:'"Arial Narrow", Arial, sans-serif',label:'Noto Sans Condensed ExtraBold · substitute'},
  'open-heavy':{family:'Open Sans',weight:800,locals:['Open Sans ExtraBold','OpenSans-Extrabold'],google:'Open+Sans:wght@800',fallback:'Arial, sans-serif',label:'Open Sans ExtraBold · substitute'},
  'open-bold':{family:'Open Sans',weight:700,locals:['Open Sans Bold','OpenSans-Bold'],google:'Open+Sans:wght@700',fallback:'Arial, sans-serif',label:'Open Sans Bold · substitute'},
  'condensed-bold':{family:'Roboto Condensed',weight:700,locals:['Roboto Condensed Bold','RobotoCondensed-Bold'],google:'Roboto+Condensed:wght@700',fallback:'"Arial Narrow", Arial, sans-serif',label:'Roboto Condensed Bold · substitute'},
@@ -44,6 +45,99 @@ const SLOTS={
  'management-top':{role:'service-condensed',side:'top',cap:46,anchorCap:48,rx:389,ry:466,y:-20,span:108,maxSpan:108,tracking:0,minTracking:0,endPad:48,minCap:27},
  'plate-label':{role:'crest-thin',side:'flat',cap:65,anchorCap:65,width:570,y:902.5,tracking:.15,minTracking:.01,minCap:28},
  'wings-label':{role:'plain-label',side:'bottom',cap:45,anchorCap:45,rx:431,ry:475,span:98,maxSpan:98,tracking:.035,minTracking:0,endPad:20,minCap:27}
+};
+// Reference-calibrated defaults, opt-in. Raster sources are not font masters.
+const REFERENCE_LETTERING={
+  "version": 1,
+  "roles": {
+    "crest-condensed": {
+      "face": "noto-condensed"
+    }
+  },
+  "slots": {
+    "wildlife-upper": {
+      "referenceProfile": "caps-upper",
+      "heightModel": "cap",
+      "cap": 51.33546,
+      "anchorCap": 51.33546,
+      "rx": 240.54227,
+      "ry": 331.82892,
+      "tracking": 0.018897,
+      "minTracking": -0.025,
+      "wordSpacingEm": -0.0807292,
+      "anchorBias": 4.05834
+    },
+    "wildlife-lower": {
+      "referenceProfile": "caps-lower",
+      "heightModel": "cap",
+      "cap": 47.99913,
+      "anchorCap": 47.99913,
+      "rx": 300.30455,
+      "ry": 379.37993,
+      "tracking": 0.1360178,
+      "minTracking": -0.025,
+      "wordSpacingEm": 0.0,
+      "anchorBias": -1.48416
+    },
+    "long-upper": {
+      "referenceProfile": "long-upper",
+      "heightModel": "xHeight",
+      "cap": 44.02432,
+      "anchorCap": 44.02432,
+      "rx": 242.30809,
+      "ry": 336.86689,
+      "tracking": -0.0031887,
+      "minTracking": -0.025,
+      "wordSpacingEm": -0.0717636,
+      "anchorBias": -0.96171,
+      "xHeight": 34.4538143,
+      "span": 116,
+      "maxSpan": 116,
+      "endPad": 12
+    },
+    "long-lower": {
+      "referenceProfile": "long-lower",
+      "heightModel": "xHeight",
+      "cap": 50.93773,
+      "anchorCap": 50.93773,
+      "rx": 291.49392,
+      "ry": 371.2928,
+      "tracking": -0.0059276,
+      "minTracking": -0.025,
+      "wordSpacingEm": 0.0091981,
+      "anchorBias": 0.10978,
+      "xHeight": 39.8643114,
+      "span": 240,
+      "maxSpan": 250,
+      "endPad": 12
+    }
+  },
+  "serviceByCrest": {
+    "wildlife-caps": {
+      "referenceProfile": "caps-service",
+      "heightModel": "cap",
+      "cap": 48.09953,
+      "anchorCap": 48.09953,
+      "rx": 401.9501,
+      "ry": 484.38091,
+      "tracking": 0.0396145,
+      "minTracking": -0.025,
+      "wordSpacingEm": 0.0044799,
+      "anchorBias": 0.42209
+    },
+    "wildlife-long": {
+      "referenceProfile": "long-service",
+      "heightModel": "cap",
+      "cap": 46.91702,
+      "anchorCap": 46.91702,
+      "rx": 397.65813,
+      "ry": 481.42089,
+      "tracking": 0.0510101,
+      "minTracking": -0.025,
+      "wordSpacingEm": 0.0379432,
+      "anchorBias": -1.15636
+    }
+  }
 };
 const CRESTS={
  'wildlife-caps':{scene:'wildlife',upper:'wildlife-upper',lower:'wildlife-lower',separator:'circle',separatorY:446,separatorSize:12.65},
@@ -111,5 +205,5 @@ function recipe(id,seen=new Set()){
  const p=r.extends?recipe(r.extends,seen):{content:{},confidence:'Generated interpretation'};
  return {...p,...r,content:{...p.content,...r.content}};
 }
-global.BCPrimitives=deepFreeze({version:5,FACES,ROLES,SLOTS,CRESTS,SHAPES,RECOLOUR,TABS,THEMES,LOCKUPS,RECIPES,recipe});
+global.BCPrimitives=deepFreeze({version:5,FACES,ROLES,SLOTS,REFERENCE_LETTERING,CRESTS,SHAPES,RECOLOUR,TABS,THEMES,LOCKUPS,RECIPES,recipe});
 })(window);

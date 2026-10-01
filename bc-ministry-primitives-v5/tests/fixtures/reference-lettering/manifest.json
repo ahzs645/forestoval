@@ -1,0 +1,93 @@
+{
+  "references": [
+    {
+      "id": 1,
+      "file": "1630573023028.jpeg",
+      "recipe": "long-ministry",
+      "label": "Long ministry",
+      "sourceSize": "200 \u00d7 200 px",
+      "scale": 0.22516767539264318,
+      "tx": 23.294513909570014,
+      "ty": 3.642800856455594,
+      "fittedWhiteBandCentre": [
+        99.47381827765807,
+        98.42960165071105
+      ],
+      "registrationRmsNormalized": 0.0013940942815353374,
+      "alignment": "One uniform scale + translation, fitted only to the outer edge of the white oval band. No glyph-level fitting, stretching, or optical adjustment.",
+      "sha256": "3121015fd6e9453ba184c9038ed3eb3190c11711c0f245bc5cc79ba5caffc148"
+    },
+    {
+      "id": 2,
+      "file": "a467069837794d374680005507598a62e7d4f8a4-676x945.png",
+      "recipe": "forests-wildfire",
+      "label": "Forests + Wildfire Service",
+      "sourceSize": "676 \u00d7 945 px",
+      "scale": 0.9999904721778826,
+      "tx": 0.00392046973934157,
+      "ty": 0.004553022783682081,
+      "fittedWhiteBandCentre": [
+        338.3232569925694,
+        420.9615021816384
+      ],
+      "registrationRmsNormalized": 0.0002682519233885481,
+      "alignment": "One uniform scale + translation, fitted only to the outer edge of the white oval band. No glyph-level fitting, stretching, or optical adjustment.",
+      "sha256": "141ff4fb9d852846961fed27982f201621cb8ac59e7b7d1edec8ea09dec0307f"
+    },
+    {
+      "id": 3,
+      "file": "British_Columbia_Wildfire_Service.png",
+      "recipe": "long-wildfire",
+      "label": "Long ministry + Wildfire Service",
+      "sourceSize": "267 \u00d7 373 px",
+      "scale": 0.37474003571505793,
+      "tx": 6.498847722772453,
+      "ty": 8.374430663726173,
+      "fittedWhiteBandCentre": [
+        133.2818559403823,
+        166.12535584877125
+      ],
+      "registrationRmsNormalized": 0.0005521078460307065,
+      "alignment": "One uniform scale + translation, fitted only to the outer edge of the white oval band. No glyph-level fitting, stretching, or optical adjustment.",
+      "sha256": "0137827e538a5a6b91e2a0b245d5541e1f0547765a2a55901888f5375306edcf"
+    },
+    {
+      "id": 4,
+      "file": "logo_transparent-858x1024.png",
+      "recipe": "forests",
+      "label": "Forests",
+      "sourceSize": "858 \u00d7 1024 px",
+      "scale": 0.9585603624737838,
+      "tx": 104.69559082542861,
+      "ty": 110.34942087932257,
+      "fittedWhiteBandCentre": [
+        428.9981865720871,
+        513.8659112842346
+      ],
+      "registrationRmsNormalized": 0.00037994626605455814,
+      "alignment": "One uniform scale + translation, fitted only to the outer edge of the white oval band. No glyph-level fitting, stretching, or optical adjustment.",
+      "sha256": "773a802ac186fb9dfa271efa8a0739fcc342fd8dd4f1d68d052b5a6a602b3615"
+    }
+  ],
+  "modelWhiteEllipse": [
+    338.32256,
+    420.96096,
+    310.34551,
+    398.06377
+  ],
+  "canvas": {
+    "viewBox": [
+      0,
+      0,
+      676,
+      945
+    ],
+    "width": 676,
+    "height": 945
+  },
+  "source": "Four user-provided reference rasters; fixed oval registration reused from the preceding overlay, unchanged throughout typography calibration.",
+  "maskSize": [
+    676,
+    945
+  ]
+}
