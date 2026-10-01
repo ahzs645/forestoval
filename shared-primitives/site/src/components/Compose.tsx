@@ -3,11 +3,27 @@ import { FAMILIES, references, type FamilyId, type VB } from '../data';
 import { LAYERS, PRESETS, resolve, type Preset } from '../layers';
 import { dataUrl, download, downloadPng, finish, stack } from '../svg';
 import { MAX_HALF_SPAN, TAB, tabPiece, type TabSide } from '../tab';
+import { LiveLettering } from './LiveLettering';
 
 const TAB_LAYERS: Record<string, TabSide> = { 'ribbon-lower': 'lower', 'ribbon-upper': 'upper' };
 import type { ViewSettings } from '../App';
 
-export function Compose({ view, onOpen }: { view: ViewSettings; onOpen: (file: string) => void }) {
+export function Compose(props: { view: ViewSettings; onOpen: (file: string) => void }) {
+  const [mode, setMode] = useState<'lettering' | 'layers'>('lettering');
+  return (
+    <div className="fo-compose">
+      <div className="fo-modes" aria-label="Compose mode">
+        <button type="button" aria-pressed={mode === 'lettering'} onClick={() => setMode('lettering')}>Live lettering</button>
+        <button type="button" aria-pressed={mode === 'layers'} onClick={() => setMode('layers')}>Layer assembly</button>
+        <span>Live text uses the studio engine. Existing layer presets remain in Layer assembly.</span>
+      </div>
+      <div className="fo-mode-panel" hidden={mode !== 'lettering'}><LiveLettering view={props.view} /></div>
+      <div className="fo-mode-panel" hidden={mode !== 'layers'}><LayerCompose {...props} /></div>
+    </div>
+  );
+}
+
+function LayerCompose({ view, onOpen }: { view: ViewSettings; onOpen: (file: string) => void }) {
   const [family, setFamily] = useState<FamilyId>('bc-ministry-v5');
   const [layers, setLayers] = useState<Set<string>>(new Set(PRESETS[1].layers));
   const [preset, setPreset] = useState<string | null>(PRESETS[1].name);

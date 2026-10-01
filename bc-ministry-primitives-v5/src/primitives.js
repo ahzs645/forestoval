@@ -4,17 +4,21 @@
 (function (global) {
 'use strict';
 const deepFreeze=o=>{for(const v of Object.values(o))if(v&&typeof v==='object')deepFreeze(v);return Object.freeze(o);};
+// advance: the probe text's width (em) in the exact face the calibration used.
+// The engine compares it with the loaded face, so a different binary, weight or
+// width is reported instead of silently changing the fit.
+const FACE_PROBE='Hamburgefonstiv FORESTS 1234';
 const FACES={
- 'noto-condensed':{family:'Noto Sans Condensed',weight:800,stretch:'condensed',locals:['Noto Sans Condensed ExtraBold','NotoSans-CondensedExtraBold'],google:'Noto+Sans:wdth,wght@75,800',fallback:'"Arial Narrow", Arial, sans-serif',label:'Noto Sans Condensed ExtraBold · substitute'},
- 'open-heavy':{family:'Open Sans',weight:800,locals:['Open Sans ExtraBold','OpenSans-Extrabold'],google:'Open+Sans:wght@800',fallback:'Arial, sans-serif',label:'Open Sans ExtraBold · substitute'},
- 'open-bold':{family:'Open Sans',weight:700,locals:['Open Sans Bold','OpenSans-Bold'],google:'Open+Sans:wght@700',fallback:'Arial, sans-serif',label:'Open Sans Bold · substitute'},
- 'condensed-bold':{family:'Roboto Condensed',weight:700,locals:['Roboto Condensed Bold','RobotoCondensed-Bold'],google:'Roboto+Condensed:wght@700',fallback:'"Arial Narrow", Arial, sans-serif',label:'Roboto Condensed Bold · substitute'},
- 'condensed-heavy':{family:'Roboto Condensed',weight:800,locals:['Roboto Condensed ExtraBold','RobotoCondensed-ExtraBold'],google:'Roboto+Condensed:wght@800',fallback:'"Arial Narrow", Arial, sans-serif',label:'Roboto Condensed ExtraBold · substitute'},
- 'inter-black':{family:'Inter',weight:900,locals:['Inter Black','Inter-Black'],google:'Inter:wght@900',fallback:'"Arial Black", Arial, sans-serif',label:'Inter Black · substitute'},
- 'slab-bold':{family:'Roboto Slab',weight:700,locals:['Roboto Slab Bold','RobotoSlab-Bold'],google:'Roboto+Slab:wght@700',fallback:'Rockwell, Georgia, serif',label:'Roboto Slab Bold · substitute'},
- 'slab-medium':{family:'Roboto Slab',weight:500,locals:['Roboto Slab Medium','RobotoSlab-Medium'],google:'Roboto+Slab:wght@500',fallback:'Rockwell, Georgia, serif',label:'Roboto Slab Medium · substitute'},
- 'sans-regular':{family:'Roboto',weight:400,locals:['Roboto Regular','Roboto-Regular'],google:'Roboto:wght@400',fallback:'Arial, sans-serif',label:'Roboto Regular · substitute'},
- 'sans-bold':{family:'Roboto',weight:700,locals:['Roboto Bold','Roboto-Bold'],google:'Roboto:wght@700',fallback:'Arial, sans-serif',label:'Roboto Bold · substitute'}
+ 'noto-condensed':{family:'Noto Sans Condensed',weight:800,advance:13.58798,stretch:'condensed',locals:['Noto Sans Condensed ExtraBold','NotoSans-CondensedExtraBold'],google:'Noto+Sans:wdth,wght@75,800',fallback:'"Arial Narrow", Arial, sans-serif',label:'Noto Sans Condensed ExtraBold · substitute'},
+ 'open-heavy':{family:'Open Sans',weight:800,advance:16.19873,locals:['Open Sans ExtraBold','OpenSans-Extrabold'],google:'Open+Sans:wght@800',fallback:'Arial, sans-serif',label:'Open Sans ExtraBold · substitute'},
+ 'open-bold':{family:'Open Sans',weight:700,advance:15.77198,locals:['Open Sans Bold','OpenSans-Bold'],google:'Open+Sans:wght@700',fallback:'Arial, sans-serif',label:'Open Sans Bold · substitute'},
+ 'condensed-bold':{family:'Roboto Condensed',weight:700,advance:13.11573,locals:['Roboto Condensed Bold','RobotoCondensed-Bold'],google:'Roboto+Condensed:wght@700',fallback:'"Arial Narrow", Arial, sans-serif',label:'Roboto Condensed Bold · substitute'},
+ 'condensed-heavy':{family:'Roboto Condensed',weight:800,advance:13.17139,locals:['Roboto Condensed ExtraBold','RobotoCondensed-ExtraBold'],google:'Roboto+Condensed:wght@800',fallback:'"Arial Narrow", Arial, sans-serif',label:'Roboto Condensed ExtraBold · substitute'},
+ 'inter-black':{family:'Inter',weight:900,advance:16.34522,locals:['Inter Black','Inter-Black'],google:'Inter:wght@900',fallback:'"Arial Black", Arial, sans-serif',label:'Inter Black · substitute'},
+ 'slab-bold':{family:'Roboto Slab',weight:700,advance:15.52247,locals:['Roboto Slab Bold','RobotoSlab-Bold'],google:'Roboto+Slab:wght@700',fallback:'Rockwell, Georgia, serif',label:'Roboto Slab Bold · substitute'},
+ 'slab-medium':{family:'Roboto Slab',weight:500,advance:15.41114,locals:['Roboto Slab Medium','RobotoSlab-Medium'],google:'Roboto+Slab:wght@500',fallback:'Rockwell, Georgia, serif',label:'Roboto Slab Medium · substitute'},
+ 'sans-regular':{family:'Roboto',weight:400,advance:14.65528,locals:['Roboto Regular','Roboto-Regular'],google:'Roboto:wght@400',fallback:'Arial, sans-serif',label:'Roboto Regular · substitute'},
+ 'sans-bold':{family:'Roboto',weight:700,advance:14.88086,locals:['Roboto Bold','Roboto-Bold'],google:'Roboto:wght@700',fallback:'Arial, sans-serif',label:'Roboto Bold · substitute'}
 };
 // Change a role once: every slot/recipe using it updates together.
 const ROLES={
@@ -184,7 +188,7 @@ const LOCKUPS={
 const longName='Forests, Lands and Natural Resource Operations';
 const RECIPES=[
  {id:'forests',name:'Forests',crest:'wildlife-caps',tab:'none',layout:'badge',theme:'wildlife',content:{upper:'BRITISH COLUMBIA',lower:'FORESTS'},reference:'wildlife-source',confidence:'Reference-derived'},
- {id:'forests-wildfire',name:'Forests · Wildfire Service',extends:'forests',tab:'wildfire-bottom',content:{service:'WILDFIRE SERVICE'},reference:'wildfire-source'},
+ {id:'forests-wildfire',name:'Forests · Wildfire Service',extends:'forests',tab:'wildfire-bottom',tabBacking:'transparent',content:{service:'WILDFIRE SERVICE'},reference:'wildfire-source'},
  {id:'long-ministry',name:'Long ministry',crest:'wildlife-long',tab:'none',layout:'badge',theme:'wildlife',content:{upper:'British Columbia',lower:longName},reference:'wildlife-long',confidence:'Small raster reference'},
  {id:'long-wildfire',name:'Long ministry · Wildfire',extends:'long-ministry',tab:'wildfire-bottom',content:{service:'WILDFIRE SERVICE'},reference:'wildlife-long-ribbon'},
  {id:'forest-service',name:'Forest Service',crest:'tree-heavy',tab:'none',layout:'badge',theme:'forest',content:{upper:'FOREST SERVICE',lower:'BRITISH COLUMBIA'},reference:'tree-source',confidence:'Supplied vector reference'},
@@ -205,5 +209,5 @@ function recipe(id,seen=new Set()){
  const p=r.extends?recipe(r.extends,seen):{content:{},confidence:'Generated interpretation'};
  return {...p,...r,content:{...p.content,...r.content}};
 }
-global.BCPrimitives=deepFreeze({version:5,FACES,ROLES,SLOTS,REFERENCE_LETTERING,CRESTS,SHAPES,RECOLOUR,TABS,THEMES,LOCKUPS,RECIPES,recipe});
+global.BCPrimitives=deepFreeze({version:5,FACE_PROBE,FACES,ROLES,SLOTS,REFERENCE_LETTERING,CRESTS,SHAPES,RECOLOUR,TABS,THEMES,LOCKUPS,RECIPES,recipe});
 })(window);

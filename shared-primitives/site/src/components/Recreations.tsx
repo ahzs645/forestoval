@@ -1,20 +1,59 @@
-import { useMemo, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
 import {
   build,
+  buildLive,
   CREST_VARIANTS,
   fits,
   letteringRuns,
+  liveRecipes,
   RECREATIONS,
   referencesFor,
   variantMembers,
   type Built,
   type LetteringFit,
+  type LiveLettering,
   type Recreation,
   type ReferenceImage,
 } from '../recreations';
 import type { ViewSettings } from '../App';
+import { loadLetteringRuntime } from '../lettering/runtime';
 
 type Mode = 'side' | 'wipe' | 'overlay' | 'difference';
+type Source = 'live' | 'fitted' | 'v5';
+const SOURCES: [Source, string, string][] = [
+  ['live', 'Live engine', 'Drawn now by the v5 engine, configured as Compose → Live lettering (reference-calibrated).'],
+  ['fitted', 'Saved reference fit · legacy', 'The saved v5 examples with the fits in lettering-fit.json applied.'],
+  ['v5', 'Saved v5 examples · legacy', 'The lettering in the saved v5 examples, as generated.'],
+];
+
+// Rendered once per page load: the engine's lettering for every recipe used here.
+let livePending: Promise<LiveLettering> | undefined;
+function loadLive(): Promise<LiveLettering> {
+  livePending ??= (async () => {
+    const { E } = await loadLetteringRuntime();
+    const live: LiveLettering = { svgs: {}, backing: {}, warnings: {} };
+    for (const id of liveRecipes()) {
+      const r = await E.render(E.recipeState(id, { textFit: 'reference-calibrated' }));
+      live.svgs[id] = new XMLSerializer().serializeToString(r.svg);
+      live.backing[id] = r.state.tabBacking;
+      live.warnings[id] = r.warnings.filter((w) => w.code.startsWith('FONT_') || w.code === 'REFERENCE_PROFILE_UNAVAILABLE').map((w) => w.message);
+    }
+    return live;
+  })();
+  livePending.catch(() => { livePending = undefined; });
+  return livePending;
+}
+function useLive(enabled: boolean) {
+  const [state, setState] = useState<{ live?: LiveLettering; error?: string }>({});
+  useEffect(() => {
+    if (!enabled || state.live) return;
+    let alive = true;
+    loadLive().then((live) => alive && setState({ live }), (e: unknown) => alive && setState({ error: e instanceof Error ? e.message : String(e) }));
+    return () => { alive = false; };
+  }, [enabled, state.live]);
+  return state;
+}
+
 const MODES: [Mode, string][] = [
   ['side', 'Side by side'],
   ['wipe', 'Wipe'],
@@ -24,7 +63,8 @@ const MODES: [Mode, string][] = [
 
 export function Recreations({ view, onOpen }: { view: ViewSettings; onOpen: (file: string) => void }) {
   const [mode, setMode] = useState<Mode>('side');
-  const [fitted, setFitted] = useState(true);
+  const [source, setSource] = useState<Source>('live');
+  const live = useLive(source === 'live');
   const [showHidden, setShowHidden] = useState(false);
   const hiddenCount = RECREATIONS.filter((r) => r.hidden).length;
   const shown = RECREATIONS.filter((r) => showHidden || !r.hidden);
@@ -34,7 +74,8 @@ export function Recreations({ view, onOpen }: { view: ViewSettings; onOpen: (fil
         <div>
           <h2>Recreations</h2>
           <p className="muted">
-            Each supplied reference next to the same logo rebuilt from the shared primitives. The artwork is our pieces; the lettering is the v5 studio’s live text for the same crest.
+            Each supplied reference next to the same logo rebuilt from the shared primitives. The artwork is our pieces; the lettering is drawn by the live v5 engine with
+            the same recipe and configuration as Compose → Live lettering. The two saved-lettering modes are kept as legacy evidence of the earlier pipeline.
             The references are the supplied images, kept in <code>shared-primitives/references/</code>.
           </p>
         </div>
@@ -44,9 +85,10 @@ export function Recreations({ view, onOpen }: { view: ViewSettings; onOpen: (fil
               <button key={m} className={mode === m ? 'active' : ''} onClick={() => setMode(m)}>{label}</button>
             ))}
           </div>
-          <div className="segmented modes" title="Lettering only; the artwork is the same either way.">
-            <button className={fitted ? 'active' : ''} onClick={() => setFitted(true)}>Lettering fitted to reference</button>
-            <button className={!fitted ? 'active' : ''} onClick={() => setFitted(false)}>v5 studio lettering</button>
+          <div className="segmented modes" title="Lettering only; the artwork is the same pieces in every mode.">
+            {SOURCES.map(([s, label, hint]) => (
+              <button key={s} className={source === s ? 'active' : ''} title={hint} onClick={() => setSource(s)}>{label}</button>
+            ))}
           </div>
         </div>
       </div>
@@ -56,9 +98,10 @@ export function Recreations({ view, onOpen }: { view: ViewSettings; onOpen: (fil
           Show hidden logos ({hiddenCount}: the BCTS wordmark beside the crest)
         </label>
       )}
+      {source === 'live' && live.error && <p className="crash">The live engine failed to load: {live.error}</p>}
       <CrestVariants showHidden={showHidden} />
       <div className="recgrid">
-        {shown.map((r) => <RecreationCard key={r.id} rec={r} mode={mode} fitted={fitted} view={view} onOpen={onOpen} />)}
+        {shown.map((r) => <RecreationCard key={r.id} rec={r} mode={mode} source={source} live={live.live} view={view} onOpen={onOpen} />)}
       </div>
     </div>
   );
@@ -74,8 +117,9 @@ function CrestVariants({ showHidden }: { showHidden: boolean }) {
   })), []);
   return (
     <section className="variants">
-      <h3>Lettering around the oval</h3>
+      <h3>Saved lettering fits (legacy)</h3>
       <p className="muted small">
+        These saved fits apply only to the “Saved reference fit” mode; the live engine has its own reference calibration.
         Each crest variant's lettering is fitted once, to every reference that uses it at the same time, and then used unchanged on each of those logos.
         The scores are the overlap with each reference's letters on the crest band: v5 placement → shared fit. Parks has its own face and is fitted alone.
       </p>
@@ -109,17 +153,28 @@ function CrestVariants({ showHidden }: { showHidden: boolean }) {
 interface CardProps {
   rec: Recreation;
   mode: Mode;
-  fitted: boolean;
+  source: Source;
+  live?: LiveLettering;
   view: ViewSettings;
   onOpen: (file: string) => void;
 }
 
-function RecreationCard({ rec, mode, fitted, view, onOpen }: CardProps) {
+function RecreationCard({ rec, mode, source, live, view, onOpen }: CardProps) {
   const refs = useMemo(() => referencesFor(rec.id), [rec.id]);
   const [active, setActive] = useState<ReferenceImage | undefined>(() => refs.find((r) => r.role === 'primary'));
-  const built = useMemo(() => build(rec, fitted), [rec, fitted]);
+  const built = useMemo(() => (source === 'live' ? (live ? buildLive(rec, live) : null) : build(rec, source === 'fitted')), [rec, source, live]);
+  const fitted = source === 'fitted';
   const [t, setT] = useState(0.5);
   const others = refs.filter((r) => r !== active);
+
+  if (!built) {
+    return (
+      <article className="reccard">
+        <header><h3>{rec.name}</h3></header>
+        <p className="muted">Rendering with the live engine…</p>
+      </article>
+    );
+  }
 
   return (
     <article className="reccard">
@@ -165,7 +220,12 @@ function RecreationCard({ rec, mode, fitted, view, onOpen }: CardProps) {
         <dd>
           {built.letteringFrom.join(' + ')}
           <br />
-          {built.fit ? (
+          {source === 'live' ? (
+            <span className="muted">
+              Same recipe and configuration as Compose → Live lettering; no saved corrections applied.
+              {built.warnings?.map((w) => <span key={w} className="recwarn"><br />⚠ {w}</span>)}
+            </span>
+          ) : built.fit ? (
             <span className="muted" title={fitSummary(built.fit)}>
               Fitted to {built.fit.reference}: overlap with its letters {built.fit.before.toFixed(2)} → {built.fit.after.toFixed(2)}
               {built.fit.frozen?.length ? ` · ${built.fit.frozen.length} run(s) too small to fit, left as v5` : ''}

@@ -29,6 +29,8 @@ with sync_playwright() as pw:
     errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
     page.set_content(PAGE.read_text(encoding='utf-8'))
     page.wait_for_function('window.BCStudio && BCStudio.current!==null')
+    start=page.evaluate("({state:BCStudio.current.state.textFit,control:document.getElementById('textFit').value})")
+    record('A fresh studio starts with reference-calibrated fitting, like Compose and Recreations',start=={'state':'reference-calibrated','control':'reference-calibrated'},start)
     page.evaluate('n=>BCLogo.ensureFonts(Object.keys(BCPrimitives.ROLES).map(k=>BCPrimitives.ROLES[k].face),n)',ARGS.network_fonts)
     font_status=page.evaluate('[...BCLogo.fontState].map(([id,v])=>({id,status:v.status,source:v.source}))')
     record('All default role faces load at their requested weight',all(f['status']=='ready' for f in font_status),font_status)
@@ -64,8 +66,9 @@ with sync_playwright() as pw:
     containment=page.evaluate("""async()=>{
       const read=async(blob)=>{const url=URL.createObjectURL(blob);try{const img=new Image();await new Promise((ok,no)=>{img.onload=ok;img.onerror=no;img.src=url;});const c=document.createElement('canvas');c.width=img.width;c.height=img.height;const ctx=c.getContext('2d');ctx.drawImage(img,0,0);return ctx.getImageData(0,0,c.width,c.height).data;}finally{URL.revokeObjectURL(url);}};
       const rows=[];
+      // The band is found from paper pixels; a see-through holder has the same geometry.
       for(const recipe of ['forests','forests-wildfire','long-wildfire','forest-service','wildfire-management','parks']){
-        const s=BCLogo.recipeState(recipe),r=BCLogo.makeLogo(s),bg=r.svg.cloneNode(true),ink=r.svg.cloneNode(true);
+        const s={...BCLogo.recipeState(recipe),tabBacking:'paper'},r=BCLogo.makeLogo(s),bg=r.svg.cloneNode(true),ink=r.svg.cloneNode(true);
         bg.querySelectorAll('text').forEach(t=>t.remove());ink.querySelector('[data-layer="composition"]').querySelectorAll('path,ellipse,rect,use,circle').forEach(x=>x.remove());
         ink.querySelectorAll('text').forEach(t=>{t.setAttribute('fill','#ff0000');if(!t.dataset.slot)t.remove();});
         const a=await read(await BCLogo.png({...r,svg:bg},900)),b=await read(await BCLogo.png({...r,svg:ink},900));
@@ -76,6 +79,45 @@ with sync_playwright() as pw:
     }""")
     for row in containment:
         record('Glyph ink stays inside the lettering band: '+row['recipe'],row['outsidePaperPixels']==0,row)
+    backing=page.evaluate('''()=>{
+      const parts=(recipe,extra={})=>{const r=BCLogo.makeLogo({...BCLogo.recipeState(recipe),...extra});const ribbon=r.svg.querySelector('[data-tab-backing]');
+        return {backing:r.state.tabBacking,marked:ribbon?.getAttribute('data-tab-backing'),faces:ribbon?.querySelectorAll('[data-tab-part="face"]').length,
+          ring:[...r.svg.querySelectorAll('[data-primitive="reactive-service-ribbon"] [data-tab-part="border"]')].map(x=>x.getAttribute('fill-rule'))};};
+      return {fw:parts('forests-wildfire'),lw:parts('long-wildfire'),fwPaper:parts('forests-wildfire',{tabBacking:'paper'}),
+        fwReactive:parts('forests-wildfire',{tabSizing:'follow-text'}),bogus:BCLogo.normalise({recipe:'long-wildfire',tabBacking:'glass'}).tabBacking};}''')
+    record('Service holder backing follows the preset: Forests · Wildfire Service see-through, long ministry paper',
+           backing['fw']['backing']=='transparent' and backing['fw']['faces']==0 and backing['lw']['backing']=='paper' and backing['lw']['faces']==1 and backing['fwPaper']['faces']==1 and backing['bogus']=='paper',backing)
+    record('A see-through reactive holder is one even-odd ring',backing['fwReactive']['ring']==['evenodd'] and backing['fwReactive']['faces']==0,backing['fwReactive'])
+    faces=page.evaluate("async()=>{const ids=Object.keys(BCPrimitives.FACES);await BCLogo.ensureFonts(ids,false);return ids.map(id=>({id,...BCLogo.fontState.get(id),font:undefined}))}")
+    record('Ready faces are verified against the calibration advances',all(f.get('verified') for f in faces if f['status']=='ready'),[{k:f.get(k) for k in ('id','status','source','verified','advance')} for f in faces])
+    mismatch=page.evaluate('''()=>{const st=BCLogo.fontState.get('open-heavy'),saved={...st};Object.assign(st,{verified:false,advance:st.advance*1.01});
+      try{return BCLogo.makeLogo(BCLogo.recipeState('forests')).warnings.map(w=>w.code)}finally{BCLogo.fontState.set('open-heavy',saved)}}''')
+    record('A face whose advances differ is reported, not silently used',('FONT_METRICS_MISMATCH' in mismatch) or not any(f['id']=='open-heavy' and f['status']=='ready' for f in faces),mismatch)
+    # Retry: a face that settled on a local copy because the supplied file failed
+    # must be loaded again from the supplied file once it is available.
+    noto=ROOT.parent/'shared-primitives/site/node_modules/@fontsource-variable/noto-sans/files/noto-sans-latin-wdth-normal.woff2'
+    supply={'ok':False,'requests':0}
+    def serve(route):
+        supply['requests']+=1
+        cors={'access-control-allow-origin':'*'}
+        if supply['ok'] and noto.exists():route.fulfill(status=200,body=noto.read_bytes(),headers={**cors,'content-type':'font/woff2'})
+        else:route.fulfill(status=404,headers=cors)
+    page.route('https://fonts.test/**',serve)
+    load="async()=>{BCLogo.retryFonts();await BCLogo.ensureFonts(['noto-condensed'],false);const s=BCLogo.fontState.get('noto-condensed');return {status:s.status,source:s.source,verified:s.verified}}"
+    page.evaluate("window.BC_FONT_SOURCES={'noto-condensed':[{url:'https://fonts.test/noto.woff2'}]}")
+    first=page.evaluate(load);before=supply['requests'];supply['ok']=True
+    second=page.evaluate(load)
+    retried=supply['requests']>before and first['source']=='local' and (second['source']=='bundled' and second['verified'] if noto.exists() else second['source']=='local')
+    record('Retry reloads a face from its supplied source after settling on a local copy',retried,{'first':first,'second':second,'requests':supply['requests'],'suppliedFile':noto.exists()})
+    # A load that started before a retry must not overwrite the newer result.
+    stale=page.evaluate("""async()=>{const real=window.fetch;window.fetch=async(u,...r)=>{if(String(u).includes('slow')){await new Promise(ok=>setTimeout(ok,400));return new Response('',{status:404})}return real(u,...r)};
+      try{window.BC_FONT_SOURCES={'noto-condensed':[{url:'https://fonts.test/slow.woff2'}]};BCLogo.retryFonts();const old=BCLogo.ensureFonts(['noto-condensed'],false);
+        await new Promise(ok=>setTimeout(ok,50));window.BC_FONT_SOURCES={'noto-condensed':[{url:'https://fonts.test/noto.woff2'}]};BCLogo.retryFonts();
+        const now=(await BCLogo.ensureFonts(['noto-condensed'],false))[0].source;await old;return {now,after:BCLogo.fontState.get('noto-condensed').source}}
+      finally{window.fetch=real}}""")
+    record('A font load started before a retry cannot overwrite the newer result',stale['after']==stale['now'] and (stale['now']=='bundled' if noto.exists() else True),stale)
+    page.unroute('https://fonts.test/**')
+    page.evaluate("async()=>{delete window.BC_FONT_SOURCES;BCLogo.retryFonts();await BCLogo.ensureFonts(Object.keys(BCPrimitives.FACES),false)}")
     page.evaluate("BCStudio.startRecipe('bcts-tree')")
     page.wait_for_function("BCStudio.current.state.recipe==='bcts-tree'")
     png=page.evaluate('''async()=>{const b=await BCLogo.png(BCStudio.current,1000);return await new Promise(ok=>{const rd=new FileReader();rd.onload=()=>ok(rd.result);rd.readAsDataURL(b);});}''')

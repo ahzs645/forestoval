@@ -97,8 +97,8 @@ npm run regen    # rerun extract_primitives.py; the page reloads
 ```
 
 - **Library:** the 15 building blocks, grouped as Crest, Scenes, Separators, Service tabs and Airtanker package. Scene parts are hidden by default. They appear in their scene's detail panel, with the *Show scene parts* toggle, or in search results. Click a piece to see its details and download it as SVG or PNG. The colour and backdrop menus apply here and in Compose; Recreations uses each logo's own theme and only takes the backdrop.
-- **Recreations:** each supplied reference next to the same logo rebuilt from the primitives. There are four views: side by side, a draggable wipe, an overlay and a difference blend. Each card lists the primitives used, where its lettering comes from, the reference file, how it was lined up, and any alternate copies in the folder.
-- **Compose:** stack pieces in their shared coordinates, with presets for each logo. You can overlay the finished logo (loaded when picked); with *Difference blend* on, matching artwork turns black. There are also guides for the crest centre and each piece's viewBox. With a tab in the stack, *Tabs* sliders grow it around the oval; downloads include the grown tab.
+- **Recreations:** each supplied reference next to the same logo rebuilt from the primitives. The lettering is drawn by the live v5 engine with the same recipe and configuration as Compose → Live lettering (including the service holder's backing); the saved reference fits and the saved v5 examples remain as two legacy lettering modes. There are four views: side by side, a draggable wipe, an overlay and a difference blend. Each card lists the primitives used, where its lettering comes from, the reference file, how it was lined up, and any alternate copies in the folder.
+- **Compose:** two modes. *Live lettering* runs the v5 studio engine on any active recipe: click the curved text (or use the sidebar fields) to retype it and the reference-calibrated fit updates live; each preset keeps its own draft, and SVG, PNG and configuration exports come from the engine. See [`site/docs/live-lettering.md`](site/docs/live-lettering.md). *Layer assembly* stacks pieces in their shared coordinates, with presets for each logo. You can overlay the finished logo (loaded when picked); with *Difference blend* on, matching artwork turns black. There are also guides for the crest centre and each piece's viewBox. With a tab in the stack, *Tabs* sliders grow it around the oval; downloads include the grown tab.
 - **Checks:** runs in the browser. For every file it checks the XML, viewBox, that the file is self-contained, internal references, unique ids and theme coverage. It also checks nothing falls outside the viewBox (rendered with a margin) and measures the padding. It stacks each set of parts and compares them pixel by pixel with the composite they came from.
 
 `npm run build` writes a static copy to `site/dist/`, with the v5 studio built into `dist/studio/` (it runs `../bc-ministry-primitives-v5/build.py`, so it needs `python3`). Serve it with `npm run preview`; browsers block the module script if you open `index.html` directly from disk. The deployed site links the studio from its header.
@@ -130,8 +130,10 @@ so keep the file names: the script checks that every studio reference still exis
 The v5 studio fitted its lettering to its own settings, not to these images, so on
 several references (Long ministry especially) the words sat in visibly different
 places. `fit_lettering.py` fits each recreation's lettering to its primary
-reference and writes `lettering-fit.json`, which the site applies. The
-*v5 studio lettering* switch on the Recreations tab shows the unfitted placement.
+reference and writes `lettering-fit.json`, which the site applies in the
+*Saved reference fit · legacy* mode of the Recreations tab; *Saved v5 examples ·
+legacy* shows the unfitted placement. The default *Live engine* mode uses
+neither: it draws the engine's current reference-calibrated lettering.
 
 ```sh
 python fit_lettering.py                 # all recreations, about 4 minutes

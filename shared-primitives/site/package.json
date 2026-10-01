@@ -11,6 +11,8 @@
     "regen": "cd .. && python3 extract_primitives.py"
   },
   "dependencies": {
+    "@fontsource-variable/noto-sans": "^5.3.0",
+    "@fontsource/inter": "^5.3.0",
     "@fontsource/open-sans": "^5.3.0",
     "@fontsource/roboto": "^5.3.0",
     "@fontsource/roboto-condensed": "^5.3.0",
