@@ -1,14 +1,30 @@
 /* UI owns the shared patch maps. Every recipe renders through the same engine. */
 (function(){'use strict';
 const P=BCPrimitives,E=BCLogo,$=id=>document.getElementById(id),R=JSON.parse($('reference-data').textContent),STORAGE='bc-shared-primitives-v5';
-let state=E.recipeState('long-wildfire',{textFit:'reference-calibrated'}),mode='design',current,revision=0,toastTimer,renderTimer;
+// Kabel is the default tree-oval face when the build bundled the OTF; otherwise the
+// calibrated v2 substitutes, until Load Kabel-Black.otf supplies it.
+let kabelDefault=globalThis.BC_FONT_SOURCES?.['kabel-black']?'kabel-black':'reference-v2';
+let state=E.recipeState('long-wildfire',{textFit:'reference-calibrated',treeLettering:kabelDefault,autoProfile:true,separatorPlacement:'follow-text',fanOut:true,centreInRing:true}),mode='design',current,revision=0,toastTimer,renderTimer;
 let alignment={scale:1,x:0,y:0};
 try{const raw=localStorage.getItem(STORAGE);if(raw)state=E.normalise(JSON.parse(raw));}catch{}
+// A preview link selects a new preset without deleting any saved configuration.
+const requestedRecipe=new URLSearchParams(location.search).get('recipe');
+if(P.RECIPES.some(r=>r.id===requestedRecipe&&!r.excluded))state=E.recipeState(requestedRecipe,{textFit:'reference-calibrated',treeLettering:kabelDefault,autoProfile:true,separatorPlacement:'follow-text',fanOut:true,centreInRing:true});
 const label=s=>s.replace(/-/g,' ');
 function select(el,entries){el.replaceChildren(...entries.map(([value,text])=>{const o=document.createElement('option');o.value=value;o.textContent=text;return o;}));}
 select($('recipe'),P.RECIPES.filter(x=>!x.excluded).map(x=>[x.id,x.name]));
 for(const [id,table]of Object.entries({crest:P.CRESTS,tab:P.TABS,layout:P.LOCKUPS,theme:P.THEMES,typeRole:P.ROLES,typeSlot:P.SLOTS}))select($(id),Object.keys(table).map(k=>[k,label(k)]));
 select($('typeFace'),Object.entries(P.FACES).map(([id,f])=>[id,f.label]));
+// Kabel is a font choice, independent of fitting policy and saved v2 defaults.
+const kabelField=document.createElement('label');kabelField.textContent='Tree oval lettering';
+const kabelSelect=document.createElement('select');kabelSelect.id='treeLettering';kabelField.append(kabelSelect);
+select(kabelSelect,[['kabel-black','Kabel Black · supplied OTF'],['reference-v2','Previous v2 substitutes']]);
+$('contentFields').before(kabelField);
+kabelSelect.onchange=()=>{state.treeLettering=kabelSelect.value;syncRole();syncSlot();refresh();};
+const kabelButton=document.createElement('button');kabelButton.type='button';kabelButton.id='loadKabel';kabelButton.textContent='Load Kabel-Black.otf';
+const kabelInput=document.createElement('input');kabelInput.type='file';kabelInput.accept='.otf,font/otf';kabelInput.hidden=true;kabelInput.id='kabelFile';
+kabelField.after(kabelButton,kabelInput);kabelButton.onclick=()=>kabelInput.click();
+kabelInput.onchange=async()=>{kabelButton.disabled=true;try{const f=kabelInput.files[0];if(!f)return;if(f.size>5000000)throw Error('Choose a font smaller than 5 MB.');await E.supplyFont('kabel-black',await f.arrayBuffer());kabelDefault=state.treeLettering='kabel-black';syncTextFit();await refresh();toast('Kabel loaded for this session. The file was not uploaded.');}catch(e){toast(e.message,true);}finally{kabelInput.value='';kabelButton.disabled=false;}};
 // Keep legacy presets unchanged. Reactive sizing is an explicit editing mode.
 const tabSizingField=document.createElement('div');
 const tabSizingLabel=document.createElement('label');tabSizingLabel.htmlFor='tabSizing';tabSizingLabel.textContent='Tab layout';
@@ -37,6 +53,7 @@ textFitNote.id='textFitNote';textFitSelect.setAttribute('aria-describedby','text
 textFitLabel.append(textFitSelect);textFitField.append(textFitLabel,textFitNote);$('contentFields').before(textFitField);
 select(textFitSelect,Object.entries(E.TEXT_FIT_POLICIES).map(([id,p])=>[id,p.label]));
 function syncTextFit(){
+ kabelSelect.value=state.treeLettering;kabelSelect.disabled=!['tree-heavy','tree-long'].includes(state.crest);
  textFitSelect.value=state.textFit;
  textFitField.hidden=P.LOCKUPS[state.layout].kind==='wordmark';
  textFitNote.textContent=E.TEXT_FIT_POLICIES[state.textFit].description+' Curved/fixed-slot lettering only; straight wordmarks are unchanged.'+(state.tabSizing==='follow-text'?' The reactive service tab keeps its separate grow-then-fit policy.':'');
@@ -44,7 +61,7 @@ function syncTextFit(){
 textFitSelect.addEventListener('change',()=>{state.textFit=textFitSelect.value;syncTextFit();syncRole();syncSlot();refresh();});
 // Reference controls store shared per-slot parameters, never phrase-specific offsets.
 const referenceControls=document.createElement('div');referenceControls.id='referenceTypeControls';
-const refFields=[['slotWordSpacing','wordSpacingEm','Added word spacing (em)',-.2,.3,.001],['slotAnchorBias','anchorBias','Arc centre bias (design units)',-40,40,.1],['slotSpan','span','Preferred arc span (degrees)',20,300,1],['slotMaxSpan','maxSpan','Maximum arc span (degrees)',20,330,1],['slotXHeight','xHeight','Lowercase x-height (design units)',4,80,.1]];
+const refFields=[['slotRadialOffset','radialOffset','Baseline outward offset (design units)',-20,20,.1],['slotWordSpacing','wordSpacingEm','Added word spacing (em)',-.2,.3,.001],['slotAnchorBias','anchorBias','Arc centre bias (design units)',-40,40,.1],['slotSpan','span','Preferred arc span (degrees)',20,300,1],['slotMaxSpan','maxSpan','Maximum arc span (degrees)',20,330,1],['slotXHeight','xHeight','Lowercase x-height (design units)',4,80,.1]];
 for(const[id,key,label,min,max,step]of refFields){
  const wrap=document.createElement('label');wrap.textContent=label;const input=document.createElement('input');input.id=id;input.type='number';input.min=min;input.max=max;input.step=step;wrap.append(input);referenceControls.append(wrap);
  input.addEventListener('input',()=>{
@@ -63,7 +80,7 @@ function fields(){syncTabSizing();syncTextFit();const l=P.LOCKUPS[state.layout],
  if(l.kind!=='wordmark')keys.push('upper','lower');if(tab.slot&&l.kind!=='wordmark')keys.push('service');if(['horizontal','stacked','wordmark'].includes(l.kind))keys.push('word','descriptor','district');if(l.kind==='words')keys.push('lines');if(l.kind==='strip')keys.push('branch');
  $('contentFields').replaceChildren(...keys.map(k=>{const w=document.createElement('label');w.textContent=fieldLabels[k];const input=document.createElement(['lower','lines','branch'].includes(k)?'textarea':'input');input.value=state.content[k]||'';input.id='content-'+k;input.dataset.content=k;input.maxLength=320;if(input.tagName==='TEXTAREA')input.rows=k==='lines'?3:2;input.addEventListener('input',()=>{state.content[k]=input.value;schedule();});w.append(input);return w;}));
 }
-function sync(){for(const k of['recipe','crest','tab','layout','theme'])$(k).value=state[k];$('autoProfile').checked=state.autoProfile;$('outputWidth').value=state.outputWidth;fields();syncRole();syncSlot();}
+function sync(){for(const k of['recipe','crest','tab','layout','theme'])$(k).value=state[k];$('autoProfile').checked=state.autoProfile;$('separatorFollow').checked=state.separatorPlacement==='follow-text';$('fanOut').checked=state.fanOut;$('centreInRing').checked=state.centreInRing;$('outputWidth').value=state.outputWidth;fields();syncRole();syncSlot();}
 function syncRole(){const id=$('typeRole').value,r=E.role(id,state);$('typeFace').value=r.face;$('roleCap').value=r.capScale;$('roleTracking').value=r.trackingEm;const uses=E.dependencies(id);$('roleUses').textContent='Shared by '+uses.length+' reference recipes: '+(uses.join(' · ')||'none in this family')+'.';}
 function syncSlot(){const id=$('typeSlot').value,t=E.slot(id,state);$('slotCap').value=t.cap;$('slotTracking').value=t.tracking;
  $('slotTracking').min=state.textFit==='reference-calibrated'?-.06:0;$('roleTracking').min=state.textFit==='reference-calibrated'?-.06:-.01;
@@ -78,6 +95,9 @@ function startRecipe(id){if(P.recipe(id).excluded)throw Error('This distorted re
 $('recipe').addEventListener('change',()=>startRecipe($('recipe').value));
 for(const k of['crest','tab','layout','theme'])$(k).addEventListener('change',()=>{state[k]=$(k).value;fields();refresh();});
 $('autoProfile').addEventListener('change',()=>{state.autoProfile=$('autoProfile').checked;refresh();});
+$('separatorFollow').addEventListener('change',()=>{state.separatorPlacement=$('separatorFollow').checked?'follow-text':'reference';refresh();});
+$('fanOut').addEventListener('change',()=>{state.fanOut=$('fanOut').checked;refresh();});
+$('centreInRing').addEventListener('change',()=>{state.centreInRing=$('centreInRing').checked;refresh();});
 $('resetRecipe').onclick=()=>startRecipe(state.recipe);
 $('typeRole').onchange=syncRole;$('typeSlot').onchange=syncSlot;
 function changeRole(){if(['roleCap','roleTracking'].some(id=>!$(id).value.trim()||!Number.isFinite(Number($(id).value))))return;const id=$('typeRole').value;state.roles[id]={face:$('typeFace').value,capScale:Number($('roleCap').value),trackingEm:Number($('roleTracking').value)};state=E.normalise(state);schedule();}
@@ -111,7 +131,7 @@ $('exportConfig').onclick=()=>download(state.recipe+'-configuration.json',config
 const crcTable=Array.from({length:256},(_,n)=>{for(let k=0;k<8;k++)n=n&1?0xedb88320^(n>>>1):n>>>1;return n>>>0;});
 function crc(bytes){let c=0xffffffff;for(const b of bytes)c=crcTable[(c^b)&255]^(c>>>8);return (c^0xffffffff)>>>0;}
 function zip(entries){const enc=new TextEncoder(),parts=[],directory=[];let offset=0;const u16=(d,p,n)=>d.setUint16(p,n,true),u32=(d,p,n)=>d.setUint32(p,n,true);for(const[name,value]of entries){const fn=enc.encode(name),data=value instanceof Uint8Array?value:enc.encode(value),checksum=crc(data),local=new Uint8Array(30+fn.length),v=new DataView(local.buffer);u32(v,0,0x04034b50);u16(v,4,20);u16(v,6,0x800);u32(v,14,checksum);u32(v,18,data.length);u32(v,22,data.length);u16(v,26,fn.length);local.set(fn,30);parts.push(local,data);const central=new Uint8Array(46+fn.length),c=new DataView(central.buffer);u32(c,0,0x02014b50);u16(c,4,20);u16(c,6,20);u16(c,8,0x800);u32(c,16,checksum);u32(c,20,data.length);u32(c,24,data.length);u16(c,28,fn.length);u32(c,42,offset);central.set(fn,46);directory.push(central);offset+=local.length+data.length;}const dsize=directory.reduce((a,b)=>a+b.length,0),end=new Uint8Array(22),e=new DataView(end.buffer);u32(e,0,0x06054b50);u16(e,8,entries.length);u16(e,10,entries.length);u32(e,12,dsize);u32(e,16,offset);return new Blob([...parts,...directory,end],{type:'application/zip'});}
-$('exportFamily').onclick=async()=>{const b=$('exportFamily');b.disabled=true;try{await latest();const entries=[];for(const rec of P.RECIPES.filter(x=>!x.excluded)){const s=rec.id===state.recipe?state:E.recipeState(rec.id,state),r=E.makeLogo(s);entries.push([rec.id+'.svg',E.serialise(r)]);}entries.push(['shared-rules.json',JSON.stringify({version:5,textFit:state.textFit,referenceModelVersion:state.referenceModelVersion,tabSizing:state.tabSizing,roles:state.roles,slots:state.slots},null,2)]);entries.push(['README.txt','Reference-based family. Editable text; no font files embedded. Install the named faces on the destination computer. Historical font identity is not authenticated. Fire Control excluded. The selected recipe includes its current wording; other recipes use their default content with the same shared overrides.\n']);download('bc-ministry-shared-family.zip',zip(entries));toast('Family exported from one set of shared rules.');}catch(e){toast(e.message,true);}finally{b.disabled=false;}};
+$('exportFamily').onclick=async()=>{const b=$('exportFamily');b.disabled=true;try{await latest();const entries=[];for(const rec of P.RECIPES.filter(x=>!x.excluded)){const s=rec.id===state.recipe?state:E.recipeState(rec.id,state),r=E.makeLogo(s);entries.push([rec.id+'.svg',E.serialise(r)]);}entries.push(['shared-rules.json',JSON.stringify({version:5,treeLettering:state.treeLettering,textFit:state.textFit,referenceModelVersion:state.referenceModelVersion,tabSizing:state.tabSizing,roles:state.roles,slots:state.slots},null,2)]);entries.push(['README.txt','Reference-based family. Editable text; no font files embedded. Install the named faces on the destination computer. Historical font identity is not authenticated. Fire Control excluded. The selected recipe includes its current wording; other recipes use their default content with the same shared overrides.\n']);download('bc-ministry-shared-family.zip',zip(entries));toast('Family exported from one set of shared rules.');}catch(e){toast(e.message,true);}finally{b.disabled=false;}};
 window.BCStudio={get state(){return E.clone(state);},get mode(){return mode;},current:null,refresh,startRecipe,zip,configText};
 sync();refresh();
 })();

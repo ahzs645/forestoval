@@ -8,8 +8,12 @@ export interface Configuration {
   layout: string;
   theme: string;
   textFit: string;
+  treeLettering: 'reference-v2' | 'kabel-black';
   tabSizing: string;
   tabBacking: string;
+  separatorPlacement: string;
+  fanOut: boolean;
+  centreInRing: boolean;
   autoProfile: boolean;
   referenceModelVersion?: number;
   outputWidth: number;
@@ -27,7 +31,7 @@ export interface Recipe {
 }
 export interface Catalogue {
   RECIPES: Recipe[];
-  CRESTS: Record<string, { upper: string; lower: string }>;
+  CRESTS: Record<string, { upper: string; lower: string; separator: string; longer?: string; shorter?: string }>;
   TABS: Record<string, { slot?: string; shape?: string }>;
   LOCKUPS: Record<string, { kind: string }>;
   FACES: Record<string, { family: string; weight: number; advance?: number }>;
@@ -40,6 +44,9 @@ export interface LogoResult {
   report: Array<{ slot?: string; role: string; cap: number; trackingEm: number; stage: string; referenceProfile?: string }>;
   warnings: Array<{ code: string; message: string }>;
   fontIds: string[];
+  /** The crest profile actually drawn (autoProfile can differ from state.crest). */
+  crest: string;
+  separators: { placement: string; state: string; y: number; angle: number; crowded: boolean } | null;
   viewBox: { x: number; y: number; w: number; h: number };
 }
 export interface Engine {
@@ -49,6 +56,8 @@ export interface Engine {
   render(input: Configuration, options?: { allowNetwork?: boolean }): Promise<LogoResult>;
   serialise(result: LogoResult): string;
   png(result: LogoResult, width: number): Promise<Blob>;
+  supplyFont(id: string, bytes: ArrayBuffer): Promise<unknown>;
+  ensureFonts(ids: string[], allowNetwork?: boolean): Promise<Array<{ status: string; source: string }>>;
   retryFonts(): void;
   fontState: Map<string, { status: string; source: string; verified?: boolean; advance?: number }>;
 }

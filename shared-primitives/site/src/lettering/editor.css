@@ -40,6 +40,8 @@
 .fo-dock button { margin-bottom: 2px; }
 .fo-editor label.fo-ack { display: flex; gap: 8px; align-items: center; font-weight: 400; margin: 0 0 10px; padding: 8px 12px; background: #fff8e8; border-left: 3px solid #cda44b; border-radius: 3px; }
 .fo-editor .fo-ack input { display: inline-block; width: auto; margin: 0; }
+.fo-editor label.fo-check { display: flex; gap: 8px; align-items: center; font-weight: 400; }
+.fo-editor .fo-check input { display: inline-block; width: auto; margin: 0; }
 .fo-status { font-size: 12px; padding: 8px 0; margin: 8px 0; color: #345844; }
 .fo-status[data-error="true"] { color: #963c2c; }
 .fo-fonts { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 12px; color: #5b655d; }

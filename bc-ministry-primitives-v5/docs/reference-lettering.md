@@ -1,3 +1,5 @@
+> **Kabel tree-oval option:** This document records the preserved v2 substitute model. New tree-oval drafts select a separate Kabel Black profile when that font is available; see [kabel-black.md](kabel-black.md). Saved v2 configurations are not silently changed.
+
 # Reference-calibrated lettering (v2)
 
 This adds the opt-in `reference-calibrated` fitting policy to the v5 studio. It
@@ -52,6 +54,36 @@ Older engine versions do not understand the new policy.
 | Upper mixed-case crest | Noto Sans Condensed ExtraBold, 800, condensed width | Lowercase x-height | References 1 and 3 together |
 | Lower mixed-case crest | Noto Sans Condensed ExtraBold, 800, condensed width | Lowercase x-height | References 1 and 3 together |
 | Lower service inscription | Open Sans ExtraBold, 800 | Cap height | Separate caps/ministry variants, references 2/3 |
+| Tree crest upper (FOREST SERVICE) | Open Sans Bold, 700 | Cap height | Forest Service vector (reference 5), model version 2 |
+| Tree crest lower (BRITISH COLUMBIA) | Raleway Black, 900 | Cap height | Forest Service vector (reference 5), model version 2 |
+
+### Tree crest (model version 2)
+
+`tools/extract_tree_masks.py` draws the supplied Forest Service vector
+(`data/references/tree-source.svg`) into the design grid with its recorded
+registration. It keeps the dark ink inside the white ring, cuts out the
+diamonds, and writes `ref-5-upper-mask.png` / `ref-5-lower-mask.png`.
+`tools/calibrate_reference_lettering.py` then fits each line (groups
+`tree-upper` / `tree-lower` with free radii, and `tree-*-ring` on the
+ring-centred baseline that the site's editor uses by default).
+
+Every catalogue face was tried, plus about thirty open geometric and gothic
+candidates (Jost, League Spartan, Montserrat, Raleway, Libre Franklin, Public
+Sans, Figtree, Red Hat Display and others). The upper line fits best in Open
+Sans Bold (loss 0.099; the previous Roboto Condensed Bold scored 0.175). The
+lower line's lettering is a heavy geometric gothic. Its A has a flat apex and
+its O is round, so Futura-style faces with a pointed A do not match it, even
+though Jost Black fit its overall widths (0.110). Raleway Black has the
+flat-apex A and fits best: 0.092 with free radii, and 0.089 on the
+ring-centred baseline. The previous Open Sans ExtraBold scored 0.305. Its C
+terminals are angled where the vector's are cut vertically, which is the
+largest remaining glyph difference. Measured against the vector, the letters
+now overlap 0.61 / 0.67, up from 0.40 / 0.36, and the line ends are within 1°
+of the vector's. The lower line has its own role, `crest-tree-lower`, so the
+capitals wildlife crest keeps Open Sans ExtraBold. Version-1 configurations
+upgrade to version 2, since their wildlife profiles are unchanged. Raleway
+Black is bundled by the site (`@fontsource/raleway`); its probe advance
+matches the Google static instance exactly.
 
 Three condensed candidates were tested for each mixed-case run: the previous
 Roboto Condensed Bold, Open Sans Condensed Bold, and Noto Sans Condensed
@@ -66,7 +98,7 @@ the font itself; the engine does not horizontally scale individual glyphs.
 
 The engine tries, in order: first-party files the host page supplies in
 `window.BC_FONT_SOURCES` (`{faceId: [{url, unicodeRange}]}`), named local faces,
-then Google Fonts when the user asks for it. The viewer site supplies all ten
+then Google Fonts when the user asks for it. The viewer site supplies all eleven
 faces from pinned Fontsource packages (`site/src/lettering/fonts.ts`; Noto is the
 variable font, so weight and width come from its axes), so its editor and
 Recreations page fit with the same binaries on every machine. The standalone

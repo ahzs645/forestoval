@@ -473,10 +473,11 @@ def tab_bands(oval, centre, half, tab=TAB):
     return band(-tab['inset'], tab['depth'] + tab['border'], 0), band(0, tab['depth'], tab['border'])
 
 
-def separator_pair(y):
-    """engine.js drawBadge separator positions on the crest band."""
+def separator_pair(y, inset=0):
+    """engine.js separatorLayout reference positions: on the crest band, drawn in
+    by the crest's separatorInset."""
     band = SHAPES['separatorBand']
-    dx = band['rx']*math.sqrt(max(0, 1 - ((y - CY)/band['ry'])**2))
+    dx = (band['rx'] - inset)*math.sqrt(max(0, 1 - ((y - CY)/(band['ry'] - inset))**2))
     return [(CX - dx, y), (CX + dx, y)]
 
 
@@ -633,7 +634,7 @@ def build_airtanker(w, base, art):
     outer_rx = float(fragment(art['wildlifeFrame'], '')['outer-black-oval'].get('rx'))
     k = (x1 - x0)/2/outer_rx
     m = mul(mul((1, 0, 0, 1, (x0 + x1)/2, (y0 + y1)/2), (k, 0, 0, k, 0, 0)), (1, 0, 0, 1, -CX, -CY))
-    diamonds = [apply(m, p) for p in separator_pair(CRESTS['tree-heavy']['separatorY'])]
+    diamonds = [apply(m, p) for p in separator_pair(CRESTS['tree-heavy']['separatorY'], CRESTS['tree-heavy'].get('separatorInset', 0))]
     mirror = s['right-wing'].get('transform')
 
     def out(rel, title, ids, note='', **attrs):
@@ -721,7 +722,7 @@ def main():
         'frameCheck': {'radiusDeviation': round(check['radius_deviation'], 4), 'treeOffset': [round(v, 5) for v in check['tree_offset']]},
         # Each placed at the crest's separatorY; scale is relative to the master
         # mark (the circle master is the capitals crest's size).
-        'separators': {key: {'at': separator_pair(c['separatorY']), 'scale': c['separatorSize']/master, 'y': c['separatorY'], 'size': c['separatorSize']}
+        'separators': {key: {'at': separator_pair(c['separatorY'], c.get('separatorInset', 0)), 'scale': c['separatorSize']/master, 'y': c['separatorY'], 'size': c['separatorSize']}
                        for key, c, master in [('circle-caps', CRESTS['wildlife-caps'], CRESTS['wildlife-caps']['separatorSize']),
                                               ('circle-long', CRESTS['wildlife-long'], CRESTS['wildlife-caps']['separatorSize']),
                                               ('diamond', CRESTS['tree-heavy'], CRESTS['tree-heavy']['separatorSize'])]},

@@ -7,7 +7,7 @@ built page still works opened straight from disk."""
 from pathlib import Path
 import argparse, base64, json, re
 ROOT=Path(__file__).resolve().parent
-TOKENS={'STUDIO_CSS':'src/studio.css','PRIMITIVES_JS':'src/primitives.js','ENGINE_JS':'src/engine.js','STUDIO_JS':'src/studio.js','ART_JSON':'data/art.json','REFERENCE_JSON':'data/references.json'}
+TOKENS={'FONT_SOURCES_JS':'fonts','STUDIO_CSS':'src/studio.css','PRIMITIVES_JS':'src/primitives.js','ENGINE_JS':'src/engine.js','STUDIO_JS':'src/studio.js','ART_JSON':'data/art.json','REFERENCE_JSON':'data/references.json'}
 MIME={'.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg'}
 def references():
     """data/references.json with each `file` swapped for an inline `src` data URL."""
@@ -19,7 +19,19 @@ def references():
         src='data:%s;base64,%s'%(MIME[path.suffix.lower()],base64.b64encode(path.read_bytes()).decode())
         refs[key]={('src' if k=='file' else k):(src if k=='file' else v) for k,v in ref.items()}
     return refs
+def private_fonts():
+    """Inline only the local user-provided OTF; never fetch or invent a substitute."""
+    manifest=json.loads((ROOT/'data/kabel-black-font.json').read_text())
+    path=ROOT/'fonts'/manifest['file']
+    if not path.exists():return {}
+    import hashlib
+    data=path.read_bytes()
+    if hashlib.sha256(data).hexdigest()!=manifest['sha256']:
+        raise SystemExit('Kabel font differs from data/kabel-black-font.json; use tools/setup_kabel.py with the selected OTF.')
+    return {'kabel-black':[{'url':'data:font/otf;base64,'+base64.b64encode(data).decode('ascii')}]}
+
 def source(token):
+    if token=='FONT_SOURCES_JS':return 'globalThis.BC_FONT_SOURCES='+json.dumps(private_fonts(),separators=(',',':'))+';'
     name=TOKENS[token]
     if token=='REFERENCE_JSON':text=json.dumps(references(),ensure_ascii=False,separators=(',',':'))
     else:text=(ROOT/name).read_text(encoding='utf-8')

@@ -20,7 +20,23 @@ const ART=global.BC_ART||readData('art-data');
 let measureRoot,seq=0,advanceSeq=0;const cache=new Map(),advanceCache=new Map();
 function measurementRoot(){if(!measureRoot){measureRoot=node('svg',{width:1,height:1,'aria-hidden':'true'});measureRoot.style.cssText='position:fixed;left:-20000px;top:-20000px;visibility:hidden;overflow:visible';document.body.append(measureRoot);}return measureRoot;}
 const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');
-const fontState=new Map(),fontPromises=new Map();let fontGeneration=0;
+const fontState=new Map(),fontPromises=new Map(),suppliedFonts=new Map();let fontGeneration=0;
+// Read the binary signature rather than labelling every rasterisation font WOFF2.
+function fontMime(buffer){
+ const b=new Uint8Array(buffer);if(b.length<12)throw Error('The file is not a supported font.');
+ const tag=String.fromCharCode(...b.subarray(0,4));
+ if(tag==='OTTO')return 'font/otf';if(tag==='wOF2')return 'font/woff2';if(tag==='wOFF')return 'font/woff';
+ if(tag==='true'||(b[0]===0&&b[1]===1&&b[2]===0&&b[3]===0))return 'font/ttf';
+ throw Error('The file is not an OTF, TTF, WOFF or WOFF2 font.');
+}
+async function supplyFont(id,buffer){
+ const face=P.FACES[id];if(!face)throw Error('Unknown face '+id);
+ if(!(buffer instanceof ArrayBuffer)||buffer.byteLength>5000000)throw Error('Choose a font file smaller than 5 MB.');
+ const mime=fontMime(buffer),copy=buffer.slice(0);
+ // Validate before replacing a working selection. No request or persistent storage.
+ await new FontFace(face.family,copy,{weight:String(face.weight),style:'normal'}).load();
+ suppliedFonts.set(id,{bytes:copy,mime});retryFonts();return loadFace(id,false);
+}
 function invalidateMetrics(){cache.clear();advanceCache.clear();}
 const timeout=(promise,ms)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(Error('Font loading timed out')),ms))]);
 async function loadFace(id,allowNetwork=false){
@@ -30,22 +46,25 @@ async function loadFace(id,allowNetwork=false){
  const generation=fontGeneration,task=(async()=>{
   // First-party files from the host page (BC_FONT_SOURCES[id] = [{url, unicodeRange}])
   // come first: every browser then measures the same pinned binary.
+  const supplied=suppliedFonts.get(id);
+  if(supplied){const f=new FontFace(face.family,supplied.bytes,{weight:String(face.weight),style:'normal'});await f.load();document.fonts.add(f);
+   return settle(id,{source:'uploaded',loaded:[{font:f,...supplied,range:null}]},generation,allowNetwork);}
   let bundledError;const bundled=global.BC_FONT_SOURCES?.[id];
   if(Array.isArray(bundled)&&bundled.length){try{
    const loaded=[];
    for(const item of bundled){const buf=await timeout(fetch(item.url).then(r=>{if(!r.ok)throw Error('Font file HTTP '+r.status);return r.arrayBuffer();}),8000);
-    const f=new FontFace(face.family,buf,{weight:String(face.weight),style:'normal',...(face.stretch?{stretch:face.stretch}:{}),...(item.unicodeRange?{unicodeRange:item.unicodeRange}:{})});await f.load();document.fonts.add(f);loaded.push({font:f,bytes:buf,range:item.unicodeRange||null});}
+    const f=new FontFace(face.family,buf,{weight:String(face.weight),style:'normal',...(face.stretch?{stretch:face.stretch}:{}),...(item.unicodeRange?{unicodeRange:item.unicodeRange}:{})});await f.load();document.fonts.add(f);loaded.push({font:f,bytes:buf,mime:fontMime(buf),range:item.unicodeRange||null});}
    return settle(id,{source:'bundled',loaded},generation,allowNetwork);
   }catch(e){bundledError='Bundled face failed: '+e.message;}}
   for(const name of face.locals){try{const f=new FontFace(face.family,`local("${name}")`,{weight:String(face.weight),style:'normal',...(face.stretch?{stretch:face.stretch}:{})});await timeout(f.load(),1800);document.fonts.add(f);return settle(id,{source:'local',font:f},generation,allowNetwork);}catch{}}
-  if(allowNetwork){try{
+  if(allowNetwork&&face.google){try{
    const css=await timeout(fetch('https://fonts.googleapis.com/css2?family='+face.google+'&display=block').then(r=>{if(!r.ok)throw Error('Font CSS HTTP '+r.status);return r.text();}),6500);
    // Request full available latin/latin-extended subsets, never a text-subset tied
    // to one recipe. A new name must not silently lack letters.
    const blocks=[...css.matchAll(/@font-face\s*\{([\s\S]*?)\}/g)];let loaded=[];
    for(const b of blocks){const body=b[1],u=body.match(/url\(([^)]+)\)/),range=body.match(/unicode-range:\s*([^;]+);/);if(!u)continue;
     const url=u[1].replace(/["']/g,''),buf=await timeout(fetch(url).then(r=>{if(!r.ok)throw Error('Font bytes HTTP '+r.status);return r.arrayBuffer();}),6500);
-    const f=new FontFace(face.family,buf,{weight:String(face.weight),style:'normal',...(face.stretch?{stretch:face.stretch}:{}),...(range?{unicodeRange:range[1]}:{})});await f.load();document.fonts.add(f);loaded.push({font:f,bytes:buf,range:range?.[1]||null});
+    const f=new FontFace(face.family,buf,{weight:String(face.weight),style:'normal',...(face.stretch?{stretch:face.stretch}:{}),...(range?{unicodeRange:range[1]}:{})});await f.load();document.fonts.add(f);loaded.push({font:f,bytes:buf,mime:fontMime(buf),range:range?.[1]||null});
    }
    if(!loaded.length)throw Error('No font faces in stylesheet');return settle(id,{source:'web',loaded},generation,allowNetwork);
   }catch(e){if(generation===fontGeneration)fontState.set(id,{status:'fallback',source:'fallback',face:id,family:face.family,weight:face.weight,error:e.message});}}
@@ -62,7 +81,7 @@ function settle(id,extra,generation,allowNetwork){
  // A load that started before retryFonts() must not overwrite the newer result.
  if(generation!==fontGeneration){for(const f of registered(extra))document.fonts.delete(f);return loadFace(id,allowNetwork);}
  const face=P.FACES[id],s={status:'ready',face:id,family:face.family,weight:face.weight,...extra};fontState.set(id,s);invalidateMetrics();
- if(face.advance&&P.FACE_PROBE){s.advance=metrics(P.FACE_PROBE,id).width;s.verified=Math.abs(s.advance-face.advance)/face.advance<=ADVANCE_TOLERANCE;}
+ if(face.advance&&P.FACE_PROBE){s.advance=metrics(P.FACE_PROBE,id).width;s.verified=Math.abs(s.advance-face.advance)/face.advance<=ADVANCE_TOLERANCE;if(!s.verified)invalidateMetrics();}
  return s;
 }
 // Start every face again from the top of the source order (supplied, local,
@@ -79,53 +98,102 @@ function metrics(text,faceId){
  ctx.font=`${f.weight} 1000px ${family}`;ctx.fontKerning='normal';ctx.fontStretch=f.stretch||'normal';
  const h=ctx.measureText('H'),x=ctx.measureText('x'),space=ctx.measureText(' '),m=ctx.measureText(text);
  const el=node('text',{'font-family':family,'font-weight':f.weight,'font-stretch':f.stretch,'font-size':1000,'font-kerning':'normal',style:'font-synthesis:none;white-space:pre'},text);measurementRoot().append(el);const width=el.getComputedTextLength()/1000;el.remove();
- const v={xHeight:(x.actualBoundingBoxAscent||536)/1000,spaceAdvance:space.width/1000,stretch:f.stretch,cap:(h.actualBoundingBoxAscent||714)/1000,ascent:Math.max(0,m.actualBoundingBoxAscent||0)/1000,descent:Math.max(0,m.actualBoundingBoxDescent||0)/1000,left:(m.actualBoundingBoxLeft||0)/1000,right:(m.actualBoundingBoxRight||m.width)/1000,width,family,weight:f.weight,faceId};cache.set(key,v);return v;
+ // The supplied Kabel outline has H=720 and x=518 in 1000 units/em.
+ // Large Canvas probes can quantize ink bounds (734.375 was observed for H).
+ // Use pinned outline metrics only for a loaded, non-mismatching face; keep
+ // the existing measurement route for fallbacks and all unpinned faces.
+ const status=fontState.get(faceId),pinned=status?.status==='ready'&&status.verified!==false;
+ const v={xHeight:pinned&&Number.isFinite(f.xHeightEm)?f.xHeightEm:(x.actualBoundingBoxAscent||536)/1000,spaceAdvance:space.width/1000,stretch:f.stretch,cap:pinned&&Number.isFinite(f.capEm)?f.capEm:(h.actualBoundingBoxAscent||714)/1000,ascent:Math.max(0,m.actualBoundingBoxAscent||0)/1000,descent:Math.max(0,m.actualBoundingBoxDescent||0)/1000,left:(m.actualBoundingBoxLeft||0)/1000,right:(m.actualBoundingBoxRight||m.width)/1000,width,family,weight:f.weight,faceId};cache.set(key,v);return v;
 }
 function clean(value,max=320){return String(value??'').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,'').normalize('NFC').slice(0,max);}
 function normalise(input={}){
  if(!input||typeof input!=='object'||Array.isArray(input))throw Error('Configuration must be an object');
  const rid=P.RECIPES.some(r=>r.id===input.recipe)?input.recipe:'forests';const r=P.recipe(rid);
+ const treeLettering=input.treeLettering??'reference-v2';
+ if(!['reference-v2','kabel-black'].includes(treeLettering))throw Error('Unknown tree lettering: '+treeLettering);
  const textFit=input.textFit??'legacy';
  if(typeof textFit!=='string'||!Object.hasOwn(TEXT_FIT_POLICIES,textFit))throw Error('Unknown lettering fit policy: '+textFit);
- const referenceModelVersion=input.referenceModelVersion??P.REFERENCE_LETTERING?.version;
+ // Version 2 only added tree profiles to version 1, so a version-1 configuration upgrades.
+ let referenceModelVersion=input.referenceModelVersion??P.REFERENCE_LETTERING?.version;
+ if(referenceModelVersion===1&&P.REFERENCE_LETTERING?.version===2)referenceModelVersion=2;
  if(textFit==='reference-calibrated'&&referenceModelVersion!==P.REFERENCE_LETTERING?.version)throw Error('Unsupported reference lettering model version: '+referenceModelVersion);
- const s={version:5,textFit,...(textFit==='reference-calibrated'?{referenceModelVersion}:{}),tabSizing:input.tabSizing==='follow-text'?'follow-text':'reference',tabBacking:['paper','transparent'].includes(input.tabBacking)?input.tabBacking:r.tabBacking||'paper',recipe:rid,crest:input.crest||r.crest,tab:input.tab||r.tab,layout:input.layout||r.layout,theme:input.theme||r.theme,autoProfile:input.autoProfile===true,content:{...r.content},roles:{},slots:{},colours:{},outputWidth:clamp(Number(input.outputWidth)||1200,100,6000)};
+ const s={version:5,textFit,treeLettering,...(textFit==='reference-calibrated'?{referenceModelVersion}:{}),tabSizing:input.tabSizing==='follow-text'?'follow-text':'reference',tabBacking:['paper','transparent'].includes(input.tabBacking)?input.tabBacking:r.tabBacking||'paper',separatorPlacement:input.separatorPlacement==='follow-text'?'follow-text':'reference',fanOut:input.fanOut===true,centreInRing:input.centreInRing===true,recipe:rid,crest:input.crest||r.crest,tab:input.tab||r.tab,layout:input.layout||r.layout,theme:input.theme||r.theme,autoProfile:input.autoProfile===true,content:{...r.content},roles:{},slots:{},colours:{},outputWidth:clamp(Number(input.outputWidth)||1200,100,6000)};
  for(const [k,v]of Object.entries(input.content||{}))if(['upper','lower','service','word','descriptor','district','lines','branch'].includes(k))s.content[k]=clean(v);
  for(const k of ['crest','tab','layout','theme']){const t={crest:P.CRESTS,tab:P.TABS,layout:P.LOCKUPS,theme:P.THEMES}[k];if(!t[s[k]])throw Error('Unknown '+k+': '+s[k]);}
  for(const[id,v]of Object.entries(input.roles||{})){if(!P.ROLES[id]||!v||typeof v!=='object')continue;const out={};if(v.face&&P.FACES[v.face])out.face=v.face;if(Number.isFinite(v.capScale))out.capScale=clamp(v.capScale,.5,1.5);if(Number.isFinite(v.trackingEm))out.trackingEm=clamp(v.trackingEm,-.06,.18);s.roles[id]=out;}
- for(const[id,v]of Object.entries(input.slots||{})){if(!P.SLOTS[id]||!v||typeof v!=='object')continue;const out={};for(const[k,limits]of Object.entries({cap:[15,100],tracking:[-.06,.2],wordSpacingEm:[-.2,.3],anchorBias:[-40,40],xHeight:[4,80],span:[20,300],maxSpan:[20,330],rx:[100,550],ry:[150,650],y:[-300,1100]}))if(Number.isFinite(v[k]))out[k]=clamp(v[k],...limits);if(['cap','xHeight'].includes(v.heightModel))out.heightModel=v.heightModel;s.slots[id]=out;}
+ for(const[id,v]of Object.entries(input.slots||{})){if(!P.SLOTS[id]||!v||typeof v!=='object')continue;const out={};for(const[k,limits]of Object.entries({radialOffset:[-20,20],cap:[15,100],tracking:[-.06,.2],wordSpacingEm:[-.2,.3],anchorBias:[-40,40],xHeight:[4,80],span:[20,300],maxSpan:[20,330],rx:[100,550],ry:[150,650],y:[-300,1100]}))if(Number.isFinite(v[k]))out[k]=clamp(v[k],...limits);if(['cap','xHeight'].includes(v.heightModel))out.heightModel=v.heightModel;s.slots[id]=out;}
  for(const[k,v]of Object.entries(input.colours||{}))if(k in P.THEMES[s.theme]&&/^#[0-9a-f]{6}$/i.test(v))s.colours[k]=v;
  return s;
 }
-function role(id,s){return {...P.ROLES[id],...(s.textFit==='reference-calibrated'?P.REFERENCE_LETTERING?.roles[id]:{}),...(s.roles[id]||{})};}
+function usesKabel(s){return s.treeLettering==='kabel-black'&&['tree-heavy','tree-long'].includes(s.crest);}
+function role(id,s){return {...P.ROLES[id],...(s.textFit==='reference-calibrated'?P.REFERENCE_LETTERING?.roles[id]:{}),
+ ...(usesKabel(s)&&['crest-service-upper','crest-tree-lower','crest-condensed'].includes(id)?{face:'kabel-black'}:{}),...(s.roles[id]||{})};}
 function referenceProfile(id,s){
  if(s.textFit!=='reference-calibrated')return null;
+ if(usesKabel(s)){
+  if(P.KABEL_LETTERING?.slots[id])return P.KABEL_LETTERING.slots[id];
+  if(id==='long-upper'||id==='long-lower')return null;
+ }
  if(id==='service-bottom')return P.REFERENCE_LETTERING?.serviceByCrest[effectiveCrest(s)]||null;
  return P.REFERENCE_LETTERING?.slots[id]||null;
 }
+// With centreInRing, a crest line's baseline follows the white ring instead of
+// its slot ellipse: the line's type body (see typeBody) is centred on the
+// ring's centre line at every angle. A slot whose radii were set by hand keeps them.
+function ringMid(id,s){
+ if(!s.centreInRing||Number.isFinite(s.slots[id]?.rx)||Number.isFinite(s.slots[id]?.ry))return null;
+ // Profiles of one pair share their scene, so the configured crest names the ring.
+ if(!Object.values(P.CRESTS).some(c=>c.upper===id||c.lower===id))return null;
+ const crest=P.CRESTS[s.crest],ring=P.SHAPES.rings?.[crest?.scene],off=crest?.ringOffset||0;
+ // ringOffset: a crest's measured optical offset from the ring centre (+ outward).
+ return ring?{rx:(ring.inner[0]+ring.outer[0])/2+off,ry:(ring.inner[1]+ring.outer[1])/2+off}:null;
+}
+// The part of a line that is centred, as a fraction of its cap height: the cap
+// height for capitals; for lowercase, the x-height plus TYPE_BODY_LIFT of the
+// way to the cap height (designers centre mixed case on the x-height and adjust
+// optically; the long-ministry reference sits 30% up). Blended by the share of
+// lowercase letters, full at TYPE_BODY_MIXED, so typing never jumps the line.
+const TYPE_BODY_LIFT=.3,TYPE_BODY_MIXED=.6;
+function typeBody(text,m){
+ const letters=(text.match(/\p{L}/gu)||[]).length,lower=(text.match(/\p{Ll}/gu)||[]).length;
+ const w=letters?clamp(lower/letters/TYPE_BODY_MIXED,0,1):0;
+ return 1-w*(1-TYPE_BODY_LIFT)*Math.max(0,m.cap-m.xHeight)/m.cap;
+}
 function slot(id,s){
  const calibrated=referenceProfile(id,s),t={...P.SLOTS[id],...calibrated,...(s.slots[id]||{})};
+ if(t.side==='top'||t.side==='bottom'){const mid=ringMid(id,s);if(mid)t.ringMid=mid;}
  // span cannot exceed maxSpan after a manual edit. Never reverse the search bounds.
  if(Number.isFinite(t.span))t.maxSpan=Math.max(t.span,t.maxSpan||t.span);
  return t;
 }
+// A crest pair declares its short and long profiles (CRESTS longer / shorter).
+// With autoProfile, the lower wording measured at the short profile's
+// switchCap picks the long one when it would need more than 92% of the short
+// lower slot's widest arc.
 function effectiveCrest(s){
- if(!s.autoProfile||!s.crest.startsWith('wildlife-'))return s.crest;
- const t=slot('wildlife-lower',s),r=role(t.role,s),m=metrics(s.content.lower||'',r.face),size=46/m.cap;
- const p=curve({...t,span:t.maxSpan},46);return m.width*size>p.length*.92?'wildlife-long':'wildlife-caps';
+ const base=P.CRESTS[s.crest],shortId=base.shorter||(base.longer?s.crest:null);
+ if(!s.autoProfile||!shortId)return s.crest;
+ const sc=P.CRESTS[shortId],t=slot(sc.lower,s),r=role(t.role,s),m=metrics(s.content.lower||'',r.face),size=sc.switchCap/m.cap;
+ const p=curve({...t,span:t.maxSpan},sc.switchCap);return m.width*size>p.length*.92?sc.longer:shortId;
 }
 function point(rx,ry,a){a*=Math.PI/180;return [CX+rx*Math.cos(a),CY+ry*Math.sin(a)];}
 function curve(t,cap=t.cap,span=t.span){
  if(t.side==='flat'){const width=t.width||570,y=t.y+(cap-t.anchorCap)/2;return{d:`M ${CX-width/2} ${y} L ${CX+width/2} ${y}`,length:width,rx:0,ry:0,span:0,side:'flat'};}
- const shift=(t.side==='top'?1:-1)*(t.anchorCap-cap)/2,rx=t.rx+shift,ry=t.ry+shift;
+ let rx,ry;
+ if(t.ringMid){const half=cap*(t.bodyRatio??1)/2*(t.side==='top'?-1:1);rx=t.ringMid.rx+half;ry=t.ringMid.ry+half;}
+ else{const shift=(t.side==='top'?1:-1)*(t.anchorCap-cap)/2;rx=t.rx+shift;ry=t.ry+shift;}
+ // Independent line placement: positive expands the baseline ellipse.
+ // This is an equal-radii adjustment, not a mathematically constant normal
+ // offset of an ellipse. It never scales, stretches or emboldens the glyphs.
+ const radialOffset=t.radialOffset||0;rx+=radialOffset;ry+=radialOffset;
  const mid=t.side==='top'?-90:90,dir=t.side==='top'?1:-1,start=mid-dir*span/2,end=mid+dir*span/2;
  let a=point(rx,ry,start),b=point(rx,ry,end),last=a,length=0;
  for(let i=1;i<=360;i++){const next=point(rx,ry,start+(end-start)*i/360);length+=Math.hypot(next[0]-last[0],next[1]-last[1]);last=next;}
  const y=t.y||0;
- return {d:`M ${round(a[0])} ${round(a[1]+y)} A ${round(rx)} ${round(ry)} 0 ${span>180?1:0} ${dir>0?1:0} ${round(b[0])} ${round(b[1]+y)}`,length,rx,ry,span,side:t.side,start,end};
+ return {d:`M ${round(a[0])} ${round(a[1]+y)} A ${round(rx)} ${round(ry)} 0 ${span>180?1:0} ${dir>0?1:0} ${round(b[0])} ${round(b[1]+y)}`,length,rx,ry,span,side:t.side,start,end,y};
 }
 function fitRunLegacy(text,slotId,s){
- const t=slot(slotId,s),r=role(t.role,s),m=metrics(text,r.face),count=Array.from(text).length;
+ const t=slot(slotId,s),r=role(t.role,s),m=metrics(text,r.face),count=Array.from(text).length;if(t.ringMid)t.bodyRatio=typeBody(text,m);
  const preferredCap=t.cap*r.capScale;let cap=preferredCap,span=t.span,tracking=Math.max(0,t.tracking+r.trackingEm),stage='natural';
  const getWidth=(size,tr)=>m.width*size+count*tr*size;
  const edge=t.endPad||12;
@@ -137,7 +205,7 @@ function fitRunLegacy(text,slotId,s){
  // again after each movement rather than scaling the glyph width or entire badge.
  for(let i=0;i<12;i++){c=curve(t,cap,span);size=cap/m.cap;const width=getWidth(size,tracking),available=Math.max(1,c.length-2*edge);if(width<=available+.001)break;cap*=available/width*.999;stage='uniform-shrink';}
  c=curve(t,cap,span);size=cap/m.cap;
- return {text,widthBasis:'browser advance',slot:slotId,role:t.role,face:r.face,family:m.family,weight:m.weight,...(m.stretch?{stretch:m.stretch}:{}),size,cap,preferredCap,tracking:tracking*size,trackingEm:tracking,width:getWidth(size,tracking),available:c.length-2*edge,curve:c,stage,tooSmall:cap<t.minCap,minimum:t.minCap,ascent:m.ascent*size,descent:m.descent*size};
+ return {text,widthBasis:'browser advance',slot:slotId,role:t.role,face:r.face,family:m.family,weight:m.weight,...(m.stretch?{stretch:m.stretch}:{}),size,cap,...(t.radialOffset?{radialOffset:t.radialOffset}:{}),...(t.ringMid?{bodyRatio:t.bodyRatio,ringCentred:true}:{}),preferredCap,tracking:tracking*size,trackingEm:tracking,width:getWidth(size,tracking),available:c.length-2*edge,curve:c,stage,tooSmall:cap<t.minCap,minimum:t.minCap,ascent:m.ascent*size,descent:m.descent*size};
 }
 // Measure the exact size/spacing written by textAttrs, not a scaled 1000px width.
 // A bounded cache avoids remeasuring identical gallery/export runs. Font loading
@@ -164,7 +232,7 @@ function fitRun(text,slotId,s){
  const policy=s.textFit||'legacy';
  if(typeof policy!=='string'||!Object.hasOwn(TEXT_FIT_POLICIES,policy))throw Error('Unknown lettering fit policy: '+policy);
  if(policy==='legacy')return fitRunLegacy(text,slotId,s);
- const t=slot(slotId,s),r=role(t.role,s),m=metrics(text,r.face);
+ const t=slot(slotId,s),r=role(t.role,s),m=metrics(text,r.face);if(t.ringMid)t.bodyRatio=typeBody(text,m);
  const calibrated=policy==='reference-calibrated'&&!!t.referenceProfile;
  const heightModel=calibrated?(t.heightModel||'cap'):'cap';
  const usesXHeight=heightModel==='xHeight'&&Number.isFinite(t.xHeight);
@@ -212,13 +280,13 @@ function fitRun(text,slotId,s){
  const c=curve(t,cap,span),size=cap/m.cap,resolvedWidth=width(cap,tracking),budget=available(cap,span);
  const stylePreserved=Math.abs(cap-preferredCap)<.0001&&Math.abs(tracking-preferredTrackingEm)<1e-8;
  return {text,widthBasis:'final-size browser advance',slot:slotId,role:t.role,face:r.face,family:m.family,weight:m.weight,...(m.stretch?{stretch:m.stretch}:{}),
-  size,cap,preferredCap,tracking:tracking*size,trackingEm:tracking,preferredTrackingEm,minimumTrackingEm,
+  size,cap,...(t.radialOffset?{radialOffset:t.radialOffset}:{}),...(t.ringMid?{bodyRatio:t.bodyRatio,ringCentred:true}:{}),preferredCap,tracking:tracking*size,trackingEm:tracking,preferredTrackingEm,minimumTrackingEm,
   ...(calibrated?{referenceProfile:t.referenceProfile,heightModel,xHeight:m.xHeight*size,preferredXHeight:usesXHeight?t.xHeight*r.capScale:null,wordSpacing:wordSpacingEm*size,wordSpacingEm,requestedWordSpacingEm,anchorBias,stretch:m.stretch}:{}),
   width:resolvedWidth,available:budget,curve:c,stage:adjustments.at(-1)||'natural',adjustments,fitPolicy:policy,
   preferredSpan,maxSpan,stylePreserved,overflow:Math.max(0,resolvedWidth-budget),
   tooSmall:cap<t.minCap,minimum:t.minCap,ascent:m.ascent*size,descent:m.descent*size};
 }
-function textAttrs(f,colour){return{'font-family':f.family,'font-weight':f.weight,'font-stretch':f.stretch,'font-size':round(f.size),'font-kerning':'normal','text-rendering':f.fitPolicy?'geometricPrecision':undefined,'letter-spacing':round(f.tracking),'word-spacing':f.wordSpacing===undefined?undefined:round(f.wordSpacing),style:'font-synthesis:none;white-space:pre','xml:space':'preserve',fill:colour};}
+function textAttrs(f,colour){return{'font-family':f.family,'font-weight':f.weight,'font-stretch':f.stretch,'font-size':round(f.size),'font-kerning':'normal','text-rendering':f.fitPolicy||f.precise?'geometricPrecision':undefined,'letter-spacing':round(f.tracking),'word-spacing':f.wordSpacing===undefined?undefined:round(f.wordSpacing),style:'font-synthesis:none;white-space:pre','xml:space':'preserve',fill:colour};}
 function curved(parent,defs,text,slotId,s,colour,id,report,resolved=null){if(!text?.trim())return;
  const f=resolved||fitRun(text,slotId,s);const pid=id+'-baseline';defs.append(node('path',{id:pid,d:f.curve.d,'data-baseline':slotId}));
  const e=node('text',{...textAttrs(f,colour),'text-anchor':'middle','data-slot':slotId,'data-role':f.role,'data-face':f.face,'data-live-text':id});
@@ -248,19 +316,27 @@ function ribbon(defs,t,theme,backing='paper'){
 }
 function wings(){const W=P.SHAPES.wings,g=node('g',{'data-layer':'tab-shape','data-fidelity':'photo-based approximation'});for(const mirror of [false,true]){const x=node('g',mirror?{transform:`translate(${2*CX} 0) scale(-1 1)`}:{});x.append(node('path',{d:W.outline,fill:W.fill,stroke:W.stroke,'stroke-width':W.strokeWidth,'stroke-linejoin':'round'}));for(const[a,b]of W.rules)x.append(node('path',{d:`M ${a} ${b} H ${W.ruleEnd}`,fill:'none',stroke:W.stroke,'stroke-width':W.ruleWidth}));g.append(x);}g.append(node('path',{d:W.band,fill:W.bandFill,stroke:W.stroke,'stroke-width':W.bandStrokeWidth}));return g;}
 // Resolve the service lettering and its holder once; exports use this same result.
+// A tab with holder 'oval' (no traced master of its own) always uses this
+// oval-hugging holder: at its fixed halfSpan with the reference holder, or
+// grown to the wording with follow-text.
 function serviceTabLayout(s){
- const t=P.TABS[s.tab];
- if(s.tabSizing!=='follow-text'||t.shape!=='ribbon'||P.LOCKUPS[s.layout].kind==='wordmark')return null;
+ const t=P.TABS[s.tab],grow=s.tabSizing==='follow-text';
+ if(!(grow||t.holder==='oval')||t.shape!=='ribbon'||P.LOCKUPS[s.layout].kind==='wordmark')return null;
  if(!global.BCTabLayout||!global.BCTabProfile)throw Error('Reactive tabs require tab-layout.js and the layout.json tab profile. Rebuild the studio.');
  const text=s.content.service||'',sl=slot(t.slot,s),r=role(sl.role,s),m=metrics(text,r.face);
- const layout=global.BCTabLayout.resolve({profile:global.BCTabProfile,side:t.side==='top'?'upper':'lower',metrics:m,
+ const fixed=!grow&&Number.isFinite(t.halfSpan),profile=fixed?{...global.BCTabProfile,halfSpan:t.halfSpan}:global.BCTabProfile;
+ const layout=global.BCTabLayout.resolve({profile,side:t.side==='top'?'upper':'lower',metrics:m,...(fixed?{maxHalfSpan:t.halfSpan}:{}),
   capHeight:sl.cap*r.capScale,referenceCap:P.SLOTS[t.slot].anchorCap,minCap:sl.minCap,
   trackingEm:Math.max(0,sl.tracking+r.trackingEm),count:Array.from(text).length,endPad:sl.endPad||12});
- const tab={mode:'follow-text',side:t.side,halfSpan:layout.halfSpan,depth:layout.depth,
+ const tab={mode:grow?'follow-text':'reference',side:t.side,halfSpan:layout.halfSpan,depth:layout.depth,
   padding:layout.padding,baselineOffset:layout.offset,endPadding:layout.endPadding,status:layout.status};
- const fit={text,widthBasis:'browser advance',slot:t.slot,role:sl.role,face:r.face,family:m.family,weight:m.weight,...(m.stretch?{stretch:m.stretch}:{}),
+ // Report the final-size textPath advance, measured like every other run, and
+ // render it with the same geometric precision.
+ const width=text?measuredAdvance(text,m,layout.size,layout.trackingEm):0;
+ const fit={text,widthBasis:'final-size browser advance',slot:t.slot,role:sl.role,face:r.face,family:m.family,weight:m.weight,...(m.stretch?{stretch:m.stretch}:{}),
   size:layout.size,cap:layout.cap,preferredCap:layout.requestedCap,tracking:layout.tracking,trackingEm:layout.trackingEm,
-  width:layout.width,available:layout.available,curve:layout.curve,stage:layout.stage,
+  precise:true,overflow:Math.max(0,width-layout.available),
+  width,available:layout.available,curve:layout.curve,stage:layout.stage,
   tooSmall:layout.tooSmall,minimum:layout.minimum,ascent:m.ascent*layout.size,descent:m.descent*layout.size,tab};
  return {fit,geometry:layout.geometry};
 }
@@ -272,15 +348,120 @@ function reactiveRibbon(layout,theme,backing='paper'){
  else g.append(node('path',{d:layout.geometry.border+' '+layout.geometry.face,'fill-rule':'evenodd',fill:theme.ink,'data-tab-part':'border'}));
  return g;
 }
-function drawBadge(s,defs,theme,report,tabLayout=null){const crestId=effectiveCrest(s),c=P.CRESTS[crestId],t=P.TABS[s.tab],g=node('g',{'data-layer':'badge','data-crest':crestId});
+// Separator marks sit on the separator band drawn in by the crest's
+// separatorInset. 'reference' keeps the crest's separatorY. 'follow-text'
+// places the mirrored pair from the visible ends of the upper and lower runs:
+//  - home: at separatorHomeY (the sides) while both runs stay at least
+//    SEPARATOR_COMFORT units (along the band, mark centre to ink) away;
+//  - pushed: a run that comes closer pushes the marks along the band;
+//  - centred: once the gap is under twice that, exactly halfway between the
+//    two runs' ink, so both lines are the same distance from the marks.
+// Under SEPARATOR_MIN_GAP plus the mark's size on either side the marks are
+// crowded: the lower arc narrows to make room (roomForSeparators), else a
+// warning. Measured on the references: Forests keeps its marks 129 units from
+// BRITISH COLUMBIA (home); the long ministry's sit about 40 units from each line.
+const SEPARATOR_COMFORT=50,SEPARATOR_MIN_GAP=6;
+const wrap180=a=>((a+180)%360+360)%360-180;
+function bandRadius(a,inset=0){const b=P.SHAPES.separatorBand,r=a*Math.PI/180;return 1/Math.hypot(Math.cos(r)/(b.rx-inset),Math.sin(r)/(b.ry-inset));}
+// Length along the (inset) band between two polar angles on the same side.
+function arcUnits(a,b,inset=0){return Math.abs(b-a)*Math.PI/180*bandRadius((a+b)/2,inset);}
+const unitsToDeg=(u,a,inset=0)=>u/bandRadius(a,inset)*180/Math.PI;
+// Polar angles (degrees, screen y down) of a curved run's first and last
+// visible ink edges, at its ink midline: the advance less the final letter
+// spacing and the end glyphs' side bearings. Both crest baselines run left to right.
+function runEnds(f){
+ const c=f.curve;if(!c||c.side==='flat'||!(f.width>0))return null;
+ const m=metrics(f.text,f.face),size=f.size,shift=(c.side==='top'?1:-1)*f.cap*(f.bodyRatio??1)/2,start=c.length/2+(f.anchorBias||0)-f.width/2;
+ const at=dist=>{let last=point(c.rx,c.ry,c.start),acc=0;
+  for(let i=1;i<=360;i++){const a=c.start+(c.end-c.start)*i/360,next=point(c.rx,c.ry,a),d=Math.hypot(next[0]-last[0],next[1]-last[1]);
+   if(acc+d>=dist||i===360){const prev=c.start+(c.end-c.start)*(i-1)/360,u=d?clamp((dist-acc)/d,0,1):0,p=point(c.rx+shift,c.ry+shift,prev+(a-prev)*u);return Math.atan2(p[1]+(c.y||0)-CY,p[0]-CX)*180/Math.PI;}
+   acc+=d;last=next;}};
+ const inkStart=start-m.left*size,inkEnd=start+f.width-(f.tracking||0)-Math.max(0,m.width-m.right)*size;
+ return {left:at(clamp(inkStart,0,c.length)),right:at(clamp(inkEnd,0,c.length))};
+}
+// Each side's gap, as right-side angles: the upper run's end and the lower
+// run's end (the left side mirrored in). Each mark is placed in its own gap,
+// since the end letters differ; the references' pairs are not mirror images either.
+function runGap(upper,lower){
+ const u=upper&&runEnds(upper),l=lower&&runEnds(lower);if(!u||!l)return null;
+ return {left:{top:wrap180(180-u.left),bottom:wrap180(180-l.left)},right:{top:u.right,bottom:l.right}};
+}
+const STATE_ORDER=['home','pushed','centred'];
+function separatorLayout(c,s,upper,lower){
+ const inset=c.separatorInset||0,b=P.SHAPES.separatorBand;
+ const onBand=y=>{const dx=(b.rx-inset)*Math.sqrt(Math.max(0,1-((y-CY)/(b.ry-inset))**2));return {y,dx,angle:Math.atan2(y-CY,dx)*180/Math.PI};};
+ const fixed=placement=>{const o=onBand(c.separatorY);return {placement,...o,points:[[CX-o.dx,o.y],[CX+o.dx,o.y]],state:'reference',crowded:false};};
+ if(s.separatorPlacement!=='follow-text')return fixed('reference');
+ const g=runGap(upper,lower);
+ // A missing run leaves no gap to follow: keep the reference position.
+ if(!g)return fixed('reference-fallback');
+ const home=onBand(c.separatorHomeY??c.separatorY).angle,need=c.separatorSize+SEPARATOR_MIN_GAP;
+ const place=({top,bottom})=>{
+  const comfortTop=unitsToDeg(SEPARATOR_COMFORT,top,inset),comfortBottom=unitsToDeg(SEPARATOR_COMFORT,bottom,inset);
+  let angle=home,state='home';
+  if(bottom-top<comfortTop+comfortBottom){
+   // Halfway by length along the band (its radius changes across the gap).
+   let lo=top,hi=bottom;for(let i=0;i<30;i++){const mid=(lo+hi)/2;if(arcUnits(top,mid,inset)<arcUnits(mid,bottom,inset))lo=mid;else hi=mid;}
+   angle=(lo+hi)/2;state='centred';}
+  else if(home<top+comfortTop){angle=top+comfortTop;state='pushed';}
+  else if(home>bottom-comfortBottom){angle=bottom-comfortBottom;state='pushed';}
+  angle=clamp(angle,-85,85);
+  const up=arcUnits(top,angle,inset),down=arcUnits(angle,bottom,inset),r=bandRadius(angle,inset),a=angle*Math.PI/180;
+  return {angle,state,top,bottom,dx:r*Math.cos(a),y:CY+r*Math.sin(a),clearance:{upper:up,lower:down},crowded:up<need||down<need};
+ };
+ const L=place(g.left),R=place(g.right),state=STATE_ORDER[Math.max(STATE_ORDER.indexOf(L.state),STATE_ORDER.indexOf(R.state))];
+ return {placement:'follow-text',state,y:(L.y+R.y)/2,dx:(L.dx+R.dx)/2,angle:(L.angle+R.angle)/2,points:[[CX-L.dx,L.y],[CX+R.dx,R.y]],
+  crowded:L.crowded||R.crowded,sides:{left:L,right:R},
+  clearance:{upper:Math.min(L.clearance.upper,R.clearance.upper),lower:Math.min(L.clearance.lower,R.clearance.lower)}};
+}
+// A crest with a fan profile (the long crest) spreads its upper line toward the
+// fanned capitals look when the lower line leaves room: letter height, spacing
+// and word spacing move together toward fan.capScale / trackingEm /
+// wordSpacingEm until the fan target is reached or the line's ends come
+//  - within fan.clearance units of marks at home (the Forests reference's 129), or
+//  - as close to marks the lower line has pushed as that line is, so the marks
+//    end up halfway between the two lines.
+function fanUpper(c,s,upper,lower){
+ const fan=c.fan;if(!fan||!s.fanOut||s.separatorPlacement!=='follow-text'||!upper||!lower)return upper;
+ const inset=c.separatorInset||0;
+ const room=f=>{const sep=separatorLayout(c,s,f,lower);if(!sep.sides)return false;
+  if(sep.state==='home')return sep.clearance.upper>=fan.clearance;
+  return sep.state==='pushed'&&Object.values(sep.sides).every(x=>x.state==='centred'||x.clearance.upper>=x.clearance.lower);};
+ if(!room(upper))return upper;
+ const id=c.upper,base=slot(id,s),k=t=>1+(fan.capScale-1)*t,ws=base.wordSpacingEm||0;
+ const at=t=>fitRun(upper.text,id,{...s,slots:{...s.slots,[id]:{...(s.slots[id]||{}),cap:base.cap*k(t),...(Number.isFinite(base.xHeight)?{xHeight:base.xHeight*k(t)}:{}),
+  tracking:base.tracking+(fan.trackingEm-base.tracking)*t,wordSpacingEm:ws+(fan.wordSpacingEm-ws)*t,span:Math.max(base.span,fan.span),maxSpan:Math.max(base.maxSpan||0,fan.span)}}});
+ let lo=0,hi=1,best=null;const full=at(1);
+ if(room(full)){best=full;lo=1;}
+ else for(let i=0;i<10;i++){const mid=(lo+hi)/2,f=at(mid);if(room(f)){lo=mid;best=f;}else hi=mid;}
+ return best?{...best,stage:'fanned',adjustments:[...(best.adjustments||[]),'fanned'],fan:round(lo)}:upper;
+}
+// Following marks need room between the lines. When both runs reach each other,
+// narrow the lower run's arc (its fit then tightens or shrinks as usual) until
+// the marks fit; if even a short arc leaves no room, keep the fit and warn.
+function roomForSeparators(c,s,upper,lower){
+ const id=c.lower,base=slot(id,s),text=lower.text;
+ const fitAt=m=>fitRun(text,id,{...s,slots:{...s.slots,[id]:{...(s.slots[id]||{}),span:Math.min(base.span,m),maxSpan:m}}});
+ let lo=40,hi=lower.curve.span,best=fitAt(lo);
+ if(separatorLayout(c,s,upper,best).crowded)return lower;
+ for(let i=0;i<10;i++){const mid=(lo+hi)/2,f=fitAt(mid);if(separatorLayout(c,s,upper,f).crowded)hi=mid;else{lo=mid;best=f;}}
+ return {...best,stage:'separator-room',adjustments:[...(best.adjustments||[]),'separator-room']};
+}
+function drawBadge(s,defs,theme,report,tabLayout=null,layout=null){const crestId=effectiveCrest(s),c=P.CRESTS[crestId],t=P.TABS[s.tab],g=node('g',{'data-layer':'badge','data-crest':crestId});
  if(t.shape==='ribbon')g.append(tabLayout?reactiveRibbon(tabLayout,theme,s.tabBacking):ribbon(defs,t,theme,s.tabBacking));
  if(t.shape==='plate'){const p=P.SHAPES.plate;g.append(node('rect',{'data-layer':'tab-shape','data-primitive':'plate',x:p.x,y:p.y,width:p.width,height:p.height,rx:p.rx,fill:theme.paper,stroke:theme.ink,'stroke-width':p.strokeWidth}));}
  if(t.shape==='wings')g.append(wings());
  const frame=sourceShape(defs,'frame-'+c.scene,c.scene==='wildlife'?ART.wildlifeFrame:ART.treeFrame,theme,c.scene);g.append(use(frame,{'data-layer':'frame'}));
  if(c.scene==='wildlife')defs.append(fragment(ART.wildlifeClip));
  const scene=sourceShape(defs,'scene-'+c.scene,c.scene==='wildlife'?ART.wildlifeScene:ART.treeInner,theme,c.scene);g.append(use(scene,{'data-layer':'scene'}));
- if(c.separator!=='none'){const band=P.SHAPES.separatorBand,y=c.separatorY,dx=band.rx*Math.sqrt(Math.max(0,1-((y-CY)/band.ry)**2)),r=c.separatorSize,marks=node('g',{'data-layer':'separators',fill:theme.text});for(const x of[CX-dx,CX+dx])marks.append(c.separator==='circle'?node('circle',{cx:x,cy:y,r}):node('path',{d:`M ${x} ${y-r} l ${r} ${r} -${r} ${r} -${r} -${r} Z`}));g.append(marks);}
- const letters=node('g',{'data-layer':'live-lettering'});curved(letters,defs,s.content.upper,c.upper,s,theme.text,'upper',report);curved(letters,defs,s.content.lower,c.lower,s,theme.text,'lower',report);if(t.slot)curved(letters,defs,s.content.service,t.slot,s,t.shape==='wings'?P.SHAPES.wings.textFill:theme.text,'service',report,tabLayout?.fit);g.append(letters);return g;
+ // The marks follow the fitted lettering, so fit both crest runs first.
+ const letters=node('g',{'data-layer':'live-lettering'});let upper=s.content.upper?.trim()?fitRun(s.content.upper,c.upper,s):null;
+ let lower=s.content.lower?.trim()?fitRun(s.content.lower,c.lower,s):null,sep=c.separator==='none'?null:separatorLayout(c,s,upper,lower);
+ if(sep?.crowded){lower=roomForSeparators(c,s,upper,lower);sep=separatorLayout(c,s,upper,lower);}
+ if(sep?.state==='home'||sep?.state==='pushed'){const fanned=fanUpper(c,s,upper,lower);if(fanned!==upper){upper=fanned;sep=separatorLayout(c,s,upper,lower);}}
+ curved(letters,defs,s.content.upper,c.upper,s,theme.text,'upper',report,upper);curved(letters,defs,s.content.lower,c.lower,s,theme.text,'lower',report,lower);
+ if(sep){const r=c.separatorSize,marks=node('g',{'data-layer':'separators',fill:theme.text,'data-separator-placement':sep.placement,'data-separator-state':sep.state,'data-separator-y':round(sep.y)});sep.points.forEach(([px,py],i)=>{const x=round(px),y=round(py),side=sep.sides?.[i?'right':'left'],gap=side?{'data-clearance-upper':round(side.clearance.upper),'data-clearance-lower':round(side.clearance.lower)}:{};marks.append(c.separator==='circle'?node('circle',{cx:x,cy:y,r,...gap}):node('path',{d:`M ${x} ${round(y-r)} l ${r} ${r} -${r} ${r} -${r} -${r} Z`,...gap}));});g.append(marks);if(layout)layout.separators=sep;}
+ if(t.slot)curved(letters,defs,s.content.service,t.slot,s,t.shape==='wings'?P.SHAPES.wings.textFill:theme.text,'service',report,tabLayout?.fit);g.append(letters);return g;
 }
 function badgeBox(s,tabLayout=null){
  if(tabLayout){const b=tabLayout.geometry.bounds,x=Math.min(0,b.x),y=Math.min(0,b.y);return{x,y,w:Math.max(676,b.x+b.w)-x,h:Math.max(844,b.y+b.h)-y};}
@@ -290,13 +471,13 @@ function blockHeight(rows,gap){return rows.reduce((h,r)=>h+r.ascent+r.descent,0)
 function wordBlock(g,s,l,theme,x,top,report,center=false){const rows=blockMetrics(s,l);let y=top;rows.forEach((f,i)=>{y+=f.ascent;plain(g,f,x+(center?(l.wordWidth-f.width)/2:0),y,i===0&&s.content.word?theme.word:theme.descriptor,'word-line-'+i,report);y+=f.descent+l.lineGap;});return rows;}
 function uniqueIds(svg,prefix){const map=new Map();for(const e of svg.querySelectorAll('[id]')){map.set(e.id,prefix+e.id);e.id=prefix+e.id;}for(const e of[svg,...svg.querySelectorAll('*')])for(const a of[...e.attributes]){let v=a.value.replace(/url\(#([^)]+)\)/g,(_,id)=>`url(#${map.get(id)||id})`);if(a.localName==='href'&&v.startsWith('#'))v='#'+(map.get(v.slice(1))||v.slice(1));if(a.name==='aria-labelledby')v=v.split(' ').map(x=>map.get(x)||x).join(' ');if(v!==a.value)e.setAttributeNS(a.namespaceURI,a.name,v);}}
 function makeLogo(input={},options={}){
- const s=normalise(input),theme={...P.THEMES[s.theme],...s.colours},report=[],warnings=[];const l=P.LOCKUPS[s.layout],tabLayout=serviceTabLayout(s),bn=badgeBox(s,tabLayout);
+ const s=normalise(input),theme={...P.THEMES[s.theme],...s.colours},report=[],warnings=[],layoutInfo={separators:null};const l=P.LOCKUPS[s.layout],tabLayout=serviceTabLayout(s),bn=badgeBox(s,tabLayout);
  const svg=node('svg',{xmlns:NS,version:'1.1',role:'img','aria-labelledby':'title desc'});svg.setAttributeNS('http://www.w3.org/2000/xmlns/','xmlns:xlink',XL);
  svg.append(node('title',{id:'title'},Object.values(s.content).filter(Boolean).join(' — ')));svg.append(node('desc',{id:'desc'},'Reference-based reconstruction with shared vector primitives and editable text. Substitute fonts; not an authenticated official master. Font files are not embedded.'));
  const defs=node('defs');svg.append(defs);const composition=node('g',{'data-layer':'composition'});svg.append(composition);let nominal=bn;
  if(l.kind==='wordmark'){const rows=blockMetrics(s,l),h=blockHeight(rows,l.lineGap);wordBlock(composition,s,l,theme,0,0,report);nominal={x:0,y:0,w:l.wordWidth,h};}
  else{
-  const badge=drawBadge(s,defs,theme,report,tabLayout);
+  const badge=drawBadge(s,defs,theme,report,tabLayout,layoutInfo);
   if(l.kind==='badge')composition.append(badge);
   else if(l.kind==='strip'){composition.append(node('rect',{'data-layer':'branch-strip',x:330,y:l.barY,width:l.width-330,height:l.height,fill:theme.strip}));composition.append(badge);const labelX=tabLayout?Math.max(756,bn.x+bn.w+80):756;const f=fitPlain(s.content.branch||'','branch-condensed',l.textCap,l.width-labelX-74,s,.003);plain(composition,f,labelX,l.barY+(l.height-f.ascent-f.descent)/2+f.ascent,theme.stripText,'branch-label',report);nominal={x:0,y:bn.y,w:l.width,h:bn.h};}
   else if(l.kind==='words'){composition.append(badge);const lines=(s.content.lines||'').split(/\r?\n/).filter(x=>x.trim());const rows=lines.map(text=>fitPlain(text,'plain-label',l.labelCap,l.wordWidth,s)),h=blockHeight(rows,l.lineGap);let y=(844-h)/2;rows.forEach((f,i)=>{y+=f.ascent;plain(composition,f,(tabLayout?bn.x+bn.w:676)+l.gap,y,theme.descriptor,'stacked-line-'+i,report);y+=f.descent+l.lineGap;});nominal={x:0,y:Math.min(bn.y,(844-h)/2),w:(tabLayout?bn.x+bn.w:676)+l.gap+l.wordWidth,h:Math.max(bn.h,h)};}
@@ -304,7 +485,7 @@ function makeLogo(input={},options={}){
   else{composition.append(badge);const rows=blockMetrics(s,l),h=blockHeight(rows,l.lineGap);wordBlock(composition,s,l,theme,bn.x+bn.w+l.gap,(l.centerY||422)-h/2,report);nominal={x:bn.x,y:Math.min(bn.y,(844-h)/2),w:bn.w+l.gap+l.wordWidth,h:Math.max(bn.h,h)};}
  }
  const fontIds=[...new Set(report.map(r=>r.face))];for(const id of fontIds){const f=fontState.get(id);if(f?.status==='ready'&&f.verified===false)warnings.push({code:'FONT_METRICS_MISMATCH',message:`${P.FACES[id].family} ${P.FACES[id].weight} (${f.source}) measures ${((f.advance/P.FACES[id].advance-1)*100).toFixed(2)}% different from the calibration face. Its fit is not the reference fit.`});}
- for(const id of fontIds)if(fontState.get(id)?.status!=='ready')warnings.push({code:'FONT_FALLBACK',message:P.FACES[id].family+' '+P.FACES[id].weight+' is not verified. Load the reference faces or install that exact weight.'});
+ for(const id of fontIds)if(fontState.get(id)?.status!=='ready')warnings.push({code:'FONT_FALLBACK',message:id==='kabel-black'?'Kabel Black is missing. Load your Kabel-Black.otf in the editor, or run tools/setup_kabel.py and rebuild. Google Fonts does not supply this face.':P.FACES[id].family+' '+P.FACES[id].weight+' is not verified. Load the reference faces or install that exact weight.'});
  for(const r of report)if(r.tooSmall)warnings.push({code:'SMALL_TEXT',message:`${r.slot||r.role}: fitted cap height ${r.cap.toFixed(1)}. Shorten the wording for a readable mark.`});
  for(const r of report){
   if(s.textFit==='reference-calibrated'&&r.slot&&!r.referenceProfile)warnings.push({code:'REFERENCE_PROFILE_UNAVAILABLE',message:`${r.slot}: no reference calibration is applied here; the existing fitting policy is used (reactive tabs keep their own solver).`});
@@ -312,14 +493,15 @@ function makeLogo(input={},options={}){
   if(r.fitPolicy&&!r.stylePreserved)warnings.push({code:'TEXT_STYLE_REDUCED',message:`${r.slot}: preferred height or spacing was reduced within the ${r.fitPolicy} limits. Shorten the wording or choose another crest profile to retain the preferred style.`});
   if(r.overflow>.05)warnings.push({code:'TEXT_FIT_OVERFLOW',message:`${r.slot}: the measured text exceeds the available arc by ${r.overflow.toFixed(2)} units. Review this configuration before export.`});
  }
- if(tabLayout?.fit.tab.status==='text-reduced')warnings.push({code:'TAB_TEXT_REDUCED',message:`Service tab reached its 80° half-span limit. Requested cap ${tabLayout.fit.preferredCap.toFixed(1)}; rendered ${tabLayout.fit.cap.toFixed(1)}. Shorten the wording to keep the requested size.`});
+ if(layoutInfo.separators?.crowded)warnings.push({code:'SEPARATOR_CROWDED',message:'The upper and lower lettering leave no clear room for the separator marks. Shorten the wording or choose another crest profile.'});
+ if(tabLayout?.fit.tab.status==='text-reduced')warnings.push({code:'TAB_TEXT_REDUCED',message:`Service tab reached its ${tabLayout.fit.tab.halfSpan.toFixed(0)}° half-span limit. Requested cap ${tabLayout.fit.preferredCap.toFixed(1)}; rendered ${tabLayout.fit.cap.toFixed(1)}. Shorten the wording to keep the requested size.`});
  if(P.recipe(s.recipe).excluded)warnings.push({code:'EXCLUDED_REFERENCE',message:'Fire Control is excluded from calibration. This is only a shared-component placeholder.'});
  if(s.tab==='airtanker')warnings.push({code:'APPROXIMATION',message:'Winged geometry remains a photographic approximation.'});
  measurementRoot().append(svg);let b;try{b=composition.getBBox();}catch{b={x:nominal.x,y:nominal.y,width:nominal.w,height:nominal.h};}
  const pad=10,x=Math.min(nominal.x,b.x)-pad,y=Math.min(nominal.y,b.y)-pad,right=Math.max(nominal.x+nominal.w,b.x+b.width)+pad,bottom=Math.max(nominal.y+nominal.h,b.y+b.height)+pad;
  const viewBox={x:round(x),y:round(y),w:round(right-x),h:round(bottom-y)};svg.remove();svg.setAttribute('viewBox',`${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`);svg.setAttribute('width',s.outputWidth);svg.setAttribute('height',round(s.outputWidth*viewBox.h/viewBox.w));
  const summary=report.map(({curve,family,...r})=>({...r,curve:curve?{span:curve.span,rx:curve.rx,ry:curve.ry}:undefined}));svg.insertBefore(node('metadata',{'data-engine':'bc-shared-primitives','data-version':'5'},JSON.stringify({configuration:s,resolved:summary})),defs);
- uniqueIds(svg,(options.prefix||'bc'+(++seq))+'-');return{svg,state:s,report:summary,warnings,viewBox,nominal,crest:effectiveCrest(s),fontIds};
+ uniqueIds(svg,(options.prefix||'bc'+(++seq))+'-');return{svg,state:s,report:summary,warnings,viewBox,nominal,crest:effectiveCrest(s),separators:layoutInfo.separators,fontIds};
 }
 async function render(input={},options={}){const s=normalise(input);const ids=Object.keys(P.ROLES).map(id=>role(id,s).face);await ensureFonts(ids,options.allowNetwork===true);return makeLogo(s,options);}
 // Editable exports must re-establish the same aliases in a fresh document.
@@ -341,14 +523,14 @@ async function png(result,width=1600){
  await document.fonts.ready;const svg=result.svg.cloneNode(true);let css='';
  // Web-font bytes are used only in this transient rasterization image, then
  // discarded. They are not included in downloadable SVGs or source packages.
- for(const id of result.fontIds){const state=fontState.get(id),face=P.FACES[id];if(state?.source==='web'||state?.source==='bundled')for(const item of state.loaded)css+=`@font-face{font-family:"${face.family}";font-style:normal;font-weight:${face.weight};font-stretch:${face.stretch||'normal'};src:url(data:font/woff2;base64,${base64(item.bytes)});${item.range?'unicode-range:'+item.range+';':''}}`;
+ for(const id of result.fontIds){const state=fontState.get(id),face=P.FACES[id];if(state?.source==='web'||state?.source==='bundled'||state?.source==='uploaded')for(const item of state.loaded)css+=`@font-face{font-family:"${face.family}";font-style:normal;font-weight:${face.weight};font-stretch:${face.stretch||'normal'};src:url(data:${item.mime||fontMime(item.bytes)};base64,${base64(item.bytes)});${item.range?'unicode-range:'+item.range+';':''}}`;
  else if(state?.source==='local')css+=`@font-face{font-family:"${face.family}";font-weight:${face.weight};font-stretch:${face.stretch||'normal'};src:${face.locals.map(x=>'local("'+x+'")').join(',')}}`;
  }
  if(css)svg.querySelector('defs').append(node('style',{},css));
  const w=clamp(Math.round(width),100,6000),h=Math.round(w*result.viewBox.h/result.viewBox.w);if(w*h>32000000)throw Error('PNG is too large; reduce export width.');svg.setAttribute('width',w);svg.setAttribute('height',h);
  const url=URL.createObjectURL(new Blob([serialise(svg)],{type:'image/svg+xml'}));try{const img=new Image();await new Promise((ok,bad)=>{img.onload=ok;img.onerror=()=>bad(Error('SVG rasterization failed'));img.src=url;});const c=document.createElement('canvas');c.width=w;c.height=h;const context=c.getContext('2d');context.drawImage(img,0,0,w,h);return await new Promise((ok,bad)=>c.toBlob(b=>b?ok(b):bad(Error('PNG export failed')),'image/png'));}finally{URL.revokeObjectURL(url);}
 }
-function recipeState(id,shared={}){return normalise({recipe:id,textFit:shared.textFit,referenceModelVersion:shared.referenceModelVersion,tabSizing:shared.tabSizing,roles:shared.roles||{},slots:shared.slots||{}});}
+function recipeState(id,shared={}){return normalise({recipe:id,treeLettering:shared.treeLettering,textFit:shared.textFit,referenceModelVersion:shared.referenceModelVersion,tabSizing:shared.tabSizing,autoProfile:shared.autoProfile,separatorPlacement:shared.separatorPlacement,fanOut:shared.fanOut,centreInRing:shared.centreInRing,roles:shared.roles||{},slots:shared.slots||{}});}
 function dependencies(roleId){return P.RECIPES.filter(x=>!x.excluded).filter(r=>{const s=recipeState(r.id),c=P.CRESTS[s.crest],t=P.TABS[s.tab],l=P.LOCKUPS[s.layout];return [...(l.kind!=='wordmark'?[P.SLOTS[c.upper]?.role,P.SLOTS[c.lower]?.role,P.SLOTS[t.slot]?.role]:[]),...(l.kind==='wordmark'||l.kind==='horizontal'||l.kind==='stacked'?['wordmark-heavy','descriptor-slab',...(s.content.district?['district-slab']:[])]:[]),...(l.kind==='words'?['plain-label']:[]),...(l.kind==='strip'?['branch-condensed']:[])].includes(roleId);}).map(x=>x.name);}
-global.BCLogo={P,ART,TEXT_FIT_POLICIES,normalise,recipeState,makeLogo,render,serialise,png,metrics,fitRun,fitPlain,curve,effectiveCrest,role,slot,referenceProfile,dependencies,ensureFonts,retryFonts,fontState,invalidateMetrics,node,clone};
+global.BCLogo={P,ART,TEXT_FIT_POLICIES,normalise,recipeState,makeLogo,render,serialise,png,metrics,fitRun,fitPlain,curve,effectiveCrest,separatorLayout,typeBody,role,slot,referenceProfile,dependencies,ensureFonts,supplyFont,retryFonts,fontState,invalidateMetrics,node,clone};
 })(window);

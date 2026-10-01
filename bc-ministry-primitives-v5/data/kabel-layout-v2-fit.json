@@ -1,0 +1,89 @@
+{
+  "version": 2,
+  "font_sha256": "df904b7051598b3941381ecc5b29590945b15b1bf49b80a2aa9bc51c48c7a712",
+  "font_outline_metrics": {
+    "unitsPerEm": 1000,
+    "H_yMax": 720,
+    "x_yMax": 518,
+    "capEm": 0.72,
+    "xHeightEm": 0.518
+  },
+  "browser": "144.0.7559.96",
+  "reference": "data/references/tree-source.svg via ref-5-upper-mask.png and ref-5-lower-mask.png",
+  "fixed_canvas": [
+    676,
+    945
+  ],
+  "method": "In-sample fit of actual BCLogo.makeLogo -> BCLogo.png to the fixed reference masks. Full-resolution coverage IoU (min/max), no blur, no re-registration, no per-character fitting. Nelder-Mead initialized from a five-parameter ring-offset refit. A local fit, not a global optimum or independent accuracy.",
+  "parameters": [
+    "cap",
+    "tracking",
+    "wordSpacingEm",
+    "anchorBias",
+    "radialOffset"
+  ],
+  "parts": {
+    "upper": {
+      "profile": {
+        "cap": 60.582921323,
+        "tracking": 0.020199071,
+        "wordSpacingEm": 0.094554217,
+        "anchorBias": 2.758338713,
+        "radialOffset": 2.33053693
+      },
+      "baseline": {
+        "binary_iou": 0.6618744384107512,
+        "coverage_iou": 0.661314158548759,
+        "ink_ratio": 0.942092450016737
+      },
+      "metric_change_without_refit": {
+        "binary_iou": 0.6227804568053531,
+        "coverage_iou": 0.6224216223474471,
+        "ink_ratio": 0.9811874258239249,
+        "binary_dice": 0.7675473958213356
+      },
+      "refit": {
+        "binary_iou": 0.735409796988598,
+        "coverage_iou": 0.7349112492421208,
+        "ink_ratio": 0.9930527337072195
+      },
+      "fit_evaluations": 142,
+      "fit_converged": true
+    },
+    "lower": {
+      "profile": {
+        "cap": 60.141174935,
+        "tracking": 0.18174509,
+        "wordSpacingEm": 0.095052382,
+        "anchorBias": 18.755645994,
+        "radialOffset": 2.461207266
+      },
+      "baseline": {
+        "binary_iou": 0.6848759928675636,
+        "coverage_iou": 0.6861301579974988,
+        "ink_ratio": 0.9235755355953088
+      },
+      "metric_change_without_refit": {
+        "binary_iou": 0.5760135637585889,
+        "coverage_iou": 0.576463349679719,
+        "ink_ratio": 0.961719515996815,
+        "binary_dice": 0.7309753887966178
+      },
+      "refit": {
+        "binary_iou": 0.7162219398559933,
+        "coverage_iou": 0.7147283900038875,
+        "ink_ratio": 0.949575047315688
+      },
+      "fit_evaluations": 166,
+      "fit_converged": true
+    }
+  },
+  "limitations": [
+    "One outlined source only, not a verified historical font master.",
+    "No claim of exact letter placement or exact contours.",
+    "Radial offset increases both ellipse radii; it is not a constant normal-distance curve.",
+    "Font metrics are pinned only for the selected loaded, non-mismatching Kabel face. Other faces retain their existing route.",
+    "No optical per-pair or per-letter spacing corrections were added.",
+    "Ref-5 lettering is absent from the old four-image fixtures manifest; this new test explicitly covers it."
+  ]
+}

@@ -1,12 +1,25 @@
-import type { Catalogue, Configuration, ContentKey, EditorOptions, LogoResult, Runtime } from './types';
+import type { Catalogue, Configuration, ContentKey, EditorOptions, Engine, LogoResult, Runtime } from './types';
 
 const STORAGE_KEY = 'forestoval-compose-lettering-v1';
+/** A new or reset draft: calibrated fitting, and a crest that follows its wording
+ * (short/long crest profile, separator marks placed from the lines, and a
+ * long-crest upper line that spreads out when the lower line leaves room, and
+ * every line centred in the white ring). */
+export const NEW_DRAFT = { textFit: 'reference-calibrated', treeLettering: 'kabel-black', autoProfile: true, separatorPlacement: 'follow-text', fanOut: true, centreInRing: true } as const;
+export type DraftDefaults = Omit<typeof NEW_DRAFT, 'treeLettering'> & { treeLettering: 'kabel-black' | 'reference-v2' };
+/** New drafts use Kabel Black only when it can be used (a bundled build input, an
+ * installed face, or one loaded this session); otherwise the calibrated v2
+ * substitutes, rather than an Arial fallback that blocks exports. */
+export async function draftDefaults(E: Engine): Promise<DraftDefaults> {
+  const [kabel] = await E.ensureFonts(['kabel-black']);
+  return { ...NEW_DRAFT, treeLettering: kabel?.status === 'ready' ? 'kabel-black' : 'reference-v2' };
+}
 const LABELS: Record<ContentKey, string> = {
   upper: 'Upper oval text', lower: 'Lower / ministry text', service: 'Service tab text',
   word: 'Acronym / wordmark', descriptor: 'Descriptor', district: 'District',
   lines: 'Stacked words (one per line)', branch: 'Branch strip text',
 };
-const QUICK = ['forests', 'forests-wildfire', 'long-ministry', 'long-wildfire'];
+const QUICK = ['forest-service', 'forests', 'forests-wildfire', 'long-ministry', 'long-wildfire'];
 const title = (s: string) => s.replace(/-/g, ' ');
 const node = <K extends keyof HTMLElementTagNameMap>(tag: K, text?: string) => {
   const el = document.createElement(tag);
@@ -44,6 +57,7 @@ export class LetteringEditor {
   private inputs = new Map<ContentKey, HTMLInputElement | HTMLTextAreaElement>();
   private selected?: ContentKey;
   private palette: Record<string, string> | null;
+  private defaults: DraftDefaults = { ...NEW_DRAFT, treeLettering: 'reference-v2' };
   private storage: Storage | null;
   private abort = new AbortController();
   private revision = 0;
@@ -73,6 +87,19 @@ export class LetteringEditor {
         <div data-part="fields"></div>
         <label>Lettering style<select data-control="textFit" aria-label="Lettering style"></select></label>
         <p class="fo-muted fo-small" data-part="policy-note"></p>
+        <label>Tree oval lettering<select data-control="treeLettering" aria-label="Tree oval lettering">
+          <option value="kabel-black">Kabel Black · supplied OTF</option><option value="reference-v2">Previous v2 substitutes</option>
+        </select></label>
+        <button type="button" data-action="kabel">Load Kabel-Black.otf</button>
+        <input data-part="kabel-file" type="file" accept=".otf,font/otf" hidden>
+        <p class="fo-muted fo-small">Kabel applies to the heavy tree oval, not Parks or wildlife lettering. Loading a file keeps it in this tab only; it is not uploaded.</p>
+        <label class="fo-check"><input type="checkbox" data-control="autoProfile"> Pick the short or long crest from the wording</label>
+        <label>Separator dots<select data-control="separatorPlacement" aria-label="Separator dots">
+          <option value="follow-text">Follow the lettering</option><option value="reference">Keep the reference position</option>
+        </select></label>
+        <label class="fo-check"><input type="checkbox" data-control="fanOut"> Spread the upper line when there is room</label>
+        <label class="fo-check"><input type="checkbox" data-control="centreInRing"> Centre each line in the white ring</label>
+        <p class="fo-muted fo-small" data-part="profile-note"></p>
         <label>Service holder<select data-control="tabSizing" aria-label="Service holder">
           <option value="reference">Keep the reference holder</option><option value="follow-text">Grow to follow service text</option>
         </select></label>
@@ -104,7 +131,7 @@ export class LetteringEditor {
           <button type="button" data-action="close" aria-label="Close inline editor">Done</button>
         </div>
         <p class="fo-status" data-part="status" role="status" aria-live="polite">Preparing live SVG…</p>
-        <div class="fo-fonts"><span>Reference fonts are substitutes, not authenticated originals.</span>
+        <div class="fo-fonts"><span>Kabel is the selected tree-oval face; other families retain their substitutes. Historical font identity remains unverified.</span>
           <button type="button" data-action="fonts">Load reference fonts online</button></div>
         <p class="fo-muted fo-small">Online loading contacts Google Fonts. SVG keeps editable text and does not contain font files.</p>
         <div data-part="warnings"></div>
@@ -119,12 +146,14 @@ export class LetteringEditor {
     if (!el) throw new Error(`Missing editor part: ${name}`); return el;
   }
   private control(name: string): HTMLSelectElement { return this.root.querySelector<HTMLSelectElement>(`[data-control="${name}"]`)!; }
+  private checkbox(name: string): HTMLInputElement { return this.root.querySelector<HTMLInputElement>(`input[data-control="${name}"]`)!; }
   private on(target: EventTarget, event: string, fn: EventListener) { target.addEventListener(event, fn, { signal: this.abort.signal }); }
   private async start() {
     try {
       this.runtime = await this.options.runtime(); if (this.disposed) return;
       const { P, E } = this.runtime;
       if (!E.TEXT_FIT_POLICIES['reference-calibrated']) throw new Error('Apply the reference-lettering v2 patch before using this editor.');
+      this.defaults = await draftDefaults(E); if (this.disposed) return;
       fillSelect(this.control('recipe'), P.RECIPES.filter(r => !r.excluded).map(r => [r.id, r.name]));
       fillSelect(this.control('textFit'), Object.entries(E.TEXT_FIT_POLICIES).map(([id, p]) => [id, p.label]));
       for (const [key, table] of Object.entries({ crest: P.CRESTS, tab: P.TABS, layout: P.LOCKUPS })) {
@@ -136,9 +165,14 @@ export class LetteringEditor {
       let active = 'long-wildfire';
       try {
         const saved = JSON.parse(this.storage?.getItem(STORAGE_KEY) ?? 'null');
-        if (saved?.version === 1 && saved.drafts && typeof saved.drafts === 'object') {
+        if ([1, 2, 3, 4].includes(saved?.version) && saved.drafts && typeof saved.drafts === 'object') {
           for (const [id, draft] of Object.entries(saved.drafts)) {
-            try { const s = this.validate(draft); if (s.recipe === id) this.drafts.set(id, s); } catch { /* Ignore only this invalid saved draft. */ }
+            // Older drafts predate some of the dynamic controls; they take the new defaults
+            // (version 1: profile and separators; 1–2: spreading the upper line; 1–3: ring centring).
+            const adopt = { ...(saved.version === 1 ? { autoProfile: NEW_DRAFT.autoProfile, separatorPlacement: NEW_DRAFT.separatorPlacement } : {}),
+              ...(saved.version < 3 ? { fanOut: NEW_DRAFT.fanOut } : {}), ...(saved.version < 4 ? { centreInRing: NEW_DRAFT.centreInRing } : {}) };
+            const raw = draft && typeof draft === 'object' ? { ...draft, ...adopt } : draft;
+            try { const s = this.validate(raw); if (s.recipe === id) this.drafts.set(id, s); } catch { /* Ignore only this invalid saved draft. */ }
           }
           if (this.drafts.has(saved.active)) active = saved.active;
         }
@@ -158,13 +192,13 @@ export class LetteringEditor {
   private remember() {
     if (!this.state) return;
     this.drafts.set(this.state.recipe, this.runtime!.E.normalise(this.state));
-    try { this.storage?.setItem(STORAGE_KEY, JSON.stringify({ version: 1, active: this.state.recipe, drafts: Object.fromEntries(this.drafts) })); }
+    try { this.storage?.setItem(STORAGE_KEY, JSON.stringify({ version: 4, active: this.state.recipe, drafts: Object.fromEntries(this.drafts) })); }
     catch { /* Restricted/full storage: the live in-memory draft is still usable. */ }
   }
   private choose(id: string) {
     if (!this.runtime) return;
     this.remember();
-    this.state = this.drafts.get(id) ?? this.runtime.E.recipeState(id, { textFit: 'reference-calibrated' });
+    this.state = this.drafts.get(id) ?? this.runtime.E.recipeState(id, this.defaults);
     this.state = this.runtime.E.normalise(this.state);
     this.selected = undefined; this.part('dock').hidden = true;
     this.sync(); this.schedule();
@@ -172,10 +206,21 @@ export class LetteringEditor {
   private sync() {
     if (!this.state || !this.runtime) return;
     const { P } = this.runtime, s = this.state;
-    for (const key of ['recipe', 'textFit', 'crest', 'tab', 'layout', 'tabSizing', 'tabBacking'] as const) this.control(key).value = s[key];
-    const ribbon = P.TABS[s.tab].shape === 'ribbon' && P.LOCKUPS[s.layout].kind !== 'wordmark';
+    for (const key of ['recipe', 'textFit', 'treeLettering', 'crest', 'tab', 'layout', 'tabSizing', 'tabBacking', 'separatorPlacement'] as const) this.control(key).value = s[key];
+    const badge = P.LOCKUPS[s.layout].kind !== 'wordmark', ribbon = P.TABS[s.tab].shape === 'ribbon' && badge;
     this.control('tabSizing').disabled = !ribbon;
     this.control('tabBacking').disabled = !ribbon;
+    this.control('treeLettering').disabled = !badge || !['tree-heavy', 'tree-long'].includes(s.crest);
+    const auto = this.checkbox('autoProfile');
+    const pair = P.CRESTS[s.crest];
+    auto.checked = s.autoProfile; auto.disabled = !badge || !(pair.longer || pair.shorter);
+    const marks = badge && P.CRESTS[s.crest].separator !== 'none';
+    this.control('separatorPlacement').disabled = !marks;
+    // Spreading reads the marks' position, so it needs marks that follow the lettering.
+    const fan = this.checkbox('fanOut');
+    fan.checked = s.fanOut; fan.disabled = !marks || s.separatorPlacement !== 'follow-text';
+    const ring = this.checkbox('centreInRing');
+    ring.checked = s.centreInRing; ring.disabled = !badge;
     this.part('name').textContent = P.recipe(s.recipe).name;
     this.part('confidence').textContent = P.recipe(s.recipe).confidence ?? 'Reference-based reconstruction';
     this.part('policy-note').textContent = this.runtime.E.TEXT_FIT_POLICIES[s.textFit].description;
@@ -194,11 +239,17 @@ export class LetteringEditor {
   private bind() {
     this.on(this.root, 'change', event => {
       const target = event.target;
-      if (!(target instanceof HTMLSelectElement) || !this.state) return;
+      if (!this.state) return;
+      if (target instanceof HTMLInputElement && ['autoProfile', 'fanOut', 'centreInRing'].includes(target.dataset.control ?? '')) {
+        this.state = this.runtime!.E.normalise({ ...this.state, [target.dataset.control!]: target.checked }); this.sync(); this.schedule(); return;
+      }
+      if (!(target instanceof HTMLSelectElement)) return;
       const key = target.dataset.control;
       if (key === 'recipe') { this.choose(target.value); return; }
-      if (key && ['textFit', 'crest', 'tab', 'layout', 'tabSizing', 'tabBacking'].includes(key)) {
-        this.state = this.runtime!.E.normalise({ ...this.state, [key]: target.value }); this.sync(); this.schedule();
+      if (key && ['textFit', 'treeLettering', 'crest', 'tab', 'layout', 'tabSizing', 'tabBacking', 'separatorPlacement'].includes(key)) {
+        // Choosing a crest profile by hand stops the wording from overriding it.
+        const manual = key === 'crest' ? { autoProfile: false } : {};
+        this.state = this.runtime!.E.normalise({ ...this.state, [key]: target.value, ...manual }); this.sync(); this.schedule();
       }
     });
     this.on(this.root, 'compositionstart', () => { this.composing = true; });
@@ -221,6 +272,7 @@ export class LetteringEditor {
       }
     });
     this.on(this.part<HTMLInputElement>('file'), 'change', () => { void this.openFile(); });
+    this.on(this.part<HTMLInputElement>('kabel-file'), 'change', () => { void this.openKabel(); });
     this.on(this.part<HTMLInputElement>('font-ack-input'), 'change', event => {
       this.fontAck = (event.target as HTMLInputElement).checked; this.updateButtons();
     });
@@ -305,6 +357,7 @@ export class LetteringEditor {
           const check = f?.verified === undefined ? '' : f.verified ? ' · advances match the calibration face' : ' · advances differ from the calibration face';
           return node('p', `${P.FACES[id].family} ${P.FACES[id].weight}: ${f?.status === 'ready' ? f.source : 'fallback'}${check}`);
         }));
+      this.part('profile-note').textContent = this.profileNote(result);
       const missing = result.warnings.some(w => w.code === 'FONT_FALLBACK');
       this.unverified = result.warnings.some(w => w.code === 'FONT_FALLBACK' || w.code === 'FONT_METRICS_MISMATCH');
       this.part('font-ack').hidden = !this.unverified;
@@ -314,12 +367,28 @@ export class LetteringEditor {
       this.rendering = false; this.updateButtons();
     } catch (error) { if (!this.disposed && revision === this.revision) this.fail(error); }
   }
+  /** Which crest the wording chose, and where the separator marks went. */
+  private profileNote(result: LogoResult): string {
+    const s = result.state, notes: string[] = [];
+    if (this.runtime!.P.LOCKUPS[s.layout].kind === 'wordmark') return '';
+    const pair = this.runtime!.P.CRESTS[s.crest];
+    if (s.autoProfile && (pair.longer || pair.shorter)) notes.push(`The wording uses the ${title(result.crest)} crest.`);
+    const sep = result.separators;
+    if (sep?.placement === 'follow-text') notes.push(sep.crowded ? 'The dots are crowded between the lines.'
+      : sep.state === 'centred' ? 'The dots sit halfway between the upper and lower lines.'
+      : sep.state === 'pushed' ? 'The lettering has pushed the dots along the band.'
+      : 'The lines leave room, so the dots stay at the sides.');
+    if (result.report.some(r => r.stage === 'fanned')) notes.push('The upper line is spread out to use the room.');
+    if (sep?.placement === 'reference-fallback') notes.push('With one line empty the dots keep their reference position.');
+    return notes.join(' ');
+  }
   private updateButtons() {
     const busy = !this.result || this.rendering || this.working;
     this.root.querySelector<HTMLButtonElement>('[data-action="save"]')!.disabled = busy;
     // Verified fonts are the normal path; fallback output needs explicit consent.
     for (const b of this.root.querySelectorAll<HTMLButtonElement>('[data-action="svg"], [data-action="png"]')) b.disabled = busy || (this.unverified && !this.fontAck);
     this.root.querySelector<HTMLButtonElement>('[data-action="fonts"]')!.disabled = this.working || !this.runtime;
+    this.root.querySelector<HTMLButtonElement>('[data-action="kabel"]')!.disabled = this.working || !this.runtime;
   }
   private fail(error: unknown) {
     if (this.disposed) return;
@@ -330,9 +399,10 @@ export class LetteringEditor {
   private async action(action: string) {
     if (action === 'close') { this.close(); return; }
     if (action === 'open') { this.part<HTMLInputElement>('file').click(); return; }
+    if (action === 'kabel') { this.part<HTMLInputElement>('kabel-file').click(); return; }
     if (!this.state || !this.runtime) return;
     if (action === 'reset') {
-      this.state = this.runtime.E.recipeState(this.state.recipe, { textFit: 'reference-calibrated' });
+      this.state = this.runtime.E.recipeState(this.state.recipe, this.defaults);
       this.selected = undefined; this.part('dock').hidden = true; this.sync(); this.schedule(); return;
     }
     if (action === 'fonts') {
@@ -356,6 +426,21 @@ export class LetteringEditor {
       if (action === 'png') download(`${result.state.recipe}.png`, await this.runtime.E.png(result, result.state.outputWidth), 'image/png');
     } catch (error) { this.part('status').textContent = `Export failed: ${error instanceof Error ? error.message : String(error)}`; }
     finally { this.working = false; if (!this.disposed) this.updateButtons(); }
+  }
+  private async openKabel() {
+    const input = this.part<HTMLInputElement>('kabel-file'), file = input.files?.[0];
+    if (!file || !this.runtime || this.working) return;
+    this.working = true; this.updateButtons();
+    try {
+      if (file.size > 5_000_000) throw new Error('Choose a font file smaller than 5 MB.');
+      await this.runtime.E.supplyFont('kabel-black', await file.arrayBuffer());
+      if (this.disposed) return;
+      // The face is now usable: new drafts and the current crest switch to it.
+      this.defaults = { ...this.defaults, treeLettering: 'kabel-black' };
+      if (this.state) this.state = this.runtime.E.normalise({ ...this.state, treeLettering: 'kabel-black' });
+      this.sync(); this.schedule();
+    } catch (error) { this.part('status').textContent = `Font not loaded: ${error instanceof Error ? error.message : String(error)}`; }
+    finally { input.value = ''; this.working = false; if (!this.disposed) this.updateButtons(); }
   }
   private async openFile() {
     const input = this.part<HTMLInputElement>('file'), file = input.files?.[0];

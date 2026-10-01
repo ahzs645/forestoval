@@ -34,6 +34,20 @@ jobs:
         run: |
           python3 ../extract_primitives.py
           git diff --exit-code -- ..
+      # Kabel Black is committed for now; the secret is the fallback if it is
+      # removed again. Without either the build still works and the editor
+      # offers a local-file picker; it never downloads a substitute.
+      - name: Stage optional Kabel Black font
+        env:
+          KABEL_BLACK_OTF_BASE64: ${{ secrets.KABEL_BLACK_OTF_BASE64 }}
+        run: |
+          if [ -f ../../bc-ministry-primitives-v5/fonts/Kabel-Black.otf ]; then
+            python3 ../../bc-ministry-primitives-v5/tools/setup_kabel.py --check
+          elif [ -n "$KABEL_BLACK_OTF_BASE64" ]; then
+            python3 ../../bc-ministry-primitives-v5/tools/setup_kabel.py --from-env KABEL_BLACK_OTF_BASE64
+          else
+            echo "No deployment font supplied; use Load Kabel-Black.otf in the editor."
+          fi
       - run: npm ci
       # Also builds the v5 studio into dist/studio/.
       - run: npm run build

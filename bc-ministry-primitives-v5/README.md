@@ -42,7 +42,7 @@ original scene + crest profile + text roles + tab + composition + content
 | Composition | Crest/wordmark arrangement, row gaps and width budgets | `LOCKUPS` |
 | Example recipe | Inheritance, component references and wording | `RECIPES` |
 
-All tables are in `src/primitives.js`, except the artwork. `SHAPES` (crest centre, separator band, Parks plate, airtanker wings) and `RECOLOUR` (source colour → theme token) hold the few shapes and colours the engine draws itself; `../shared-primitives/extract_primitives.py` reads the same tables, so the shared primitives cannot drift from the engine. The tables are frozen. The UI owns validated patch maps and passes the same maps to all recipes. There are **14 active recipes, 11 shared typography roles, 12 baseline slots, 4 crest profiles and 7 composition types**. Fire Control remains an excluded catalogue entry, not a selectable family member or calibration target.
+All tables are in `src/primitives.js`, except the artwork. `SHAPES` (crest centre, separator band, Parks plate, airtanker wings) and `RECOLOUR` (source colour → theme token) hold the few shapes and colours the engine draws itself; `../shared-primitives/extract_primitives.py` reads the same tables, so the shared primitives cannot drift from the engine. The tables are frozen. The UI owns validated patch maps and passes the same maps to all recipes. There are **14 active recipes, 12 shared typography roles, 12 baseline slots, 5 crest profiles and 7 composition types**. Fire Control remains an excluded catalogue entry, not a selectable family member or calibration target.
 
 The basic inheritance is intentional:
 
@@ -65,6 +65,8 @@ These are working substitutes, not authenticated historical font identifications
 | BCTS acronym | Open Sans ExtraBold 800 | Shared acronym role with wider tracking calibrated against the supplied vector |
 | Descriptor / district | Roboto Slab Bold 700 | Separate scale and role from the acronym; a serif substitute, not an exact Clarendon identification |
 | Thin crest / plain labels | Roboto Regular 400 | Parks and plain BC/Timber/Sales treatment |
+| Tree crest upper, calibrated | Open Sans Bold 700 | Fitted to the Forest Service vector (reference-calibrated) |
+| Tree crest lower, calibrated | Raleway Black 900 | The vector's lower line is a geometric gothic with a flat-apex A; its own role (`crest-tree-lower`) so the wildlife crest is unaffected |
 
 The face catalogue also offers alternatives; they are not silently chosen as a substitute for an unavailable weight. The default role weights were loaded locally during testing. Online loading and weights not used by the defaults were not externally verified in this environment.
 
@@ -80,7 +82,11 @@ The saved vector-reference character measurements were used only as calibration 
 6. Reduce font size uniformly if the run still does not fit. Move a curved baseline with the cap-height change so its ink midline stays near the intended band centre. Do not stretch glyph width independently of height.
 7. Warn when the resulting lettering is below its minimum cap height. Fitting 320 characters proves the engine retains the wording; it does not make that wording a usable logo.
 
-Changing output width scales the complete SVG. The family is designed in a shared 676-unit crest coordinate space. The optional measured-name switch chooses the short or long wildlife profile; it does not force uppercase or replace the user's wording.
+8. Separator marks sit on the separator band drawn in by the crest's `separatorInset`. With `separatorPlacement: 'follow-text'`, place each mark from the visible ends of the lines on its side. It stays at `separatorHomeY` (the sides) while both lines keep at least 50 units away along the band, is pushed by a line that comes closer, and once the gap is under 100 units sits exactly halfway between the two lines. The Forests reference keeps its marks 129 units from BRITISH COLUMBIA; the long ministry's sit about 40 units from each line. When the marks would touch a line, narrow the lower arc until they fit; otherwise warn (`SEPARATOR_CROWDED`).
+9. With `fanOut`, a crest with a `fan` profile (the long crest) spreads its upper line toward the capitals look when the lower line leaves room. Letter height (up to ×1.166), letter spacing and word spacing grow together until the line comes within 129 units of marks at home, or as close to pushed marks as the lower line is.
+10. With `centreInRing`, a crest line's baseline follows the frame's white ring (`SHAPES.rings`) rather than its slot ellipse, with its type body centred on the ring's centre line at every angle. The body is the cap height for capitals, and for lowercase the x-height plus 30% of the way to the cap height, blended by the share of lowercase letters. Slots with hand-set radii keep them.
+
+Changing output width scales the complete SVG. The family is designed in a shared 676-unit crest coordinate space. The optional measured-name switch (`autoProfile`) chooses the short or long profile of a crest pair (wildlife capitals / long ministry, tree / long tree); it does not force uppercase or replace the user's wording.
 
 Manual shared-slot calibration is intentionally exposed, but extreme radius or cap changes can move text out of its intended band. The automatic defaults and stress cases were tested; arbitrary manual combinations are not a guarantee of an acceptable design.
 
@@ -132,7 +138,7 @@ python tests/test_browser.py
 
 The test runner also supports an existing browser through `CHROMIUM=/path/to/chromium`. It builds the page into `tests/output/` and loads it directly into a browser document, so no HTTP server is needed. The screenshots, PNG export and `results.json` also go to `tests/output/` (not tracked); `--update` also refreshes the committed copies in `review/` and `tests/results.json`.
 
-The default faces (Open Sans ExtraBold, Roboto Condensed Bold, Roboto Slab Bold, Roboto Regular) must be installed locally, or pass `--network-fonts` to load them from Google Fonts. Without them the font check fails and three lettering-band checks measure fallback fonts, so 36/40 is the expected result on a machine without the faces. The results record where the faces came from.
+The default faces (Open Sans ExtraBold, Roboto Condensed Bold, Roboto Slab Bold, Roboto Regular; Raleway Black for the reference-calibrated tree crest) must be installed locally, or pass `--network-fonts` to load them from Google Fonts. Without them the font check fails and three lettering-band checks measure fallback fonts, so 36/40 is the expected result on a machine without the faces. The results record where the faces came from.
 
 The recorded run passed **40/40 checks**, including all active recipes, exact inherited crest-typography equality, no stretched text, finite bounds, reference integrity, PNG/ZIP export, configuration round trip, 27 wording stress cases, all composition types, six pixel-mask checks that lettering remains inside its band, and a 390-pixel mobile viewport. The full results are in `tests/results.json`.
 

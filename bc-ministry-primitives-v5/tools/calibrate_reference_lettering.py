@@ -6,7 +6,39 @@ from PIL import Image
 from scipy.optimize import minimize
 from playwright.sync_api import sync_playwright
 V5=Path(__file__).resolve().parents[1];ROOT=V5;D=V5/'tests/output/calibration';FIXTURES=V5/'tests/fixtures/reference-lettering'
-EXTRA=""" 'open-condensed':{family:'Open Sans Condensed',weight:700,locals:['Open Sans Condensed Bold','OpenSans-CondensedBold'],google:'Open+Sans+Condensed:wght@700',fallback:'sans-serif',label:'Open Sans Condensed Bold · substitute'},
+EXTRA=""" 'jost-semibold':{family:'Jost',weight:600,locals:['Jost SemiBold','Jost-SemiBold'],google:'Jost:wght@600',fallback:'sans-serif',label:'Jost SemiBold · candidate'},
+ 'jost-bold':{family:'Jost',weight:700,locals:['Jost Bold','Jost-Bold'],google:'Jost:wght@700',fallback:'sans-serif',label:'Jost Bold · candidate'},
+ 'jost-heavy':{family:'Jost',weight:800,locals:['Jost ExtraBold','Jost-ExtraBold'],google:'Jost:wght@800',fallback:'sans-serif',label:'Jost ExtraBold · candidate'},
+ 'spartan-bold':{family:'League Spartan',weight:700,locals:['League Spartan Bold','LeagueSpartan-Bold'],google:'League+Spartan:wght@700',fallback:'sans-serif',label:'League Spartan Bold · candidate'},
+ 'spartan-heavy':{family:'League Spartan',weight:800,locals:['League Spartan ExtraBold','LeagueSpartan-ExtraBold'],google:'League+Spartan:wght@800',fallback:'sans-serif',label:'League Spartan ExtraBold · candidate'},
+ 'spartan-black':{family:'League Spartan',weight:900,locals:['League Spartan Black','LeagueSpartan-Black'],google:'League+Spartan:wght@900',fallback:'sans-serif',label:'League Spartan Black · candidate'},
+ 'montserrat-heavy':{family:'Montserrat',weight:800,locals:['Montserrat ExtraBold','Montserrat-ExtraBold'],google:'Montserrat:wght@800',fallback:'sans-serif',label:'Montserrat ExtraBold · candidate'},
+ 'montserrat-black':{family:'Montserrat',weight:900,locals:['Montserrat Black','Montserrat-Black'],google:'Montserrat:wght@900',fallback:'sans-serif',label:'Montserrat Black · candidate'},
+ 'nunito-heavy':{family:'Nunito Sans',weight:800,locals:['Nunito Sans ExtraBold','NunitoSans-ExtraBold'],google:'Nunito+Sans:wght@800',fallback:'sans-serif',label:'Nunito Sans ExtraBold · candidate'},
+ 'nunito-black':{family:'Nunito Sans',weight:900,locals:['Nunito Sans Black','NunitoSans-Black'],google:'Nunito+Sans:wght@900',fallback:'sans-serif',label:'Nunito Sans Black · candidate'},
+ 'redhat-heavy':{family:'Red Hat Display',weight:800,locals:['Red Hat Display ExtraBold','RedHatDisplay-ExtraBold'],google:'Red+Hat+Display:wght@800',fallback:'sans-serif',label:'Red Hat Display ExtraBold · candidate'},
+ 'redhat-black':{family:'Red Hat Display',weight:900,locals:['Red Hat Display Black','RedHatDisplay-Black'],google:'Red+Hat+Display:wght@900',fallback:'sans-serif',label:'Red Hat Display Black · candidate'},
+ 'lexend-heavy':{family:'Lexend',weight:800,locals:['Lexend ExtraBold','Lexend-ExtraBold'],google:'Lexend:wght@800',fallback:'sans-serif',label:'Lexend ExtraBold · candidate'},
+ 'figtree-heavy':{family:'Figtree',weight:800,locals:['Figtree ExtraBold','Figtree-ExtraBold'],google:'Figtree:wght@800',fallback:'sans-serif',label:'Figtree ExtraBold · candidate'},
+ 'figtree-black':{family:'Figtree',weight:900,locals:['Figtree Black','Figtree-Black'],google:'Figtree:wght@900',fallback:'sans-serif',label:'Figtree Black · candidate'},
+ 'mulish-heavy':{family:'Mulish',weight:800,locals:['Mulish ExtraBold','Mulish-ExtraBold'],google:'Mulish:wght@800',fallback:'sans-serif',label:'Mulish ExtraBold · candidate'},
+ 'mulish-black':{family:'Mulish',weight:900,locals:['Mulish Black','Mulish-Black'],google:'Mulish:wght@900',fallback:'sans-serif',label:'Mulish Black · candidate'},
+ 'urbanist-heavy':{family:'Urbanist',weight:800,locals:['Urbanist ExtraBold','Urbanist-ExtraBold'],google:'Urbanist:wght@800',fallback:'sans-serif',label:'Urbanist ExtraBold · candidate'},
+ 'urbanist-black':{family:'Urbanist',weight:900,locals:['Urbanist Black','Urbanist-Black'],google:'Urbanist:wght@900',fallback:'sans-serif',label:'Urbanist Black · candidate'},
+ 'outfit-heavy':{family:'Outfit',weight:800,locals:['Outfit ExtraBold','Outfit-ExtraBold'],google:'Outfit:wght@800',fallback:'sans-serif',label:'Outfit ExtraBold · candidate'},
+ 'jakarta-heavy':{family:'Plus Jakarta Sans',weight:800,locals:['Plus Jakarta Sans ExtraBold','PlusJakartaSans-ExtraBold'],google:'Plus+Jakarta+Sans:wght@800',fallback:'sans-serif',label:'Plus Jakarta Sans ExtraBold · candidate'},
+ 'poppins-heavy':{family:'Poppins',weight:800,locals:['Poppins ExtraBold','Poppins-ExtraBold'],google:'Poppins:wght@800',fallback:'sans-serif',label:'Poppins ExtraBold · candidate'},
+ 'kumbh-heavy':{family:'Kumbh Sans',weight:800,locals:['Kumbh Sans ExtraBold','KumbhSans-ExtraBold'],google:'Kumbh+Sans:wght@800',fallback:'sans-serif',label:'Kumbh Sans ExtraBold · candidate'},
+ 'kumbh-black':{family:'Kumbh Sans',weight:900,locals:['Kumbh Sans Black','KumbhSans-Black'],google:'Kumbh+Sans:wght@900',fallback:'sans-serif',label:'Kumbh Sans Black · candidate'},
+ 'albert-heavy':{family:'Albert Sans',weight:800,locals:['Albert Sans ExtraBold','AlbertSans-ExtraBold'],google:'Albert+Sans:wght@800',fallback:'sans-serif',label:'Albert Sans ExtraBold · candidate'},
+ 'franklin-heavy':{family:'Libre Franklin',weight:800,locals:['Libre Franklin ExtraBold','LibreFranklin-ExtraBold'],google:'Libre+Franklin:wght@800',fallback:'sans-serif',label:'Libre Franklin ExtraBold · candidate'},
+ 'franklin-black':{family:'Libre Franklin',weight:900,locals:['Libre Franklin Black','LibreFranklin-Black'],google:'Libre+Franklin:wght@900',fallback:'sans-serif',label:'Libre Franklin Black · candidate'},
+ 'public-heavy':{family:'Public Sans',weight:800,locals:['Public Sans ExtraBold','PublicSans-ExtraBold'],google:'Public+Sans:wght@800',fallback:'sans-serif',label:'Public Sans ExtraBold · candidate'},
+ 'public-black':{family:'Public Sans',weight:900,locals:['Public Sans Black','PublicSans-Black'],google:'Public+Sans:wght@900',fallback:'sans-serif',label:'Public Sans Black · candidate'},
+ 'archivo-black':{family:'Archivo',weight:900,locals:['Archivo Black','Archivo-Black'],google:'Archivo:wght@900',fallback:'sans-serif',label:'Archivo Black · candidate'},
+ 'work-black':{family:'Work Sans',weight:900,locals:['Work Sans Black','WorkSans-Black'],google:'Work+Sans:wght@900',fallback:'sans-serif',label:'Work Sans Black · candidate'},
+ 'albert-black':{family:'Albert Sans',weight:900,locals:['Albert Sans Black','AlbertSans-Black'],google:'Albert+Sans:wght@900',fallback:'sans-serif',label:'Albert Sans Black · candidate'},
+'open-condensed':{family:'Open Sans Condensed',weight:700,locals:['Open Sans Condensed Bold','OpenSans-CondensedBold'],google:'Open+Sans+Condensed:wght@700',fallback:'sans-serif',label:'Open Sans Condensed Bold · substitute'},
 """
 PROBE=r"""
 window.calibrationReady=false;
@@ -21,7 +53,7 @@ window.probe=async function(q){
  const blob=await E.png({svg:s,fontIds:[q.face],viewBox:{x:0,y:0,w:676,h:945}},q.width||473);
  return await new Promise(ok=>{const f=new FileReader;f.onload=()=>ok(f.result.split(',')[1]);f.readAsDataURL(blob)});
 };
-BCLogo.ensureFonts(['open-heavy','open-bold','condensed-bold','open-condensed','noto-condensed'],false).then(f=>{window.loadedFonts=f.map(x=>({face:x.face,status:x.status}));window.calibrationReady=true;});
+BCLogo.ensureFonts(Object.keys(BCPrimitives.FACES),false).then(f=>{window.loadedFonts=f.map(x=>({face:x.face,status:x.status}));window.calibrationReady=true;});
 """
 def html():
  prim=(V5/'src/primitives.js').read_text().replace('const FACES={','const FACES={\n'+EXTRA)
@@ -32,6 +64,13 @@ GROUPS={
  'long-upper':dict(slot='long-upper',text='British Columbia',refs=[1,3],part='upper',faces=['condensed-bold','open-condensed','noto-condensed'],init=[53,249,334,0,0,0,0],bounds=[(42,57),(236,262),(320,350),(-.06,.06),(-.19,.12),(-15,15),(-4,4)]),
  'long-lower':dict(slot='long-lower',text='Forests, Lands and Natural Resource Operations',refs=[1,3],part='lower',faces=['condensed-bold','open-condensed','noto-condensed'],init=[50,290,379,0,0,0,0],bounds=[(43,55),(275,303),(367,393),(-.035,.04),(-.10,.18),(-18,18),(-3,3)]),
  'caps-service':dict(slot='service-bottom',text='WILDFIRE SERVICE',refs=[2],part='service',faces=['open-heavy'],init=[48.04678,402.36543,484.21603,.04075,0,0,0],bounds=[(41,53),(370,424),(475,492),(-.01,.075),(-.1,.1),(-15,15),(-3,3)]),
+ # Tree crest, from the Forest Service vector (tools/extract_tree_masks.py). Uppercase runs, cap-height targets.
+ 'tree-upper':dict(slot='tree-upper',text='FOREST SERVICE',refs=[5],part='upper',faces=['condensed-bold','condensed-heavy','noto-condensed','open-heavy','open-bold','inter-black','sans-bold'],init=[62.36874,232.06115,322.96198,.00156,0,0,0],bounds=[(50,72),(220,248),(310,336),(-.06,.15),(-.15,.3),(-20,20),(-3,3)]),
+ 'tree-lower':dict(slot='tree-lower',text='BRITISH COLUMBIA',refs=[5],part='lower',faces=['raleway-black','franklin-black','public-black','open-heavy','inter-black','condensed-heavy','noto-condensed'],init=[62.5,296.07,381.95,.054,0,0,0],bounds=[(50,72),(282,310),(368,396),(-.06,.2),(-.15,.3),(-20,20),(-3,3)]),
+ # The same runs on the ring-centred baseline the editor uses by default
+ # (tree ring centre 266.785 x 355.965, ringOffset -4.5, capitals body = cap).
+ 'tree-upper-ring':dict(slot='tree-upper',text='FOREST SERVICE',refs=[5],part='upper',faces=['open-bold'],init=[60.94783,231.81,320.99,-.05226,.03374,.31742,0],bounds=[(54,68),(231.81,231.81),(320.99,320.99),(-.06,.1),(-.15,.3),(-20,20),(-3,3)]),
+ 'tree-lower-ring':dict(slot='tree-lower',text='BRITISH COLUMBIA',refs=[5],part='lower',faces=['raleway-black'],init=[60.70725,292.639,381.819,0.07470,0.19079,7.32139,0],bounds=[(52,66),(292.639,292.639),(381.819,381.819),(-.06,.2),(-.15,.3),(-20,20),(-3,3)]),
  'long-service':dict(slot='service-bottom',text='WILDFIRE SERVICE',refs=[3],part='service',faces=['open-heavy','condensed-bold'],init=[41,402.36543,484.21603,.04,0,0,0],bounds=[(34,47),(368,421),(470,492),(-.01,.15),(-.12,.16),(-15,15),(-3,3)])}
 def main():
  global D,FIXTURES

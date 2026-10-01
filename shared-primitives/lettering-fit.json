@@ -52,70 +52,70 @@
  },
  "crest-wildlife-long": {
   "reference": "1630573023028.jpeg, British_Columbia_Wildfire_Service.png, page-1-selection-1 (1).png",
-  "before": 0.5666,
-  "after": 0.699,
+  "before": 0.6076,
+  "after": 0.7294,
   "accepted": true,
   "runs": {
    "0:upper": {
-    "scale": 0.95,
+    "scale": 0.9,
     "spacing": -1.475,
     "gaps": [
-     -7.37
+     -11.06
     ],
     "tracks": [
-     0,
-     -1.106
+     1.106,
+     1.475
     ],
-    "dr": 0,
-    "dry": 1.5,
-    "rot": 5,
-    "dx": 3,
-    "dy": 2.5,
-    "start": 330.688,
-    "centre": -90.897
+    "dr": 1.13,
+    "dry": 2.38,
+    "rot": 6,
+    "dx": 1.63,
+    "dy": 6,
+    "start": 330.719,
+    "centre": -90.083
    },
    "0:lower": {
-    "scale": 1.05,
-    "spacing": 0,
+    "scale": 1.1,
+    "spacing": -1.391,
     "gaps": [
-     0,
-     4.52,
-     4.17,
-     0.35,
-     13.22
+     -1.39,
+     1.39,
+     1.39,
+     -8.35,
+     10.43
     ],
     "tracks": [
      0,
      0,
      0,
      0,
-     1.391,
-     1.913
+     0,
+     -0.348
     ],
-    "dr": 6.25,
-    "dry": -4.5,
-    "rot": 9,
-    "dx": 2.25,
-    "dy": 1.75,
-    "start": 201.671,
-    "centre": -270.445
+    "dr": 2.75,
+    "dry": -4.75,
+    "rot": 10,
+    "dx": 2.75,
+    "dy": 1,
+    "start": 201.851,
+    "centre": -266.933
    }
   },
   "members": {
    "long-ministry": {
     "reference": "1630573023028.jpeg",
-    "before": 0.66,
-    "after": 0.8072
+    "before": 0.6447,
+    "after": 0.8004
    },
    "long-wildfire": {
     "reference": "British_Columbia_Wildfire_Service.png",
-    "before": 0.6005,
-    "after": 0.7097
+    "before": 0.6518,
+    "after": 0.8148
    },
    "bcts-wildlife": {
     "reference": "page-1-selection-1 (1).png",
-    "before": 0.5313,
-    "after": 0.5799
+    "before": 0.5162,
+    "after": 0.573
    }
   }
  },
@@ -280,28 +280,28 @@
  },
  "long-wildfire": {
   "reference": "British_Columbia_Wildfire_Service.png",
-  "before": 0.666,
-  "after": 0.7079,
-  "accepted": true,
+  "before": 0.8537,
+  "after": 0.8621,
+  "accepted": false,
   "frozen": [],
   "runs": {
    "1:service": {
-    "scale": 0.8525,
-    "spacing": 5.348,
+    "scale": 1.05,
+    "spacing": -1.337,
     "gaps": [
-     7.69
+     -2.01
     ],
     "tracks": [
      0,
-     0.251
+     0
     ],
-    "dr": 4.38,
-    "dry": -3.38,
-    "rot": -1,
-    "dx": 1.63,
-    "dy": 7.5,
-    "start": 539.262,
-    "centre": 89.563
+    "dr": -2,
+    "dry": 2,
+    "rot": 1,
+    "dx": 0,
+    "dy": 0,
+    "start": 539.348,
+    "centre": 90.252
    }
   },
   "shared": {

@@ -9,6 +9,12 @@
 !/bc-ministry-primitives-v5/
 !/airtanker-operations/
 
+# Font files stay local, except the Kabel Black OTF the tree oval uses, which is
+# committed for now (see bc-ministry-primitives-v5/docs/kabel-black.md).
+/bc-ministry-primitives-v5/fonts/*.otf
+/bc-ministry-primitives-v5/fonts/*.ttf
+!/bc-ministry-primitives-v5/fonts/Kabel-Black.otf
+
 node_modules/
 dist/
 __pycache__/

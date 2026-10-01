@@ -45,12 +45,12 @@
   "w": 267,
   "h": 373,
   "registration": {
-   "x": -28.813248881333266,
-   "y": -37.02112015599994,
-   "w": 738.2855804,
-   "h": 1031.3877209333334
+   "x": -17.342282925206312,
+   "y": -22.347307107836915,
+   "w": 712.493927932001,
+   "h": 995.3566858375896
   },
-  "alignmentNote": "Uniformly aligned by the oval centre and height. No local warping or text-only registration.",
+  "alignmentNote": "One uniform scale and translation fitted to the outer edge of the white oval band (the reference-lettering calibration's registration). No local warping or text-only registration.",
   "sourceFile": "British_Columbia_Wildfire_Service.png"
  },
  "wildfire-management": {

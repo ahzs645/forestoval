@@ -39,9 +39,90 @@ are 14 active recipes; excluded Fire Control is not offered. Recipe inheritance
 still supplies the wording, crest, tab and layout. The UI does not maintain a
 second collection of preset coordinates.
 
-New drafts default to `reference-calibrated`, with automatic profile switching
-off. Uncalibrated slots retain the engine's own warning; having a selectable
-preset does not mean all its lettering has received reference calibration.
+New drafts default to `reference-calibrated`. Uncalibrated slots retain the
+engine's own warning; having a selectable preset does not mean all its
+lettering has received reference calibration.
+
+## The crest follows its wording
+
+A preset is a starting point, not a fixed layout. Four options, all on for new
+drafts, let one preset become another by editing its text:
+
+- **Pick the short or long crest from the wording** (`autoProfile`). On the
+  wildlife crests the engine measures the lower wording. A short name keeps the
+  capitals crest; a ministry-length name moves to the long crest. Typing
+  *British Columbia* / *Forests, Lands and Natural Resource Operations* into
+  Forests · Wildfire Service gives the long ministry badge, and *FORESTS* in
+  Long ministry · Wildfire gives the capitals badge. The wording's case is kept.
+  Choosing a crest profile by hand turns this off.
+
+  The tree crest uses the same switch. Crests come in pairs, declared in
+  `CRESTS` (`longer` / `shorter`, and the short profile's `switchCap`):
+  `wildlife-caps` / `wildlife-long` and `tree-heavy` / `tree-long`. No tree
+  reference has long wording, so `tree-long` reuses the long-ministry slots on
+  the tree scene. Its diamonds are scaled like the wildlife pair's marks
+  (16.76 → 11.92), and it has the same spreading profile. Every rule below
+  applies to the tree crest unchanged, with its diamonds as the marks. They
+  sit within 1.5 units of the Forest Service reference's diamonds. The tree
+  crests centre their lines 4.5 units inside the ring (`ringOffset`), as the
+  Forest Service vector does. That puts both lines within 1 unit of it in
+  radius and within 1° at their ends. The tree crest's lettering is calibrated
+  to that vector too (reference model version 2): Open Sans Bold above, and
+  Raleway Black below. The vector's lower line is a geometric gothic whose A
+  has a flat apex, which rules out Futura-style faces. The letters overlap it
+  0.61 / 0.67, up from 0.40 / 0.36.
+
+  The Wildfire Management tab sits on the oval. Its holder is built on the
+  frame's outer oval at ±60° (what its wording needs at its cap height),
+  matching the patch photos. It used to be the lower ribbon flipped and scaled
+  up, which floated 39 units above the oval.
+- **Separator dots: follow the lettering** (`separatorPlacement: 'follow-text'`).
+  Each dot is placed from the visible ends of the two lines on its side:
+  - *at home*: at the sides while both lines stay at least 50 units away
+    (Forests keeps BRITISH COLUMBIA 129 units from its dots);
+  - *pushed*: a line that comes closer pushes the dot along the band;
+  - *halfway*: once the gap is under 100 units, the dot sits exactly halfway
+    between the two lines (the long ministry badge: about 39 units each side).
+
+  Each side is placed on its own, since the end letters differ. The references'
+  pairs aren't mirror images either. When the dots would touch a line, the
+  lower line's arc narrows until they fit; otherwise `SEPARATOR_CROWDED` is
+  reported. With one line empty the dots keep their reference position.
+  *Keep the reference position* restores the fixed heights.
+- **Spread the upper line when there is room** (`fanOut`). On the long crest,
+  a short lower line leaves the top of the band mostly empty. The upper line
+  then grows toward the capitals look (letter height up to ×1.166, plus letter
+  and word spacing) until its ends come within 129 units of dots at home, or
+  as close to pushed dots as the lower line is. The dots then end up halfway.
+- **Centre each line in the white ring** (`centreInRing`). Each slot's baseline
+  ellipse was calibrated where its reference wording sits, so wording that runs
+  further round could drift toward one black ring. The capitals ministry slot
+  was 10 units too wide at the sides. With this option every crest line follows
+  the ring's own centre line at every angle, and centres its type body there:
+  the cap height for capitals, and for lowercase the x-height plus 30% of the
+  way to the cap height. That is the usual practice of centring mixed case on
+  the x-height, then adjusting by eye; the long ministry reference sits 30% up.
+  The two are blended by the share of lowercase letters, so typing never makes
+  a line jump. The ring is the frame's own white ellipse, which is the same in
+  the tree frame to within half a unit. A slot whose radii were set by hand
+  keeps them.
+
+  Measured against the white ring, *Forests, Lands and Mines* on the capitals
+  crest goes from 13 units nearer the outer ring to centred. All-caps lines now
+  stay within about 3 units of centre all the way round (the long crest used to
+  drift by 20). The cost is 1–3 units against individual references, which were
+  not all centred the same way. Unticking the option gives the calibrated slot
+  geometry back exactly.
+
+Either way the dots sit on the separator band drawn in by the crest's
+`separatorInset`: 3.34 units on the capitals crest, measured from
+`wildfire-source.svg`, and 7.67 on the long crest, measured from both
+long-crest rasters, which agree. The shared band alone put them 3–8 units too
+far out, mostly sideways.
+
+The note under these controls names the crest the wording picked and what the
+dots and upper line are doing. Drafts saved before these controls existed
+(storage payload versions 1–3) adopt the new defaults when loaded.
 
 A mouse click on a text character or keyboard Enter/Space opens the selected
 line's HTML input below the preview. The caret remains in a conventional input;
@@ -50,7 +131,7 @@ updates while typing. Escape/Done returns focus to the sidebar. Multiline stacke
 wordmarks use their textarea. Empty inscriptions remain recoverable there.
 
 Each preset keeps its own normalized draft using a separate localStorage key,
-`forestoval-compose-lettering-v1`; restricted storage leaves an in-memory draft.
+`forestoval-compose-lettering-v1` (payload version 4); restricted storage leaves an in-memory draft.
 Reset restores only the current preset. Opening a v5 configuration validates the
 version and preset before replacing the draft. The engine's own normalization
 still validates fitting policies and geometry overrides.
@@ -114,12 +195,19 @@ Compose modes and the existing layer presets. It requires the normal Python
 Playwright dependency from the repository requirements and Chromium (or
 `CHROMIUM=/path/to/browser`). Results and screenshots go to `tests/output/`.
 
-Beyond the editing checks, it confirms that every face loads from the bundle and
+Beyond the editing checks, it confirms that the crest follows its wording in
+both directions, that the dots sit where the references put them and halfway
+between squeezed lines, that the long crest spreads its upper line when there is
+room, that lines are centred in the ring (and that unticking restores the slots), that the tree crest follows the same rules with its diamonds, that tree crests
+default to Kabel Black only when its OTF is bundled, keep the calibrated faces without it and switch to it once one is loaded, that the
+Wildfire Management tab sits on the oval, that the dots move with
+the wording and leave room when both lines are full, and that older drafts adopt
+the new defaults. It also confirms that every face loads from the bundle and
 matches its calibration advance, that the service backing defaults per preset,
 that exports with a fallback face need consent (it blocks the bundled Noto file
 and all local faces in a second page), and that the Recreations cards show the
 engine's lettering with the same advances, and that the font button reloads the
-bundled face once it is reachable again. All 36 checks passed against
+bundled face once it is reachable again. All 54 checks passed against
 `npm run dev` and against the production build on a machine with none of the
 faces installed. A separate check confirmed that the three engine scripts load
 from `assets/` when the build is served under a sub-path like `/forestoval/`, that

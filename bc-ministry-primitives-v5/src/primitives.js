@@ -9,6 +9,7 @@ const deepFreeze=o=>{for(const v of Object.values(o))if(v&&typeof v==='object')d
 // width is reported instead of silently changing the fit.
 const FACE_PROBE='Hamburgefonstiv FORESTS 1234';
 const FACES={
+ 'kabel-black':{family:'Kabel Black',weight:900,advance:13.21998,capEm:.72,xHeightEm:.518,locals:['Kabel Black','Kabel-Black'],fallback:'Arial, sans-serif',label:'Kabel Black · supplied OTF (tree oval)'},
  'noto-condensed':{family:'Noto Sans Condensed',weight:800,advance:13.58798,stretch:'condensed',locals:['Noto Sans Condensed ExtraBold','NotoSans-CondensedExtraBold'],google:'Noto+Sans:wdth,wght@75,800',fallback:'"Arial Narrow", Arial, sans-serif',label:'Noto Sans Condensed ExtraBold · substitute'},
  'open-heavy':{family:'Open Sans',weight:800,advance:16.19873,locals:['Open Sans ExtraBold','OpenSans-Extrabold'],google:'Open+Sans:wght@800',fallback:'Arial, sans-serif',label:'Open Sans ExtraBold · substitute'},
  'open-bold':{family:'Open Sans',weight:700,advance:15.77198,locals:['Open Sans Bold','OpenSans-Bold'],google:'Open+Sans:wght@700',fallback:'Arial, sans-serif',label:'Open Sans Bold · substitute'},
@@ -18,12 +19,14 @@ const FACES={
  'slab-bold':{family:'Roboto Slab',weight:700,advance:15.52247,locals:['Roboto Slab Bold','RobotoSlab-Bold'],google:'Roboto+Slab:wght@700',fallback:'Rockwell, Georgia, serif',label:'Roboto Slab Bold · substitute'},
  'slab-medium':{family:'Roboto Slab',weight:500,advance:15.41114,locals:['Roboto Slab Medium','RobotoSlab-Medium'],google:'Roboto+Slab:wght@500',fallback:'Rockwell, Georgia, serif',label:'Roboto Slab Medium · substitute'},
  'sans-regular':{family:'Roboto',weight:400,advance:14.65528,locals:['Roboto Regular','Roboto-Regular'],google:'Roboto:wght@400',fallback:'Arial, sans-serif',label:'Roboto Regular · substitute'},
+ 'raleway-black':{family:'Raleway',weight:900,advance:15.82798,locals:['Raleway Black','Raleway-Black'],google:'Raleway:wght@900',fallback:'"Century Gothic", Arial, sans-serif',label:'Raleway Black · substitute (geometric, flat-apex A)'},
  'sans-bold':{family:'Roboto',weight:700,advance:14.88086,locals:['Roboto Bold','Roboto-Bold'],google:'Roboto:wght@700',fallback:'Arial, sans-serif',label:'Roboto Bold · substitute'}
 };
 // Change a role once: every slot/recipe using it updates together.
 const ROLES={
  'crest-heavy':{face:'open-heavy',capScale:1,trackingEm:0},
  'crest-service-upper':{face:'condensed-bold',capScale:1,trackingEm:0},
+ 'crest-tree-lower':{face:'open-heavy',capScale:1,trackingEm:0},
  'crest-condensed':{face:'condensed-bold',capScale:1,trackingEm:0},
  'crest-thin':{face:'sans-regular',capScale:1,trackingEm:0},
  'service-heavy':{face:'open-heavy',capScale:1,trackingEm:0},
@@ -42,7 +45,7 @@ const SLOTS={
  'long-upper':{role:'crest-condensed',side:'top',cap:53,anchorCap:53,rx:249,ry:334,span:116,maxSpan:116,tracking:0,minTracking:0,endPad:16,minCap:28},
  'long-lower':{role:'crest-condensed',side:'bottom',cap:50,anchorCap:50,rx:290,ry:379,span:240,maxSpan:240,tracking:0,minTracking:0,endPad:20,minCap:27},
  'tree-upper':{role:'crest-service-upper',side:'top',cap:62.36874,anchorCap:62,rx:232.06115,ry:322.96198,span:172,maxSpan:177,tracking:0.00156,minTracking:0,endPad:12,minCap:30},
- 'tree-lower':{role:'crest-heavy',side:'bottom',cap:62.5,anchorCap:62.5,rx:296.07,ry:381.95,span:183,maxSpan:188,tracking:.054,minTracking:0,endPad:12,minCap:30},
+ 'tree-lower':{role:'crest-tree-lower',side:'bottom',cap:62.5,anchorCap:62.5,rx:296.07,ry:381.95,span:183,maxSpan:188,tracking:.054,minTracking:0,endPad:12,minCap:30},
  'thin-upper':{role:'crest-thin',side:'top',cap:50,anchorCap:50,rx:247,ry:326,span:192,maxSpan:192,tracking:.022,minTracking:0,endPad:14,minCap:28},
  'thin-lower':{role:'crest-thin',side:'bottom',cap:44,anchorCap:44,rx:280,ry:382,span:193,maxSpan:193,tracking:.027,minTracking:0,endPad:14,minCap:26},
  'service-bottom':{role:'service-heavy',side:'bottom',cap:48.04678,anchorCap:48,rx:402.36543,ry:484.21603,span:108,maxSpan:108,tracking:0.04075,minTracking:0,endPad:22,minCap:27},
@@ -51,14 +54,48 @@ const SLOTS={
  'wings-label':{role:'plain-label',side:'bottom',cap:45,anchorCap:45,rx:431,ry:475,span:98,maxSpan:98,tracking:.035,minTracking:0,endPad:20,minCap:27}
 };
 // Reference-calibrated defaults, opt-in. Raster sources are not font masters.
+// Version 2 adds the tree crest (tree-upper / tree-lower, fitted to the Forest
+// Service vector with tools/extract_tree_masks.py, groups tree-*-ring: radii are
+// the ring-centred baselines, so both placements agree); the wildlife values
+// are unchanged from version 1, which the engine still accepts.
 const REFERENCE_LETTERING={
-  "version": 1,
+  "version": 2,
   "roles": {
     "crest-condensed": {
       "face": "noto-condensed"
+    },
+    "crest-service-upper": {
+      "face": "open-bold"
+    },
+    "crest-tree-lower": {
+      "face": "raleway-black"
     }
   },
   "slots": {
+    "tree-upper": {
+      "referenceProfile": "tree-upper",
+      "heightModel": "cap",
+      "cap": 60.60554,
+      "anchorCap": 60.60554,
+      "rx": 231.81,
+      "ry": 320.99,
+      "tracking": -0.0522613,
+      "minTracking": -0.06,
+      "wordSpacingEm": 0.0337352,
+      "anchorBias": 0.31742
+    },
+    "tree-lower": {
+      "referenceProfile": "tree-lower",
+      "heightModel": "cap",
+      "cap": 59.11813,
+      "anchorCap": 59.11813,
+      "rx": 291.844,
+      "ry": 381.024,
+      "tracking": 0.0944909,
+      "minTracking": -0.025,
+      "wordSpacingEm": 0.1238914,
+      "anchorBias": 8.00585
+    },
     "wildlife-upper": {
       "referenceProfile": "caps-upper",
       "heightModel": "cap",
@@ -143,18 +180,74 @@ const REFERENCE_LETTERING={
     }
   }
 };
+// separatorInset: the marks sit on the separator band drawn in by this many
+// units (measured: wildfire-source.svg for the capitals crest; both long-crest
+// rasters, which agree, for the long crest).
+// separatorHomeY: where marks that follow the lettering sit while the lines
+// leave room (the sides; both wildlife crests share the capitals position).
+// ringOffset: with centreInRing, lines centre this many units outside (+) or
+// inside (-) the ring's centre line. The Forest Service vector sets both lines
+// about 4.5 units inward; the wildlife references sit within 2 units of centre.
+// longer / shorter: a crest pair's long and short profiles, picked from the
+// lower wording with autoProfile (engine effectiveCrest); switchCap is the cap
+// height the short profile measures it at. tree-long reuses the long-ministry
+// slots on the tree scene with diamonds scaled like the wildlife pair's marks
+// (no tree reference has long wording).
+// fan: how far the long crest's upper line may spread toward the capitals
+// look while its marks are at home (engine fanUpper): letter height x1.166
+// (the capitals upper cap height), spacing and word spacing, until its ends
+// are clearance units from the marks (BRITISH COLUMBIA in the Forests reference).
+// Separate from reference model v2: old saved configurations retain their substitutes.
+// One face for both tree-oval runs. Long-tree layouts use the same face with the
+// generic fit limits, not the wildlife/Noto calibration.
+const KABEL_LETTERING={
+  "version": 2,
+  "slots": {
+    "tree-upper": {
+      "referenceProfile": "kabel-tree-upper-v2",
+      "heightModel": "cap",
+      "cap": 60.582921323,
+      "anchorCap": 60.582921323,
+      "rx": 231.993539339,
+      "ry": 321.173539338,
+      "tracking": 0.020199071,
+      "minTracking": -0.06,
+      "wordSpacingEm": 0.094554217,
+      "anchorBias": 2.758338713,
+      "radialOffset": 2.33053693
+    },
+    "tree-lower": {
+      "referenceProfile": "kabel-tree-lower-v2",
+      "heightModel": "cap",
+      "cap": 60.141174935,
+      "anchorCap": 60.141174935,
+      "rx": 292.355587468,
+      "ry": 381.535587467,
+      "tracking": 0.18174509,
+      "minTracking": -0.025,
+      "wordSpacingEm": 0.095052382,
+      "anchorBias": 18.755645994,
+      "radialOffset": 2.461207266
+    }
+  }
+};
 const CRESTS={
- 'wildlife-caps':{scene:'wildlife',upper:'wildlife-upper',lower:'wildlife-lower',separator:'circle',separatorY:446,separatorSize:12.65},
- 'wildlife-long':{scene:'wildlife',upper:'long-upper',lower:'long-lower',separator:'circle',separatorY:215,separatorSize:9},
- 'tree-heavy':{scene:'tree',upper:'tree-upper',lower:'tree-lower',separator:'diamond',separatorY:397.65,separatorSize:16.76},
+ 'wildlife-caps':{scene:'wildlife',upper:'wildlife-upper',lower:'wildlife-lower',separator:'circle',separatorY:446,separatorSize:12.65,separatorInset:3.34,separatorHomeY:446,longer:'wildlife-long',switchCap:46},
+ 'wildlife-long':{scene:'wildlife',upper:'long-upper',lower:'long-lower',separator:'circle',separatorY:215,separatorSize:9,separatorInset:7.67,separatorHomeY:446,fan:{capScale:1.166,trackingEm:.06,wordSpacingEm:0,span:200,clearance:129},shorter:'wildlife-caps'},
+ 'tree-heavy':{scene:'tree',upper:'tree-upper',lower:'tree-lower',separator:'diamond',separatorY:397.65,separatorSize:16.76,separatorHomeY:397.65,longer:'tree-long',switchCap:60,ringOffset:-4.5},
+ 'tree-long':{scene:'tree',upper:'long-upper',lower:'long-lower',separator:'diamond',separatorY:215,separatorSize:11.92,separatorInset:7.67,separatorHomeY:397.65,fan:{capScale:1.166,trackingEm:.06,wordSpacingEm:0,span:200,clearance:129},shorter:'tree-heavy',ringOffset:-4.5},
  'tree-thin':{scene:'tree',upper:'thin-upper',lower:'thin-lower',separator:'none',separatorY:397.65,separatorSize:0}
 };
 // Shapes the engine draws itself, not taken from the artwork. The generator in
 // ../shared-primitives reads these tables too, so both draw the same pieces.
-// Separators sit on the ellipse separatorBand (about the crest centre) at their
-// crest's separatorY.
+// Separators sit on the ellipse separatorBand (about the crest centre): at their
+// crest's separatorY, or between the lettering's ends (engine separatorLayout).
+// rings: the white lettering ring of each scene's frame, as [rx, ry] of its
+// inner and outer edges about the centre: the wildlife frame's own ellipses, and
+// a fit to the rendered tree frame (within 0.4 units outside, 2.2 inside).
 const SHAPES={
  centre:[338.36631,420.96480],
+ rings:{wildlife:{inner:[222.52573,313.12995],outer:[310.34551,398.06377]},tree:{inner:[222.83,313.41],outer:[310.74,398.52]}},
  separatorBand:{rx:266,ry:369},
  plate:{x:20,y:805,width:637,height:130,rx:3,strokeWidth:16},
  wings:{outline:'M 106 350 L -297 350 Q -340 350 -326 383 Q -318 408 -270 410 Q -297 440 -241 448 Q -262 478 -205 482 Q -215 511 -149 516 L 112 516 L 160 438 Z',rules:[[-279,402],[-249,440],[-212,478]],ruleEnd:106,fill:'#e4c681',stroke:'#172747',strokeWidth:12,ruleWidth:5,
@@ -162,10 +255,15 @@ const SHAPES={
 };
 // Recolouring: each source artwork colour and the theme token that replaces it.
 const RECOLOUR={'#000000':'ink','#ffffff':'paper','#fff':'paper','#231f20':'ink','#1f1a17':'ink','#15864a':'tree','#185192':'wildlife','#478cca':'water','#604b3d':'earth','#70c6ea':'sky','#93d0aa':'distant','#008450':'tree','#0091c4':'water','#4b3216':'earth','#6dc9ef':'sky'};
+// holder 'oval': no traced master; the holder is built on the frame's outer
+// oval (tab-layout.js) so it sits on the oval's border, at halfSpan degrees
+// either side (the Wildfire Management patch: its wording needs 59.9 at its
+// cap height). It used to be the lower ribbon flipped and scaled x1.1, which
+// floated 39 units above the oval.
 const TABS={
  none:{shape:'none'},
  'wildfire-bottom':{shape:'ribbon',side:'bottom',slot:'service-bottom',width:1,height:1,y:0},
- 'management-top':{shape:'ribbon',side:'top',slot:'management-top',width:1.10,height:1.10,y:-7},
+ 'management-top':{shape:'ribbon',side:'top',slot:'management-top',holder:'oval',halfSpan:60},
  parks:{shape:'plate',slot:'plate-label'},
  airtanker:{shape:'wings',slot:'wings-label',experimental:true}
 };
@@ -209,5 +307,5 @@ function recipe(id,seen=new Set()){
  const p=r.extends?recipe(r.extends,seen):{content:{},confidence:'Generated interpretation'};
  return {...p,...r,content:{...p.content,...r.content}};
 }
-global.BCPrimitives=deepFreeze({version:5,FACE_PROBE,FACES,ROLES,SLOTS,REFERENCE_LETTERING,CRESTS,SHAPES,RECOLOUR,TABS,THEMES,LOCKUPS,RECIPES,recipe});
+global.BCPrimitives=deepFreeze({version:5,FACE_PROBE,FACES,ROLES,SLOTS,REFERENCE_LETTERING,KABEL_LETTERING,CRESTS,SHAPES,RECOLOUR,TABS,THEMES,LOCKUPS,RECIPES,recipe});
 })(window);
