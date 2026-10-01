@@ -66,6 +66,12 @@ drafts, let one preset become another by editing its text:
   the dots keep their reference position. *Keep the reference position*
   restores the fixed heights.
 
+Either way the dots sit on the separator band drawn in by the crest's
+`separatorInset`: 3.34 units on the capitals crest, measured from
+`wildfire-source.svg`, and 7.67 on the long crest, measured from both
+long-crest rasters, which agree. The shared band alone put them 3–8 units too
+far out, mostly sideways.
+
 The note under these controls names the crest the wording picked. Drafts saved
 before these controls existed (storage payload version 1) adopt both defaults
 when loaded.
@@ -142,14 +148,15 @@ Playwright dependency from the repository requirements and Chromium (or
 `CHROMIUM=/path/to/browser`). Results and screenshots go to `tests/output/`.
 
 Beyond the editing checks, it confirms that the crest follows its wording in
-both directions with the dots on their reference heights, that the dots move with
+both directions with the dots on their reference heights, that the dots sit
+where the references put them, that the dots move with
 the wording and leave room when both lines are full, and that older drafts adopt
 the new defaults. It also confirms that every face loads from the bundle and
 matches its calibration advance, that the service backing defaults per preset,
 that exports with a fallback face need consent (it blocks the bundled Noto file
 and all local faces in a second page), and that the Recreations cards show the
 engine's lettering with the same advances, and that the font button reloads the
-bundled face once it is reachable again. All 44 checks passed against
+bundled face once it is reachable again. All 45 checks passed against
 `npm run dev` and against the production build on a machine with none of the
 faces installed. A separate check confirmed that the three engine scripts load
 from `assets/` when the build is served under a sub-path like `/forestoval/`, that

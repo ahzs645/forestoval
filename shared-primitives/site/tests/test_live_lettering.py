@@ -42,6 +42,7 @@ def main():
   def dots():
    g=root.locator('[data-part="canvas"] [data-layer="separators"]')
    return {'placement':g.get_attribute('data-separator-placement'),'y':float(g.get_attribute('data-separator-y'))}
+  def dot_x():return root.locator('[data-part="canvas"] [data-layer="separators"] circle').evaluate_all('(cs)=>cs.map(c=>+c.getAttribute("cx"))')
   def reset():root.get_by_role('button',name='Reset this preset',exact=True).click();wait()
   def click_character(key,index=0):
    xy=text(key).evaluate('''(t,i)=>{const r=t.getExtentOfChar(i),p=new DOMPoint(r.x+r.width/2,r.y+r.height/2).matrixTransform(t.getScreenCTM());return {x:p.x,y:p.y}}''',index)
@@ -120,6 +121,9 @@ def main():
   field('upper').fill('British Columbia');field('lower').fill('Forests, Lands and Natural Resource Operations');wait()
   long_dots=dots()
   record('Long ministry wording turns Forests · Wildfire into the long crest with its dots on the reference height',crest()=='wildlife-long' and abs(long_dots['y']-215)<.01 and root.locator('[data-warning]').count()==0,{'crest':crest(),**long_dots})
+  # Measured references: wildfire-source.svg (capitals), and both long-crest rasters, which agree.
+  long_x=dot_x();pick('forests');reset();caps_x=dot_x();pick('forests-wildfire')
+  record('Dots sit where the references put them, across the band as well as down it',abs(long_x[0]-126.45)<1.5 and abs(long_x[1]-550.95)<1.5 and abs(caps_x[0]-76.45)<1 and abs(caps_x[1]-600.53)<1,{'long':long_x,'caps':caps_x})
   reset();pick('long-wildfire')
   field('upper').fill('BRITISH COLUMBIA');field('lower').fill('FORESTS');wait()
   record('Short capitals turn Long ministry · Wildfire into the capitals crest with its dots on the reference height',crest()=='wildlife-caps' and abs(dots()['y']-446)<.01,{'crest':crest(),**dots()})

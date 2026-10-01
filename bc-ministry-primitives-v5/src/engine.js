@@ -272,7 +272,8 @@ function reactiveRibbon(layout,theme,backing='paper'){
  else g.append(node('path',{d:layout.geometry.border+' '+layout.geometry.face,'fill-rule':'evenodd',fill:theme.ink,'data-tab-part':'border'}));
  return g;
 }
-// Separator marks. 'reference' keeps the crest's separatorY. 'follow-text' puts
+// Separator marks sit on the separator band drawn in by the crest's
+// separatorInset. 'reference' keeps the crest's separatorY. 'follow-text' puts
 // the mirrored pair at the crest's separatorGap fraction of the angular gap
 // between the ends of the upper and lower runs (about the crest centre, at
 // each run's ink midline, both sides averaged), so the default wording lands
@@ -281,7 +282,7 @@ function reactiveRibbon(layout,theme,backing='paper'){
 // small for that centres it and reports SEPARATOR_CROWDED.
 const SEPARATOR_CLEARANCE=10;
 const wrap180=a=>((a+180)%360+360)%360-180;
-function bandRadius(a){const b=P.SHAPES.separatorBand,r=a*Math.PI/180;return 1/Math.hypot(Math.cos(r)/b.rx,Math.sin(r)/b.ry);}
+function bandRadius(a,inset=0){const b=P.SHAPES.separatorBand,r=a*Math.PI/180;return 1/Math.hypot(Math.cos(r)/(b.rx-inset),Math.sin(r)/(b.ry-inset));}
 // Polar angles (degrees, screen y down) of a curved run's first and last
 // visible glyph edges, at its ink midline. Both crest baselines run left to right.
 function runEnds(f){
@@ -294,17 +295,17 @@ function runEnds(f){
  return {left:at(Math.max(0,mid-f.width/2)),right:at(Math.min(c.length,mid+f.width/2-(f.tracking||0)))};
 }
 function separatorLayout(c,s,upper,lower){
- const fixed=placement=>{const b=P.SHAPES.separatorBand,y=c.separatorY,dx=b.rx*Math.sqrt(Math.max(0,1-((y-CY)/b.ry)**2));return {placement,y,dx,angle:Math.atan2(y-CY,dx)*180/Math.PI,crowded:false};};
+ const inset=c.separatorInset||0,fixed=placement=>{const b=P.SHAPES.separatorBand,y=c.separatorY,dx=(b.rx-inset)*Math.sqrt(Math.max(0,1-((y-CY)/(b.ry-inset))**2));return {placement,y,dx,angle:Math.atan2(y-CY,dx)*180/Math.PI,crowded:false};};
  if(s.separatorPlacement!=='follow-text')return fixed('reference');
  const u=upper&&runEnds(upper),l=lower&&runEnds(lower);
  // A missing run leaves no gap to follow: keep the reference position.
  if(!u||!l||!Number.isFinite(c.separatorGap))return fixed('reference-fallback');
  // Mirror the left side onto the right so the pair stays symmetric.
  const top=(u.right+wrap180(180-u.left))/2,bottom=(l.right+wrap180(180-l.left))/2,gap=bottom-top;
- const clear=(c.separatorSize+SEPARATOR_CLEARANCE)/bandRadius((top+bottom)/2)*180/Math.PI;
+ const clear=(c.separatorSize+SEPARATOR_CLEARANCE)/bandRadius((top+bottom)/2,inset)*180/Math.PI;
  let angle=top+c.separatorGap*gap,crowded=false;
  if(gap<2*clear){angle=top+gap/2;crowded=true;}else angle=clamp(angle,top+clear,bottom-clear);
- angle=clamp(angle,-85,85);const r=bandRadius(angle),a=angle*Math.PI/180;
+ angle=clamp(angle,-85,85);const r=bandRadius(angle,inset),a=angle*Math.PI/180;
  return {placement:'follow-text',y:CY+r*Math.sin(a),dx:r*Math.cos(a),angle,crowded,upper:top,lower:bottom,fraction:c.separatorGap};
 }
 // Following marks need room between the lines. When both runs reach each other,

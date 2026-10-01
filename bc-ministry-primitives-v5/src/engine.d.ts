@@ -29,7 +29,7 @@ declare global {
     readonly FACES:Readonly<Record<BCFaceId,{family:string;weight:number;advance?:number;stretch?:string;locals:readonly string[];google:string;fallback:string;label:string}>>;
     readonly ROLES:Readonly<Record<BCRoleId,Readonly<BCRole>>>;
     readonly SLOTS:Readonly<Record<BCSlotId,Readonly<BCSlot>>>;
-    readonly CRESTS:Readonly<Record<BCCrestId,{scene:'wildlife'|'tree';upper:BCSlotId;lower:BCSlotId;separator:string;separatorY:number;separatorSize:number;separatorGap?:number}>>;
+    readonly CRESTS:Readonly<Record<BCCrestId,{scene:'wildlife'|'tree';upper:BCSlotId;lower:BCSlotId;separator:string;separatorY:number;separatorSize:number;separatorInset?:number;separatorGap?:number}>>;
     readonly SHAPES:{
       readonly centre:readonly [number,number];
       readonly separatorBand:{readonly rx:number;readonly ry:number};

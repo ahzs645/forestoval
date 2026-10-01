@@ -13,7 +13,13 @@
   upper and lower lettering (at each crest's `separatorGap` fraction of the
   gap, measured from its reference wording), narrowing the lower arc when the
   lines meet; `'reference'` (the default) keeps `separatorY`.
-  `recipeState()` carries `autoProfile` and `separatorPlacement`. The site's
+  `recipeState()` carries `autoProfile` and `separatorPlacement`.
+- `separatorInset` per crest: the marks sit on the separator band drawn in by
+  3.34 (capitals, from `wildfire-source.svg`) or 7.67 units (long, from both
+  long-crest rasters). The long crest's marks were about 8 units too far out.
+- The long-ministry · Wildfire raster (`wildlife-long-ribbon`) now uses the
+  registration the lettering calibration fitted. The previous one was 3.6% too
+  large and made overlays show the lettering offset outwards. The site's
   editor and a fresh studio turn both on.
 - `retryFonts()` starts every face again from the top of the source order
   (dropping cached faces and their registered `FontFace`s), and a load that was
