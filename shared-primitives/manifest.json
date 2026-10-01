@@ -153,6 +153,15 @@
   "themable": true
  },
  {
+  "file": "bc-ministry-v5/scenes/tree-parts/mountain-base.svg",
+  "family": "bc-ministry-v5",
+  "title": "Tree scene · mountain base line",
+  "source": "bc-ministry-primitives-v5/data/art.json → treeInner #tree-mountains (bottom edge)",
+  "note": "The bottom edge of the mountains as a 7-unit line in the lettering ink, under the ridge line on the single-colour and airtanker crests. Not part of the full-colour scene. Centred in the shared crest window (source artwork shifted 1.25, 1.62 units).",
+  "viewBox": "169.588 546.231 345.724 45.138",
+  "themable": true
+ },
+ {
   "file": "bc-ministry-v5/scenes/tree-parts/conifer.svg",
   "family": "bc-ministry-v5",
   "title": "Tree scene · central conifer and trunk",

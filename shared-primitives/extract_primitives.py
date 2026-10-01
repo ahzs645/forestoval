@@ -143,6 +143,50 @@ def ridge_line(d):
     return 'M ' + ' L '.join('%s %s' % (r(px), r(py)) for px, py in pts[best[0]:best[1] + 1])
 
 
+def base_line(d):
+    """The bottom edge of the same range outline, as an open path. After the top
+    edge (see ridge_line) the outline drops at the left end, runs back along the
+    foot of the range in straight and curved segments, and climbs at the right end
+    to close. The foot is the run of segments heading right that are wider than
+    they are tall; the drops at either end are taller than they are wide."""
+    sc, segs, x, y, prev, ctrl = _Scan(d), [], 0.0, 0.0, '', None
+    sx, sy = 0.0, 0.0
+    while sc.i < len(d):
+        c = sc.cmd() if not sc.more() else {'M': 'L', 'm': 'l'}.get(prev, prev)
+        C, rel = c.upper(), c.islower()
+        if C == 'Z':
+            segs.append(('L', (x, y), [(sx, sy)])); x, y = sx, sy; prev = c; continue
+        pt = lambda: (lambda dx, dy: (x + dx, y + dy) if rel else (dx, dy))(sc.num(), sc.num())
+        if C == 'M':
+            x, y = pt(); sx, sy = x, y; ctrl = None
+        elif C in 'LHV':
+            nx, ny = (x * rel + sc.num(), y) if C == 'H' else (x, y * rel + sc.num()) if C == 'V' else pt()
+            segs.append(('L', (x, y), [(nx, ny)])); x, y = nx, ny; ctrl = None
+        elif C == 'C':
+            c1, c2, e = pt(), pt(), pt()
+            segs.append(('C', (x, y), [c1, c2, e])); x, y = e; ctrl = c2
+        elif C == 'S':
+            c2, e = pt(), pt()
+            c1 = (2 * x - ctrl[0], 2 * y - ctrl[1]) if prev.upper() in 'CS' and ctrl else (x, y)
+            segs.append(('C', (x, y), [c1, c2, e])); x, y = e; ctrl = c2
+        else:
+            raise SystemExit('base_line: unsupported path command %s' % c)
+        prev = c
+    flat = lambda seg: abs(seg[2][-1][0] - seg[1][0]) >= abs(seg[2][-1][1] - seg[1][1])
+    heading = lambda seg: seg[2][-1][0] > seg[1][0]
+    # Skip the top edge (straight, heading left) and the drop at the left end.
+    i = 0
+    while i < len(segs) and not (heading(segs[i]) and flat(segs[i])): i += 1
+    j = i
+    while j < len(segs) and heading(segs[j]) and flat(segs[j]): j += 1
+    if j - i < 2: raise SystemExit('base_line: no foot found in the range outline')
+    r = lambda v: format(round(v, 4), 'g')
+    out = 'M %s %s' % (r(segs[i][1][0]), r(segs[i][1][1]))
+    for kind, _, pts in segs[i:j]:
+        out += ' %s %s' % (kind, ' '.join('%s %s' % (r(px), r(py)) for px, py in pts))
+    return out
+
+
 def _arc(x1, y1, rx, ry, phi, fa, fs, x2, y2, n=48):
     rx, ry = abs(rx), abs(ry)
     if not rx or not ry: return [(x2, y2)]
@@ -564,6 +608,14 @@ def build_v5(w, base, themes, theme_name=None):
                         'stroke-linejoin': 'round', 'stroke-linecap': 'round'})
     out('scenes/tree-parts/mountain-ridge.svg', 'Tree scene · mountain ridge line', src + ' → treeInner #tree-mountains (top edge)', [ridge],
         tree.dependencies([ridge]), note='The top edge of the mountains as a %g-unit line in the lettering ink, for the single-colour and airtanker crests. Not part of the full-colour scene. %s' % (RIDGE_WIDTH, note))
+    # And the foot of the range (where the blue mountains meet the band below
+    # them in the full-colour scene) as a second line, as both references show.
+    feet = tree.wrapped(tree['tree-mountains'])
+    foot = next(e for e in feet.iter() if e.get('id') == 'tree-mountains')
+    foot.attrib.clear()
+    foot.attrib.update({**line.attrib, 'id': 'tree-mountain-base', 'd': base_line(tree['tree-mountains'].get('d'))})
+    out('scenes/tree-parts/mountain-base.svg', 'Tree scene · mountain base line', src + ' → treeInner #tree-mountains (bottom edge)', [feet],
+        tree.dependencies([feet]), note='The bottom edge of the mountains as a %g-unit line in the lettering ink, under the ridge line on the single-colour and airtanker crests. Not part of the full-colour scene. %s' % (RIDGE_WIDTH, note))
     fills = [tree.wrapped(tree['tree-trunk']), tree.wrapped(tree['tree-canopy'])]
     holes = [tree.wrapped(tree['tree-canopy-notch-%d' % i]) for i in range(1, 7)]
     box = _union(bbox(n, tree.byid) for n in fills); box = (box[0] - 5, box[1] - 5, box[2] - box[0] + 10, box[3] - box[1] + 10)

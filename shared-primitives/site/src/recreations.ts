@@ -96,7 +96,7 @@ export const RECREATIONS: Recreation[] = [
   { id: 'forests-wildfire', name: 'Forests · Wildfire Service', family: 'bc-ministry-v5', layers: ['ribbon-lower', 'frame', 'wildlife', 'circle-caps'], theme: 'wildlife', lettering: crest('forests-wildfire', 'crest-wildlife-caps') },
   { id: 'long-ministry', name: 'Long ministry', family: 'bc-ministry-v5', layers: ['frame', 'wildlife', 'circle-long'], theme: 'wildlife', lettering: crest('long-ministry', 'crest-wildlife-long') },
   { id: 'long-wildfire', name: 'Long ministry · Wildfire Service', family: 'bc-ministry-v5', layers: ['ribbon-lower', 'frame', 'wildlife', 'circle-long'], theme: 'wildlife', lettering: crest('long-wildfire', 'crest-wildlife-long') },
-  { id: 'forest-service-mono', name: 'Forest Service · single colour', family: 'bc-ministry-v5', layers: ['frame', 'tree', 'tree-ridge', 'diamond'], theme: 'mono', lettering: crest('forest-service', 'crest-tree', { fill: '#000000' }) },
+  { id: 'forest-service-mono', name: 'Forest Service · single colour', family: 'bc-ministry-v5', layers: ['frame', 'tree', 'tree-ridge', 'tree-base', 'diamond'], theme: 'mono', lettering: crest('forest-service', 'crest-tree', { fill: '#000000' }) },
   {
     id: 'wildfire-management',
     name: 'Wildfire Management',
@@ -122,7 +122,7 @@ export const RECREATIONS: Recreation[] = [
     id: 'airtanker',
     name: 'Airtanker Operations',
     family: 'airtanker-operations',
-    layers: ['band', 'wings', 'frame', 'tree', 'tree-ridge', 'diamond'],
+    layers: ['band', 'wings', 'frame', 'tree', 'tree-ridge', 'tree-base', 'diamond'],
     theme: 'airtanker',
     lettering: [
       { from: 'airtanker', only: CREST_RUNS, shared: { rec: 'crest-tree' }, transform: toAirtanker, fill: themes.airtanker.text },

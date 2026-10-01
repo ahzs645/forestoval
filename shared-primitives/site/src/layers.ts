@@ -31,6 +31,7 @@ function crestLayers(transform?: M, withWildlife = true): Layer[] {
     ...TREE_PARTS.map((n) => ({ key: 'tree-' + n, label: 'Tree part · ' + n.replace('-', ' '), file: `${v5}scenes/tree-parts/${n}.svg`, ...t })),
     // Not in the full-colour scene: the single-colour and airtanker crests draw the range as this line.
     { key: 'tree-ridge', label: 'Tree part · mountain ridge line', file: v5 + 'scenes/tree-parts/mountain-ridge.svg', hint: 'Single-colour and airtanker crests', ...t },
+    { key: 'tree-base', label: 'Tree part · mountain base line', file: v5 + 'scenes/tree-parts/mountain-base.svg', hint: 'Single-colour and airtanker crests: the foot of the range, under the ridge line', ...t },
     ...(withWildlife
       ? [
           { key: 'wildlife', label: 'Wildlife scene', file: v5 + 'scenes/wildlife.svg', ...t },
@@ -85,13 +86,13 @@ export const PRESETS: Preset[] = [
   { name: 'Long ministry · Wildfire', family: 'bc-ministry-v5', layers: ['ribbon-lower', 'frame', 'wildlife', 'circle-long'], theme: 'source', reference: 'bc-ministry-v5:long-wildfire' },
   { name: 'Wildlife crest from parts', family: 'bc-ministry-v5', layers: ['frame', ...wlParts, 'circle-caps'], theme: 'source', reference: 'bc-ministry-v5:forests' },
   { name: 'Forest Service', family: 'bc-ministry-v5', layers: ['frame', 'tree', 'diamond'], theme: 'forest', reference: 'bc-ministry-v5:forest-service' },
-  { name: 'Forest Service · single colour', family: 'bc-ministry-v5', layers: ['frame', 'tree', 'tree-ridge', 'diamond'], theme: 'mono', reference: 'bc-ministry-v5:forest-service' },
+  { name: 'Forest Service · single colour', family: 'bc-ministry-v5', layers: ['frame', 'tree', 'tree-ridge', 'tree-base', 'diamond'], theme: 'mono', reference: 'bc-ministry-v5:forest-service' },
   { name: 'Tree crest from parts', family: 'bc-ministry-v5', layers: ['frame', ...treeParts, 'diamond'], theme: 'forest', reference: 'bc-ministry-v5:forest-service' },
   { name: 'Wildfire Management', family: 'bc-ministry-v5', layers: ['ribbon-upper', 'frame', 'tree', 'diamond'], theme: 'forest', reference: 'bc-ministry-v5:wildfire-management' },
   { name: 'Parks', family: 'bc-ministry-v5', layers: ['plate', 'frame', 'tree'], theme: 'parks', reference: 'bc-ministry-v5:parks' },
-  { name: 'Airtanker (v5 engine)', family: 'bc-ministry-v5', layers: ['wings', 'band', 'frame', 'tree', 'tree-ridge', 'diamond'], theme: 'gold', reference: 'bc-ministry-v5:airtanker' },
-  { name: 'Airtanker badge', family: 'airtanker-operations', layers: ['band', 'wings', 'frame', 'tree', 'tree-ridge', 'diamond'], theme: 'airtanker', reference: 'airtanker-operations:airtanker-operations' },
-  { name: 'Airtanker from parts', family: 'airtanker-operations', layers: ['band', 'wing', 'frame', ...treeParts, 'tree-ridge', 'diamond'], theme: 'airtanker', reference: 'airtanker-operations:airtanker-operations' },
+  { name: 'Airtanker (v5 engine)', family: 'bc-ministry-v5', layers: ['wings', 'band', 'frame', 'tree', 'tree-ridge', 'tree-base', 'diamond'], theme: 'gold', reference: 'bc-ministry-v5:airtanker' },
+  { name: 'Airtanker badge', family: 'airtanker-operations', layers: ['band', 'wings', 'frame', 'tree', 'tree-ridge', 'tree-base', 'diamond'], theme: 'airtanker', reference: 'airtanker-operations:airtanker-operations' },
+  { name: 'Airtanker from parts', family: 'airtanker-operations', layers: ['band', 'wing', 'frame', ...treeParts, 'tree-ridge', 'tree-base', 'diamond'], theme: 'airtanker', reference: 'airtanker-operations:airtanker-operations' },
 ];
 
 export function resolve(family: FamilyId, keys: Iterable<string>): { layer: Layer; piece: Piece }[] {

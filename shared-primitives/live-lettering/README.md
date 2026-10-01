@@ -68,7 +68,8 @@ export const AIRTANKER = defineBadge({
   artwork: [{ file: 'airtanker-operations/lower-band.svg' }, { file: 'airtanker-operations/wings-pair.svg' }],
   crest: {
     transform: layout['airtanker-operations'].crestTransform,   // places crest and lettering
-    pieces: ['bc-ministry-v5/crest/frame.svg', 'bc-ministry-v5/scenes/tree.svg', 'bc-ministry-v5/scenes/tree-parts/mountain-ridge.svg'],
+    pieces: ['bc-ministry-v5/crest/frame.svg', 'bc-ministry-v5/scenes/tree.svg',
+             'bc-ministry-v5/scenes/tree-parts/mountain-ridge.svg', 'bc-ministry-v5/scenes/tree-parts/mountain-base.svg'],
   },
   marks: { file: 'airtanker-operations/diamond.svg', drawnFor: 'tree-heavy' },  // at the engine's marks
   bands: [{ content: 'service', slot: 'airtanker-band', label: 'Airtanker band',

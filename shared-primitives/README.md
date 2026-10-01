@@ -62,7 +62,7 @@ neck ends at the oval edge). Colours are the source colours.
 - `crest/` — `frame` (shared), and the two finished blank crests: `tree-crest`, `wildlife-crest` (frame + scene, no lettering)
 - `scenes/` — `tree` (shared), `wildlife`
   - `tree-parts/` — sky, distant-forest, mountains, conifer. The source paints the conifer's branch notches in the sky colour; here they are cut out as transparent holes. The source canopy path also contains the small forest cluster at lower left.
-    Plus `mountain-ridge`: just the top edge of the mountains, drawn as a 7-unit line in the lettering ink. The full-colour scene doesn't use it. The single-colour Forest Service crest and the Airtanker crest draw their mountains with it, because their themes turn the mountains' fill into the background colour.
+    Plus `mountain-ridge` and `mountain-base`: the top edge and the foot of the mountains (the blue range in the full-colour scene), each drawn as a 7-unit line in the lettering ink. The full-colour scene doesn't use them. The single-colour Forest Service crest and the Airtanker crest draw their mountains with both, because their themes turn the mountains' fill into the background colour; both references show the two lines.
   - `wildlife-parts/` — sky, mountains, distant-woodland, river, river-bank, large-tree, small-tree, eagle, elk, fish
 - `marks/` — separator circle (wildlife crests) and diamond (tree crest)
 - `tabs/`
