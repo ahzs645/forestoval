@@ -292,7 +292,20 @@ function makeLogo(input={},options={}){
  uniqueIds(svg,(options.prefix||'bc'+(++seq))+'-');return{svg,state:s,report:summary,warnings,viewBox,nominal,crest:effectiveCrest(s),fontIds};
 }
 async function render(input={},options={}){const s=normalise(input);const ids=Object.keys(P.ROLES).map(id=>role(id,s).face);await ensureFonts(ids,options.allowNetwork===true);return makeLogo(s,options);}
-function serialise(result){return '<?xml version="1.0" encoding="UTF-8"?>\n'+new XMLSerializer().serializeToString(result.svg||result)+'\n';}
+// Editable exports must re-establish the same aliases in a fresh document.
+// A CSS family alias loaded with FontFace in the editor is not an installed
+// family name on every OS. These declarations reference local faces only;
+// no font bytes or network URLs are included, and the preview is not mutated.
+function serialise(result){
+ const svg=result.svg?result.svg.cloneNode(true):result;
+ if(result.svg&&Array.isArray(result.fontIds)){
+  const css=[...new Set(result.fontIds)].map(id=>P.FACES[id]).filter(face=>face?.locals?.length).map(face=>
+   `@font-face{font-family:${JSON.stringify(face.family)};font-style:normal;font-weight:${face.weight};font-stretch:${face.stretch||'normal'};src:${face.locals.map(name=>'local('+JSON.stringify(name)+')').join(',')};}`
+  ).join('\n');
+  if(css){const defs=svg.querySelector('defs')||svg.insertBefore(node('defs'),svg.firstChild);defs.append(node('style',{'data-export-fonts':'local-aliases'},css));}
+ }
+ return '<?xml version="1.0" encoding="UTF-8"?>\n'+new XMLSerializer().serializeToString(svg)+'\n';
+}
 function base64(buffer){const bytes=new Uint8Array(buffer);let out='';for(let i=0;i<bytes.length;i+=32768)out+=String.fromCharCode(...bytes.subarray(i,i+32768));return btoa(out);}
 async function png(result,width=1600){
  await document.fonts.ready;const svg=result.svg.cloneNode(true);let css='';

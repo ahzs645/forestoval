@@ -97,6 +97,9 @@ def main():
   (out/'band-containment.json').write_text(json.dumps(containment,indent=2))
   record('Selected reference and alternate wording stay inside the crest band',all(r['total']>0 and r['outside']==0 for r in containment),containment)
   page.select_option('#recipe','long-ministry');page.select_option('#textFit','reference-calibrated');page.wait_for_function("BCStudio.current.state.textFit==='reference-calibrated'&&BCStudio.current.state.recipe==='long-ministry'")
+  # Production studio keeps this panel collapsed; open it as a user would.
+  panel=page.locator('#typeSlot').locator('xpath=ancestor::details')
+  if panel.count() and not panel.evaluate('(el)=>el.open'):panel.locator('summary').click()
   page.select_option('#typeSlot','long-upper');page.locator('#slotWordSpacing').fill('0.055');page.wait_for_function("BCStudio.current.state.slots['long-upper']?.wordSpacingEm===.055")
   record('Studio word-spacing control updates before blur',page.evaluate("BCStudio.current.report.find(x=>x.slot==='long-upper').wordSpacingEm===.055"))
   page.locator('#slotAnchorBias').fill('4.2');page.wait_for_function("BCStudio.current.state.slots['long-upper']?.anchorBias===4.2")
