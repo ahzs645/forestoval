@@ -199,7 +199,7 @@ Beyond the editing checks, it confirms that the crest follows its wording in
 both directions, that the dots sit where the references put them and halfway
 between squeezed lines, that the long crest spreads its upper line when there is
 room, that lines are centred in the ring (and that unticking restores the slots), that the tree crest follows the same rules with its diamonds, that tree crests
-keep the calibrated faces without the Kabel OTF and switch to it once loaded, that the
+default to Kabel Black only when its OTF is bundled, keep the calibrated faces without it and switch to it once one is loaded, that the
 Wildfire Management tab sits on the oval, that the dots move with
 the wording and leave room when both lines are full, and that older drafts adopt
 the new defaults. It also confirms that every face loads from the bundle and

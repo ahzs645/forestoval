@@ -20,9 +20,18 @@ horizontal stretching, synthetic bold, or individual glyph placement. Residual
 letter-position differences against the supplied outline artwork remain. This
 is a font integration, not authentication of the historical font master.
 
+## The committed OTF
+
+`fonts/Kabel-Black.otf` is committed for now (it is the one `.otf` the
+`.gitignore` lets through), so local builds, the Pages build and the standalone
+studio all bundle it and new tree-crest drafts use it. Kabel is a commercial
+typeface: the repository and the published site distribute this file. To stop
+that, delete it (and purge it from history if needed) and go back to one of the
+supply routes below; everything keeps working without it.
+
 ## Supply your existing OTF
 
-No font binary is included with this patch. From the repository root:
+To replace or reinstate the file, from the repository root:
 
 ```sh
 python3 bc-ministry-primitives-v5/tools/setup_kabel.py "/path/to/Kabel-Black.otf"
@@ -36,7 +45,7 @@ The tool verifies the selected OTF's SHA-256 against
 bc-ministry-primitives-v5/fonts/Kabel-Black.otf
 ```
 
-That file is an ignored, local build input. An OTF with a matching name but
+An OTF with a matching name but
 different bytes is rejected by the setup tool and standalone builder. The
 browser additionally checks the loaded face's probe advance against the
 selected font's measured advance. A matching advance is a metric check, not a
@@ -116,7 +125,8 @@ Other fit-policy controls and manual overrides remain independent.
 
 ## Optional GitHub Pages build input
 
-The workflow accepts a repository secret named `KABEL_BLACK_OTF_BASE64`. When
+While the OTF is committed, the workflow only checks it. Without it, the workflow
+accepts a repository secret named `KABEL_BLACK_OTF_BASE64`. When
 present, it decodes the value through the same checksum-validating setup tool
 before the build. The font is not printed to workflow logs or committed by the
 script. Empty secrets (including unavailable fork-PR secrets) leave a valid

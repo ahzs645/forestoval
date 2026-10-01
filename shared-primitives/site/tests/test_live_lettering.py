@@ -167,7 +167,14 @@ def main():
   pick('forest-service');reset()
   marks=lambda:root.locator('[data-part="canvas"] [data-layer="separators"] path').count()
   home=crest()=='tree-heavy' and marks()==2 and abs(dots()['y']-397.65)<.01 and root.get_by_label('Pick the short or long crest from the wording',exact=True).is_enabled()
+  # A bundled Kabel Black OTF becomes the tree crest's default face; without it the
+  # crest keeps the calibrated substitutes.
+  kabel_bundled=page.evaluate("async()=>(await BCLogo.ensureFonts(['kabel-black']))[0]?.status==='ready'")
+  lettering=root.get_by_label('Tree oval lettering',exact=True)
+  default_face='kabel-black' if kabel_bundled else 'raleway-black'
+  record('The tree crest defaults to Kabel Black only when the OTF is bundled',lettering.input_value()==('kabel-black' if kabel_bundled else 'reference-v2') and text('lower').get_attribute('data-face')==default_face and root.locator('[data-warning="FONT_FALLBACK"]').count()==0,{'bundled':kabel_bundled,'face':text('lower').get_attribute('data-face')})
   # Calibrated against the Forest Service vector: Open Sans Bold above, Raleway Black (flat-apex A) below.
+  lettering.select_option('reference-v2');wait()
   record('The tree crest uses its calibrated faces and profiles',text('upper').get_attribute('data-face')=='open-bold' and text('lower').get_attribute('data-face')=='raleway-black' and resolved('tree-upper').get('referenceProfile')=='tree-upper' and resolved('tree-lower').get('referenceProfile')=='tree-lower')
   field('lower').fill('Forests, Lands and Natural Resource Operations');wait()
   state=root.locator('[data-layer="separators"]').get_attribute('data-separator-state')
@@ -232,8 +239,10 @@ def main():
    probe.close()
    # Kabel Black is a user-supplied face. Without it, tree crests keep the calibrated
    # substitutes (no Arial fallback, exports open); loading an OTF in the session switches
-   # the crest to it. A bundled WOFF2 stands in for the user's file here.
+   # the crest to it. A bundled WOFF2 stands in for the user's file here, and the
+   # committed OTF (if any) is blocked so the page starts without it.
    kp=context.new_page();kp.on('pageerror',lambda e:errors.append(str(e)))
+   kp.route('**/Kabel-Black.otf*',lambda route:route.abort() if route.request.resource_type=='fetch' else route.continue_())
    kp.goto(a.url);kp.get_by_role('button',name='Live lettering',exact=True).click()
    kwait=lambda:kp.wait_for_function('''()=>{const b=document.querySelector('.fo-editor [data-action="save"]');return b&&!b.disabled}''',timeout=30000)
    kwait();kroot=kp.locator('.fo-editor');kroot.get_by_label('Current preset',exact=True).select_option('forest-service');kwait()
@@ -241,7 +250,7 @@ def main():
    ktext=lambda k:kroot.locator(f'[data-part="canvas"] [data-live-text="{k}"]')
    kselect=kroot.get_by_label('Tree oval lettering',exact=True)
    without=kselect.input_value()=='reference-v2' and ktext('lower').get_attribute('data-face')=='raleway-black' and kroot.locator('[data-warning="FONT_FALLBACK"]').count()==0 and kroot.get_by_role('button',name='SVG',exact=True).is_enabled()
-   kroot.locator('[data-part="kabel-file"]').set_input_files(str(Path('node_modules/@fontsource/raleway/files/raleway-latin-900-normal.woff2').resolve()))
+   kroot.locator('[data-part="kabel-file"]').set_input_files(str(Path(__file__).resolve().parents[1]/'node_modules/@fontsource/raleway/files/raleway-latin-900-normal.woff2'))
    kp.wait_for_function('''()=>document.querySelector('.fo-editor [data-live-text="lower"]')?.getAttribute('data-face')==='kabel-black'&&!document.querySelector('.fo-editor [data-action="save"]').disabled''',timeout=30000)
    record('Without the Kabel OTF tree crests keep the calibrated faces; loading one switches the crest to it',without and kselect.input_value()=='kabel-black' and ktext('upper').get_attribute('data-face')=='kabel-black',{'without':without})
    kp.close()

@@ -36,13 +36,16 @@ These are reference-based reconstructions, not authenticated government identity
 ## Kabel Black tree-oval lettering
 
 The live editor and studio support `Kabel-Black.otf` on both heavy tree-oval
-inscriptions. Supply your own copy once, before building:
+inscriptions. The OTF is committed for now at
+`bc-ministry-primitives-v5/fonts/Kabel-Black.otf`, so every build bundles it
+(Kabel is commercial; the repository and site distribute it while it is there).
+To replace it:
 
 ```sh
 python3 bc-ministry-primitives-v5/tools/setup_kabel.py /path/to/Kabel-Black.otf
 ```
 
-Then open **Compose → Live lettering → Forest Service** and select **Kabel
+Open **Compose → Live lettering → Forest Service** and select **Kabel
 Black · supplied OTF**. New drafts use it by default whenever the font is
 available (bundled, installed, or loaded in the editor); without it they keep
 the calibrated v2 substitutes. Older drafts keep their previous v2 settings until

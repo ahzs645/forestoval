@@ -14,12 +14,15 @@
   pushed by a line that comes within 50 units, and exactly halfway between the
   lines once the gap is under 100. The lower arc narrows when the marks would
   touch a line. `'reference'` (the default) keeps `separatorY`.
-- Kabel Black (user-supplied OTF, never committed): an optional tree-oval face
+- Kabel Black (user-supplied OTF): an optional tree-oval face
   with its own fitted profile (`KABEL_LETTERING`, `treeLettering`). The OTF is
   a checksum-checked, ignored build input (`tools/setup_kabel.py`), an optional
   Pages secret, or a session-only file picker (`supplyFont`). New drafts use
   it only when it is available; otherwise they keep the v2 substitutes. See
   docs/kabel-black.md.
+- `fonts/Kabel-Black.otf` is now committed (un-ignored), so builds bundle it and
+  new tree-crest drafts use Kabel by default. The Pages workflow checks it and
+  only falls back to the secret when the file is absent.
 - Reference lettering model version 2: the tree crest is calibrated to the
   Forest Service vector (`tools/extract_tree_masks.py`, groups `tree-*`):
   Open Sans Bold for FOREST SERVICE and Raleway Black (new face; flat-apex A

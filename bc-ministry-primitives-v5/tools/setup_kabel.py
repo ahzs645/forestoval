@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install the user-owned, selected Kabel Black OTF as an ignored build input."""
+"""Validate the selected Kabel Black OTF and stage it at fonts/Kabel-Black.otf."""
 import argparse
 import base64
 import binascii
@@ -43,7 +43,7 @@ def main():
             finally:
                 temporary.unlink(missing_ok=True)
         print('Validated selected OTF: ' + str(destination))
-        print('This is an ignored local build input. Rebuild to use it in the site/studio.')
+        print('Rebuild to use it in the site/studio.')
     except (OSError, ValueError, binascii.Error) as exc:
         parser.exit(1, str(exc) + '\n')
     return 0

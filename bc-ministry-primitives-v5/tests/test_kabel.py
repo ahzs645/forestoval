@@ -98,6 +98,8 @@ def main():
         bare=re.sub(r'<script>globalThis.BC_FONT_SOURCES=.*?</script>','<script>globalThis.BC_FONT_SOURCES={};</script>',html,count=1,flags=re.S)
         missing=browser.new_page();requests=[];missing.on('request',lambda r:requests.append(r.url));missing.set_content(bare);missing.wait_for_function('window.BCStudio?.current')
         missing.evaluate("BCStudio.startRecipe('forest-service')");missing.wait_for_function("BCStudio.current.state.recipe==='forest-service'")
+        # Without the font a fresh draft keeps the v2 faces; choosing Kabel must warn.
+        missing.locator('#treeLettering').select_option('kabel-black');missing.wait_for_function("BCStudio.current.state.treeLettering==='kabel-black'")
         check('Missing OTF is visibly reported, not silently identified as Kabel',missing.evaluate("BCStudio.current.warnings.some(w=>w.code==='FONT_FALLBACK'&&w.message.includes('Kabel'))"))
         missing.evaluate("BCLogo.ensureFonts(['kabel-black'],true)")
         check('Kabel never triggers a Google Fonts request',not any('googleapis' in u or 'gstatic' in u for u in requests))
@@ -107,7 +109,7 @@ def main():
         compiler=str(tsc) if tsc.exists() else shutil.which('tsc')
         if compiler:
             compiled=out/'compiled';cfg=out/'editor-tsconfig.json'
-            cfg.write_text(json.dumps({'compilerOptions':{'target':'ES2022','module':'ESNext','moduleResolution':'bundler','lib':['ES2022','DOM','DOM.Iterable'],'strict':True,'types':[],'skipLibCheck':True,'outDir':str(compiled)},'files':[str(ROOT.parent/'shared-primitives/site/src/lettering/editor.ts'),str(ROOT.parent/'shared-primitives/site/src/lettering/types.ts')]}))
+            cfg.write_text(json.dumps({'compilerOptions':{'target':'ES2022','module':'ESNext','moduleResolution':'bundler','lib':['ES2022','DOM','DOM.Iterable'],'strict':True,'types':[],'skipLibCheck':True,'rootDir':str(ROOT.parent/'shared-primitives/site/src/lettering'),'outDir':str(compiled)},'files':[str(ROOT.parent/'shared-primitives/site/src/lettering/editor.ts'),str(ROOT.parent/'shared-primitives/site/src/lettering/types.ts')]}))
             run=subprocess.run([compiler,'-p',str(cfg)],capture_output=True,text=True)
             check('Affected Compose controller and types pass strict TypeScript checking',run.returncode==0,run.stdout+run.stderr)
             if run.returncode==0:
@@ -116,6 +118,8 @@ def main():
                 fixture='<!doctype html><html><head><style>'+(ROOT.parent/'shared-primitives/site/src/lettering/editor.css').read_text()+'</style></head><body><div id="editor"></div>'+''.join(scripts)+'<script>'+controller+'\nwindow.editor=new LetteringEditor(document.getElementById("editor"),{runtime:()=>Promise.resolve({E:BCLogo,P:BCPrimitives}),storage:null});</script></body></html>'
                 ui=browser.new_page(viewport={'width':1400,'height':1100});ui.on('pageerror',lambda e:errors.append(str(e)));ui.set_content(fixture)
                 ui.wait_for_function('window.editor?.configuration');ui.get_by_label('Current preset',exact=True).select_option('forest-service')
+                # No font yet, so the draft starts on the v2 faces; choose Kabel explicitly.
+                ui.get_by_label('Tree oval lettering',exact=True).select_option('kabel-black')
                 ui.wait_for_function("document.querySelector('.fo-editor [data-part=\"canvas\"] text')?.getAttribute('data-face')==='kabel-black'")
                 check('Compose blocks unverified-font export before OTF loading',ui.locator('[data-action="svg"]').is_disabled() and ui.locator('[data-part="font-ack"]').is_visible())
                 ui.locator('[data-part="kabel-file"]').set_input_files(str(args.font));ui.wait_for_function('!document.querySelector("[data-action=svg]").disabled')
