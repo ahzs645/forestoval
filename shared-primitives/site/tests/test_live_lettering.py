@@ -50,6 +50,8 @@ def main():
   def dot_x():return root.locator('[data-part="canvas"] [data-layer="separators"] circle').evaluate_all('(cs)=>cs.map(c=>+c.getAttribute("cx"))')
   def reset():root.get_by_role('button',name='Reset this preset',exact=True).click();wait()
   def click_character(key,index=0):
+   # Bring this glyph (not just the curved run's large box) to mid-window, clear of the sticky header.
+   text(key).evaluate('''(t,i)=>{const r=t.getExtentOfChar(i),p=new DOMPoint(r.x+r.width/2,r.y+r.height/2).matrixTransform(t.getScreenCTM());window.scrollBy(0,p.y-innerHeight/2)}''',index)
    xy=text(key).evaluate('''(t,i)=>{const r=t.getExtentOfChar(i),p=new DOMPoint(r.x+r.width/2,r.y+r.height/2).matrixTransform(t.getScreenCTM());return {x:p.x,y:p.y}}''',index)
    page.mouse.click(xy['x'],xy['y'])
   wait()
@@ -197,7 +199,9 @@ def main():
    record('Switching Compose modes preserves the editor',text('lower').text_content()=='Forests, Lands and Natural Resource Operations')
    # The app ships its own faces: no local install or Google request is needed.
    faces=page.evaluate("()=>[...BCLogo.fontState.values()].map(f=>({face:f.face,status:f.status,source:f.source,verified:f.verified}))")
-   record('Lettering faces load from the app bundle and match the calibration advances',faces and all(f['status']=='ready' and f['source']=='bundled' and f['verified'] for f in faces),faces)
+   # Kabel Black is user-supplied (an ignored build input), so this checkout reports it as a plain fallback.
+   bundled=[f for f in faces if f['face']!='kabel-black'];kabel=[f for f in faces if f['face']=='kabel-black']
+   record('Lettering faces load from the app bundle and match the calibration advances',bundled and all(f['status']=='ready' and f['source']=='bundled' and f['verified'] for f in bundled) and all(f['source'] in ('bundled','fallback') for f in kabel),faces)
    pick('forests-wildfire')
    backing=root.get_by_label('Service backing',exact=True)
    faces_drawn=lambda:root.locator('[data-part="canvas"] [data-tab-part="face"]').count()
@@ -226,6 +230,21 @@ def main():
    noto=probe.evaluate("()=>{const f=BCLogo.fontState.get('noto-condensed');return {source:f?.source,verified:f?.verified}}")
    record('The font button reloads the bundled face once it is available',noto=={'source':'bundled','verified':True} and proot.locator('[data-part="font-ack"]').is_hidden() and svg_button.is_enabled(),noto)
    probe.close()
+   # Kabel Black is a user-supplied face. Without it, tree crests keep the calibrated
+   # substitutes (no Arial fallback, exports open); loading an OTF in the session switches
+   # the crest to it. A bundled WOFF2 stands in for the user's file here.
+   kp=context.new_page();kp.on('pageerror',lambda e:errors.append(str(e)))
+   kp.goto(a.url);kp.get_by_role('button',name='Live lettering',exact=True).click()
+   kwait=lambda:kp.wait_for_function('''()=>{const b=document.querySelector('.fo-editor [data-action="save"]');return b&&!b.disabled}''',timeout=30000)
+   kwait();kroot=kp.locator('.fo-editor');kroot.get_by_label('Current preset',exact=True).select_option('forest-service');kwait()
+   kroot.get_by_role('button',name='Reset this preset',exact=True).click();kwait()
+   ktext=lambda k:kroot.locator(f'[data-part="canvas"] [data-live-text="{k}"]')
+   kselect=kroot.get_by_label('Tree oval lettering',exact=True)
+   without=kselect.input_value()=='reference-v2' and ktext('lower').get_attribute('data-face')=='raleway-black' and kroot.locator('[data-warning="FONT_FALLBACK"]').count()==0 and kroot.get_by_role('button',name='SVG',exact=True).is_enabled()
+   kroot.locator('[data-part="kabel-file"]').set_input_files(str(Path('node_modules/@fontsource/raleway/files/raleway-latin-900-normal.woff2').resolve()))
+   kp.wait_for_function('''()=>document.querySelector('.fo-editor [data-live-text="lower"]')?.getAttribute('data-face')==='kabel-black'&&!document.querySelector('.fo-editor [data-action="save"]').disabled''',timeout=30000)
+   record('Without the Kabel OTF tree crests keep the calibrated faces; loading one switches the crest to it',without and kselect.input_value()=='kabel-black' and ktext('upper').get_attribute('data-face')=='kabel-black',{'without':without})
+   kp.close()
    # The Recreations page draws the same engine output as the editor's defaults.
    page.goto(a.url.split('#')[0]+'#/recreations')
    page.wait_for_function("document.querySelectorAll('.reccard svg text[data-live-text]').length>10",timeout=60000)

@@ -16,7 +16,7 @@ import {
   type ReferenceImage,
 } from '../recreations';
 import type { ViewSettings } from '../App';
-import { NEW_DRAFT } from '../lettering/editor';
+import { draftDefaults } from '../lettering/editor';
 import { loadLetteringRuntime } from '../lettering/runtime';
 
 type Mode = 'side' | 'wipe' | 'overlay' | 'difference';
@@ -31,9 +31,9 @@ const SOURCES: [Source, string, string][] = [
 // Returning from Compose after loading an OTF must remeasure the recreations.
 async function loadLive(): Promise<LiveLettering> {
   const { E } = await loadLetteringRuntime();
-  const live: LiveLettering = { svgs: {}, backing: {}, warnings: {} };
+  const live: LiveLettering = { svgs: {}, backing: {}, warnings: {} }, defaults = await draftDefaults(E);
   for (const id of liveRecipes()) {
-    const r = await E.render(E.recipeState(id, NEW_DRAFT));
+    const r = await E.render(E.recipeState(id, defaults));
     live.svgs[id] = new XMLSerializer().serializeToString(r.svg);
     live.backing[id] = r.state.tabBacking;
     live.warnings[id] = r.warnings.filter((w) => w.code.startsWith('FONT_') || w.code === 'REFERENCE_PROFILE_UNAVAILABLE').map((w) => w.message);

@@ -57,6 +57,7 @@ export interface Engine {
   serialise(result: LogoResult): string;
   png(result: LogoResult, width: number): Promise<Blob>;
   supplyFont(id: string, bytes: ArrayBuffer): Promise<unknown>;
+  ensureFonts(ids: string[], allowNetwork?: boolean): Promise<Array<{ status: string; source: string }>>;
   retryFonts(): void;
   fontState: Map<string, { status: string; source: string; verified?: boolean; advance?: number }>;
 }

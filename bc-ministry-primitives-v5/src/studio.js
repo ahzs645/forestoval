@@ -1,12 +1,15 @@
 /* UI owns the shared patch maps. Every recipe renders through the same engine. */
 (function(){'use strict';
 const P=BCPrimitives,E=BCLogo,$=id=>document.getElementById(id),R=JSON.parse($('reference-data').textContent),STORAGE='bc-shared-primitives-v5';
-let state=E.recipeState('long-wildfire',{textFit:'reference-calibrated',treeLettering:'kabel-black',autoProfile:true,separatorPlacement:'follow-text',fanOut:true,centreInRing:true}),mode='design',current,revision=0,toastTimer,renderTimer;
+// Kabel is the default tree-oval face when the build bundled the OTF; otherwise the
+// calibrated v2 substitutes, until Load Kabel-Black.otf supplies it.
+let kabelDefault=globalThis.BC_FONT_SOURCES?.['kabel-black']?'kabel-black':'reference-v2';
+let state=E.recipeState('long-wildfire',{textFit:'reference-calibrated',treeLettering:kabelDefault,autoProfile:true,separatorPlacement:'follow-text',fanOut:true,centreInRing:true}),mode='design',current,revision=0,toastTimer,renderTimer;
 let alignment={scale:1,x:0,y:0};
 try{const raw=localStorage.getItem(STORAGE);if(raw)state=E.normalise(JSON.parse(raw));}catch{}
 // A preview link selects a new preset without deleting any saved configuration.
 const requestedRecipe=new URLSearchParams(location.search).get('recipe');
-if(P.RECIPES.some(r=>r.id===requestedRecipe&&!r.excluded))state=E.recipeState(requestedRecipe,{textFit:'reference-calibrated',treeLettering:'kabel-black',autoProfile:true,separatorPlacement:'follow-text',fanOut:true,centreInRing:true});
+if(P.RECIPES.some(r=>r.id===requestedRecipe&&!r.excluded))state=E.recipeState(requestedRecipe,{textFit:'reference-calibrated',treeLettering:kabelDefault,autoProfile:true,separatorPlacement:'follow-text',fanOut:true,centreInRing:true});
 const label=s=>s.replace(/-/g,' ');
 function select(el,entries){el.replaceChildren(...entries.map(([value,text])=>{const o=document.createElement('option');o.value=value;o.textContent=text;return o;}));}
 select($('recipe'),P.RECIPES.filter(x=>!x.excluded).map(x=>[x.id,x.name]));
@@ -21,7 +24,7 @@ kabelSelect.onchange=()=>{state.treeLettering=kabelSelect.value;syncRole();syncS
 const kabelButton=document.createElement('button');kabelButton.type='button';kabelButton.id='loadKabel';kabelButton.textContent='Load Kabel-Black.otf';
 const kabelInput=document.createElement('input');kabelInput.type='file';kabelInput.accept='.otf,font/otf';kabelInput.hidden=true;kabelInput.id='kabelFile';
 kabelField.after(kabelButton,kabelInput);kabelButton.onclick=()=>kabelInput.click();
-kabelInput.onchange=async()=>{kabelButton.disabled=true;try{const f=kabelInput.files[0];if(!f)return;if(f.size>5000000)throw Error('Choose a font smaller than 5 MB.');await E.supplyFont('kabel-black',await f.arrayBuffer());await refresh();toast('Kabel loaded for this session. The file was not uploaded.');}catch(e){toast(e.message,true);}finally{kabelInput.value='';kabelButton.disabled=false;}};
+kabelInput.onchange=async()=>{kabelButton.disabled=true;try{const f=kabelInput.files[0];if(!f)return;if(f.size>5000000)throw Error('Choose a font smaller than 5 MB.');await E.supplyFont('kabel-black',await f.arrayBuffer());kabelDefault=state.treeLettering='kabel-black';syncTextFit();await refresh();toast('Kabel loaded for this session. The file was not uploaded.');}catch(e){toast(e.message,true);}finally{kabelInput.value='';kabelButton.disabled=false;}};
 // Keep legacy presets unchanged. Reactive sizing is an explicit editing mode.
 const tabSizingField=document.createElement('div');
 const tabSizingLabel=document.createElement('label');tabSizingLabel.htmlFor='tabSizing';tabSizingLabel.textContent='Tab layout';

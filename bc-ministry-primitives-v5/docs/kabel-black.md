@@ -54,7 +54,14 @@ Open **Compose → Live lettering → Forest Service**. In **Tree oval lettering
 choose **Kabel Black · supplied OTF**. The source image remains available in
 Recreations' comparison views; choose **Live engine** rather than a legacy mode.
 
-New drafts already select Kabel. Old saved drafts/configurations retain
+New drafts select Kabel whenever it is available: bundled at build time, installed
+locally, or loaded with **Load Kabel-Black.otf**. Loading it also switches the
+current tree crest to Kabel. Without the font, new drafts and the Recreations
+live view keep the calibrated v2 substitutes (Open Sans Bold / Raleway Black).
+They do not fall back to Arial and lock exports behind the unverified-font
+consent, which is what a public build without the font secret would otherwise
+show. The standalone studio applies the same rule from its build input. Old
+saved drafts/configurations retain
 `reference-v2` until the selector is changed, so a browser with an older draft
 will not necessarily switch its preview just because the code changed. An
 explicit shared-role override also continues to win over the selected profile.

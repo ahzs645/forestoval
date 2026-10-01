@@ -1,4 +1,4 @@
-import type { Catalogue, Configuration, ContentKey, EditorOptions, LogoResult, Runtime } from './types';
+import type { Catalogue, Configuration, ContentKey, EditorOptions, Engine, LogoResult, Runtime } from './types';
 
 const STORAGE_KEY = 'forestoval-compose-lettering-v1';
 /** A new or reset draft: calibrated fitting, and a crest that follows its wording
@@ -6,6 +6,14 @@ const STORAGE_KEY = 'forestoval-compose-lettering-v1';
  * long-crest upper line that spreads out when the lower line leaves room, and
  * every line centred in the white ring). */
 export const NEW_DRAFT = { textFit: 'reference-calibrated', treeLettering: 'kabel-black', autoProfile: true, separatorPlacement: 'follow-text', fanOut: true, centreInRing: true } as const;
+export type DraftDefaults = Omit<typeof NEW_DRAFT, 'treeLettering'> & { treeLettering: 'kabel-black' | 'reference-v2' };
+/** New drafts use Kabel Black only when it can be used (a bundled build input, an
+ * installed face, or one loaded this session); otherwise the calibrated v2
+ * substitutes, rather than an Arial fallback that blocks exports. */
+export async function draftDefaults(E: Engine): Promise<DraftDefaults> {
+  const [kabel] = await E.ensureFonts(['kabel-black']);
+  return { ...NEW_DRAFT, treeLettering: kabel?.status === 'ready' ? 'kabel-black' : 'reference-v2' };
+}
 const LABELS: Record<ContentKey, string> = {
   upper: 'Upper oval text', lower: 'Lower / ministry text', service: 'Service tab text',
   word: 'Acronym / wordmark', descriptor: 'Descriptor', district: 'District',
@@ -49,6 +57,7 @@ export class LetteringEditor {
   private inputs = new Map<ContentKey, HTMLInputElement | HTMLTextAreaElement>();
   private selected?: ContentKey;
   private palette: Record<string, string> | null;
+  private defaults: DraftDefaults = { ...NEW_DRAFT, treeLettering: 'reference-v2' };
   private storage: Storage | null;
   private abort = new AbortController();
   private revision = 0;
@@ -144,6 +153,7 @@ export class LetteringEditor {
       this.runtime = await this.options.runtime(); if (this.disposed) return;
       const { P, E } = this.runtime;
       if (!E.TEXT_FIT_POLICIES['reference-calibrated']) throw new Error('Apply the reference-lettering v2 patch before using this editor.');
+      this.defaults = await draftDefaults(E); if (this.disposed) return;
       fillSelect(this.control('recipe'), P.RECIPES.filter(r => !r.excluded).map(r => [r.id, r.name]));
       fillSelect(this.control('textFit'), Object.entries(E.TEXT_FIT_POLICIES).map(([id, p]) => [id, p.label]));
       for (const [key, table] of Object.entries({ crest: P.CRESTS, tab: P.TABS, layout: P.LOCKUPS })) {
@@ -188,7 +198,7 @@ export class LetteringEditor {
   private choose(id: string) {
     if (!this.runtime) return;
     this.remember();
-    this.state = this.drafts.get(id) ?? this.runtime.E.recipeState(id, NEW_DRAFT);
+    this.state = this.drafts.get(id) ?? this.runtime.E.recipeState(id, this.defaults);
     this.state = this.runtime.E.normalise(this.state);
     this.selected = undefined; this.part('dock').hidden = true;
     this.sync(); this.schedule();
@@ -392,7 +402,7 @@ export class LetteringEditor {
     if (action === 'kabel') { this.part<HTMLInputElement>('kabel-file').click(); return; }
     if (!this.state || !this.runtime) return;
     if (action === 'reset') {
-      this.state = this.runtime.E.recipeState(this.state.recipe, NEW_DRAFT);
+      this.state = this.runtime.E.recipeState(this.state.recipe, this.defaults);
       this.selected = undefined; this.part('dock').hidden = true; this.sync(); this.schedule(); return;
     }
     if (action === 'fonts') {
@@ -424,7 +434,11 @@ export class LetteringEditor {
     try {
       if (file.size > 5_000_000) throw new Error('Choose a font file smaller than 5 MB.');
       await this.runtime.E.supplyFont('kabel-black', await file.arrayBuffer());
-      if (!this.disposed) this.schedule();
+      if (this.disposed) return;
+      // The face is now usable: new drafts and the current crest switch to it.
+      this.defaults = { ...this.defaults, treeLettering: 'kabel-black' };
+      if (this.state) this.state = this.runtime.E.normalise({ ...this.state, treeLettering: 'kabel-black' });
+      this.sync(); this.schedule();
     } catch (error) { this.part('status').textContent = `Font not loaded: ${error instanceof Error ? error.message : String(error)}`; }
     finally { input.value = ''; this.working = false; if (!this.disposed) this.updateButtons(); }
   }

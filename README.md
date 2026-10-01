@@ -43,6 +43,8 @@ python3 bc-ministry-primitives-v5/tools/setup_kabel.py /path/to/Kabel-Black.otf
 ```
 
 Then open **Compose → Live lettering → Forest Service** and select **Kabel
-Black · supplied OTF**. New drafts use it by default; older drafts keep their
-previous v2 settings until explicitly changed. The editor also has a local OTF
+Black · supplied OTF**. New drafts use it by default whenever the font is
+available (bundled, installed, or loaded in the editor); without it they keep
+the calibrated v2 substitutes. Older drafts keep their previous v2 settings until
+explicitly changed. The editor also has a local OTF
 picker for session-only use. [Setup, exports, deployment and validation](bc-ministry-primitives-v5/docs/kabel-black.md).
