@@ -5,13 +5,13 @@ const STORAGE_KEY = 'forestoval-compose-lettering-v1';
  * (short/long crest profile, separator marks placed from the lines, and a
  * long-crest upper line that spreads out when the lower line leaves room, and
  * every line centred in the white ring). */
-export const NEW_DRAFT = { textFit: 'reference-calibrated', autoProfile: true, separatorPlacement: 'follow-text', fanOut: true, centreInRing: true } as const;
+export const NEW_DRAFT = { textFit: 'reference-calibrated', treeLettering: 'kabel-black', autoProfile: true, separatorPlacement: 'follow-text', fanOut: true, centreInRing: true } as const;
 const LABELS: Record<ContentKey, string> = {
   upper: 'Upper oval text', lower: 'Lower / ministry text', service: 'Service tab text',
   word: 'Acronym / wordmark', descriptor: 'Descriptor', district: 'District',
   lines: 'Stacked words (one per line)', branch: 'Branch strip text',
 };
-const QUICK = ['forests', 'forests-wildfire', 'long-ministry', 'long-wildfire'];
+const QUICK = ['forest-service', 'forests', 'forests-wildfire', 'long-ministry', 'long-wildfire'];
 const title = (s: string) => s.replace(/-/g, ' ');
 const node = <K extends keyof HTMLElementTagNameMap>(tag: K, text?: string) => {
   const el = document.createElement(tag);
@@ -78,6 +78,12 @@ export class LetteringEditor {
         <div data-part="fields"></div>
         <label>Lettering style<select data-control="textFit" aria-label="Lettering style"></select></label>
         <p class="fo-muted fo-small" data-part="policy-note"></p>
+        <label>Tree oval lettering<select data-control="treeLettering" aria-label="Tree oval lettering">
+          <option value="kabel-black">Kabel Black · supplied OTF</option><option value="reference-v2">Previous v2 substitutes</option>
+        </select></label>
+        <button type="button" data-action="kabel">Load Kabel-Black.otf</button>
+        <input data-part="kabel-file" type="file" accept=".otf,font/otf" hidden>
+        <p class="fo-muted fo-small">Kabel applies to the heavy tree oval, not Parks or wildlife lettering. Loading a file keeps it in this tab only; it is not uploaded.</p>
         <label class="fo-check"><input type="checkbox" data-control="autoProfile"> Pick the short or long crest from the wording</label>
         <label>Separator dots<select data-control="separatorPlacement" aria-label="Separator dots">
           <option value="follow-text">Follow the lettering</option><option value="reference">Keep the reference position</option>
@@ -116,7 +122,7 @@ export class LetteringEditor {
           <button type="button" data-action="close" aria-label="Close inline editor">Done</button>
         </div>
         <p class="fo-status" data-part="status" role="status" aria-live="polite">Preparing live SVG…</p>
-        <div class="fo-fonts"><span>Reference fonts are substitutes, not authenticated originals.</span>
+        <div class="fo-fonts"><span>Kabel is the selected tree-oval face; other families retain their substitutes. Historical font identity remains unverified.</span>
           <button type="button" data-action="fonts">Load reference fonts online</button></div>
         <p class="fo-muted fo-small">Online loading contacts Google Fonts. SVG keeps editable text and does not contain font files.</p>
         <div data-part="warnings"></div>
@@ -190,10 +196,11 @@ export class LetteringEditor {
   private sync() {
     if (!this.state || !this.runtime) return;
     const { P } = this.runtime, s = this.state;
-    for (const key of ['recipe', 'textFit', 'crest', 'tab', 'layout', 'tabSizing', 'tabBacking', 'separatorPlacement'] as const) this.control(key).value = s[key];
+    for (const key of ['recipe', 'textFit', 'treeLettering', 'crest', 'tab', 'layout', 'tabSizing', 'tabBacking', 'separatorPlacement'] as const) this.control(key).value = s[key];
     const badge = P.LOCKUPS[s.layout].kind !== 'wordmark', ribbon = P.TABS[s.tab].shape === 'ribbon' && badge;
     this.control('tabSizing').disabled = !ribbon;
     this.control('tabBacking').disabled = !ribbon;
+    this.control('treeLettering').disabled = !badge || !['tree-heavy', 'tree-long'].includes(s.crest);
     const auto = this.checkbox('autoProfile');
     const pair = P.CRESTS[s.crest];
     auto.checked = s.autoProfile; auto.disabled = !badge || !(pair.longer || pair.shorter);
@@ -229,7 +236,7 @@ export class LetteringEditor {
       if (!(target instanceof HTMLSelectElement)) return;
       const key = target.dataset.control;
       if (key === 'recipe') { this.choose(target.value); return; }
-      if (key && ['textFit', 'crest', 'tab', 'layout', 'tabSizing', 'tabBacking', 'separatorPlacement'].includes(key)) {
+      if (key && ['textFit', 'treeLettering', 'crest', 'tab', 'layout', 'tabSizing', 'tabBacking', 'separatorPlacement'].includes(key)) {
         // Choosing a crest profile by hand stops the wording from overriding it.
         const manual = key === 'crest' ? { autoProfile: false } : {};
         this.state = this.runtime!.E.normalise({ ...this.state, [key]: target.value, ...manual }); this.sync(); this.schedule();
@@ -255,6 +262,7 @@ export class LetteringEditor {
       }
     });
     this.on(this.part<HTMLInputElement>('file'), 'change', () => { void this.openFile(); });
+    this.on(this.part<HTMLInputElement>('kabel-file'), 'change', () => { void this.openKabel(); });
     this.on(this.part<HTMLInputElement>('font-ack-input'), 'change', event => {
       this.fontAck = (event.target as HTMLInputElement).checked; this.updateButtons();
     });
@@ -370,6 +378,7 @@ export class LetteringEditor {
     // Verified fonts are the normal path; fallback output needs explicit consent.
     for (const b of this.root.querySelectorAll<HTMLButtonElement>('[data-action="svg"], [data-action="png"]')) b.disabled = busy || (this.unverified && !this.fontAck);
     this.root.querySelector<HTMLButtonElement>('[data-action="fonts"]')!.disabled = this.working || !this.runtime;
+    this.root.querySelector<HTMLButtonElement>('[data-action="kabel"]')!.disabled = this.working || !this.runtime;
   }
   private fail(error: unknown) {
     if (this.disposed) return;
@@ -380,6 +389,7 @@ export class LetteringEditor {
   private async action(action: string) {
     if (action === 'close') { this.close(); return; }
     if (action === 'open') { this.part<HTMLInputElement>('file').click(); return; }
+    if (action === 'kabel') { this.part<HTMLInputElement>('kabel-file').click(); return; }
     if (!this.state || !this.runtime) return;
     if (action === 'reset') {
       this.state = this.runtime.E.recipeState(this.state.recipe, NEW_DRAFT);
@@ -406,6 +416,17 @@ export class LetteringEditor {
       if (action === 'png') download(`${result.state.recipe}.png`, await this.runtime.E.png(result, result.state.outputWidth), 'image/png');
     } catch (error) { this.part('status').textContent = `Export failed: ${error instanceof Error ? error.message : String(error)}`; }
     finally { this.working = false; if (!this.disposed) this.updateButtons(); }
+  }
+  private async openKabel() {
+    const input = this.part<HTMLInputElement>('kabel-file'), file = input.files?.[0];
+    if (!file || !this.runtime || this.working) return;
+    this.working = true; this.updateButtons();
+    try {
+      if (file.size > 5_000_000) throw new Error('Choose a font file smaller than 5 MB.');
+      await this.runtime.E.supplyFont('kabel-black', await file.arrayBuffer());
+      if (!this.disposed) this.schedule();
+    } catch (error) { this.part('status').textContent = `Font not loaded: ${error instanceof Error ? error.message : String(error)}`; }
+    finally { input.value = ''; this.working = false; if (!this.disposed) this.updateButtons(); }
   }
   private async openFile() {
     const input = this.part<HTMLInputElement>('file'), file = input.files?.[0];

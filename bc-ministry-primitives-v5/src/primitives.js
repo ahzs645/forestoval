@@ -9,6 +9,7 @@ const deepFreeze=o=>{for(const v of Object.values(o))if(v&&typeof v==='object')d
 // width is reported instead of silently changing the fit.
 const FACE_PROBE='Hamburgefonstiv FORESTS 1234';
 const FACES={
+ 'kabel-black':{family:'Kabel Black',weight:900,advance:13.21998,locals:['Kabel Black','Kabel-Black'],fallback:'Arial, sans-serif',label:'Kabel Black · supplied OTF (tree oval)'},
  'noto-condensed':{family:'Noto Sans Condensed',weight:800,advance:13.58798,stretch:'condensed',locals:['Noto Sans Condensed ExtraBold','NotoSans-CondensedExtraBold'],google:'Noto+Sans:wdth,wght@75,800',fallback:'"Arial Narrow", Arial, sans-serif',label:'Noto Sans Condensed ExtraBold · substitute'},
  'open-heavy':{family:'Open Sans',weight:800,advance:16.19873,locals:['Open Sans ExtraBold','OpenSans-Extrabold'],google:'Open+Sans:wght@800',fallback:'Arial, sans-serif',label:'Open Sans ExtraBold · substitute'},
  'open-bold':{family:'Open Sans',weight:700,advance:15.77198,locals:['Open Sans Bold','OpenSans-Bold'],google:'Open+Sans:wght@700',fallback:'Arial, sans-serif',label:'Open Sans Bold · substitute'},
@@ -196,6 +197,38 @@ const REFERENCE_LETTERING={
 // look while its marks are at home (engine fanUpper): letter height x1.166
 // (the capitals upper cap height), spacing and word spacing, until its ends
 // are clearance units from the marks (BRITISH COLUMBIA in the Forests reference).
+// Separate from reference model v2: old saved configurations retain their substitutes.
+// One face for both tree-oval runs. Long-tree layouts use the same face with the
+// generic fit limits, not the wildlife/Noto calibration.
+const KABEL_LETTERING={
+  "version": 1,
+  "slots": {
+    "tree-upper": {
+      "referenceProfile": "kabel-tree-upper-v1",
+      "heightModel": "cap",
+      "cap": 60.227223,
+      "anchorCap": 60.227223,
+      "rx": 232.171389,
+      "ry": 321.351389,
+      "tracking": 0.03507646,
+      "minTracking": -0.06,
+      "wordSpacingEm": 0.02117573,
+      "anchorBias": 3.396252
+    },
+    "tree-lower": {
+      "referenceProfile": "kabel-tree-lower-v1",
+      "heightModel": "cap",
+      "cap": 60.5,
+      "anchorCap": 60.5,
+      "rx": 292.535,
+      "ry": 381.715,
+      "tracking": 0.18125,
+      "minTracking": -0.025,
+      "wordSpacingEm": 0.1125,
+      "anchorBias": 18.0
+    }
+  }
+};
 const CRESTS={
  'wildlife-caps':{scene:'wildlife',upper:'wildlife-upper',lower:'wildlife-lower',separator:'circle',separatorY:446,separatorSize:12.65,separatorInset:3.34,separatorHomeY:446,longer:'wildlife-long',switchCap:46},
  'wildlife-long':{scene:'wildlife',upper:'long-upper',lower:'long-lower',separator:'circle',separatorY:215,separatorSize:9,separatorInset:7.67,separatorHomeY:446,fan:{capScale:1.166,trackingEm:.06,wordSpacingEm:0,span:200,clearance:129},shorter:'wildlife-caps'},
@@ -272,5 +305,5 @@ function recipe(id,seen=new Set()){
  const p=r.extends?recipe(r.extends,seen):{content:{},confidence:'Generated interpretation'};
  return {...p,...r,content:{...p.content,...r.content}};
 }
-global.BCPrimitives=deepFreeze({version:5,FACE_PROBE,FACES,ROLES,SLOTS,REFERENCE_LETTERING,CRESTS,SHAPES,RECOLOUR,TABS,THEMES,LOCKUPS,RECIPES,recipe});
+global.BCPrimitives=deepFreeze({version:5,FACE_PROBE,FACES,ROLES,SLOTS,REFERENCE_LETTERING,KABEL_LETTERING,CRESTS,SHAPES,RECOLOUR,TABS,THEMES,LOCKUPS,RECIPES,recipe});
 })(window);

@@ -9,6 +9,9 @@
 !/bc-ministry-primitives-v5/
 !/airtanker-operations/
 
+/bc-ministry-primitives-v5/fonts/*.otf
+/bc-ministry-primitives-v5/fonts/*.ttf
+
 node_modules/
 dist/
 __pycache__/

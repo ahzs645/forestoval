@@ -1,0 +1,50 @@
+{
+  "upper": {
+    "slot": "tree-upper",
+    "parameters": [
+      "cap",
+      "tracking",
+      "wordSpacingEm",
+      "anchorBias"
+    ],
+    "values": [
+      60.227222848211184,
+      0.03507645661911855,
+      0.02117573049099089,
+      3.396252092068561
+    ],
+    "lossBefore": 0.1642902541408658,
+    "lossAfter": 0.09663597746210603,
+    "calls": 345,
+    "success": true,
+    "seconds": 8.495524644851685,
+    "method": "Actual BCLogo.makeLogo -> BCLogo.png. Four shared per-line parameters; ring-centred baselines. In-sample fit to ref-5 SVG-derived mask, not independent accuracy."
+  },
+  "lower": {
+    "slot": "tree-lower",
+    "parameters": [
+      "cap",
+      "tracking",
+      "wordSpacingEm",
+      "anchorBias"
+    ],
+    "values": [
+      60.5,
+      0.18125,
+      0.1125,
+      18.0
+    ],
+    "lossBefore": 0.40001643515283514,
+    "lossAfter": 0.09014311809588735,
+    "calls": 57,
+    "success": true,
+    "seconds": 1.5343945026397705,
+    "method": "Actual BCLogo.makeLogo -> BCLogo.png. Four shared per-line parameters; ring-centred baselines. In-sample fit to ref-5 SVG-derived mask, not independent accuracy."
+  },
+  "notes": [
+    "Profiles fit to the supplied tree-source.svg through ref-5 masks at fixed registration.",
+    "One face per line; shared cap height, tracking, word spacing and arc bias only. No per-glyph transforms.",
+    "The earlier 93.6% per-glyph overlap is not a full-composition fidelity score.",
+    "Remaining differences in individual letter positions are not hidden by warping."
+  ]
+}

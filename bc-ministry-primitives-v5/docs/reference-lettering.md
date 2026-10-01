@@ -1,3 +1,5 @@
+> **Kabel tree-oval option:** This document records the preserved v2 substitute model. New tree-oval drafts now select a separate Kabel Black profile; see [kabel-black.md](kabel-black.md). Saved v2 configurations are not silently changed.
+
 # Reference-calibrated lettering (v2)
 
 This adds the opt-in `reference-calibrated` fitting policy to the v5 studio. It

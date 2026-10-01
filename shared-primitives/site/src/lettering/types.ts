@@ -8,6 +8,7 @@ export interface Configuration {
   layout: string;
   theme: string;
   textFit: string;
+  treeLettering: 'reference-v2' | 'kabel-black';
   tabSizing: string;
   tabBacking: string;
   separatorPlacement: string;
@@ -55,6 +56,7 @@ export interface Engine {
   render(input: Configuration, options?: { allowNetwork?: boolean }): Promise<LogoResult>;
   serialise(result: LogoResult): string;
   png(result: LogoResult, width: number): Promise<Blob>;
+  supplyFont(id: string, bytes: ArrayBuffer): Promise<unknown>;
   retryFonts(): void;
   fontState: Map<string, { status: string; source: string; verified?: boolean; advance?: number }>;
 }

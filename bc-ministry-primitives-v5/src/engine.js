@@ -20,7 +20,23 @@ const ART=global.BC_ART||readData('art-data');
 let measureRoot,seq=0,advanceSeq=0;const cache=new Map(),advanceCache=new Map();
 function measurementRoot(){if(!measureRoot){measureRoot=node('svg',{width:1,height:1,'aria-hidden':'true'});measureRoot.style.cssText='position:fixed;left:-20000px;top:-20000px;visibility:hidden;overflow:visible';document.body.append(measureRoot);}return measureRoot;}
 const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');
-const fontState=new Map(),fontPromises=new Map();let fontGeneration=0;
+const fontState=new Map(),fontPromises=new Map(),suppliedFonts=new Map();let fontGeneration=0;
+// Read the binary signature rather than labelling every rasterisation font WOFF2.
+function fontMime(buffer){
+ const b=new Uint8Array(buffer);if(b.length<12)throw Error('The file is not a supported font.');
+ const tag=String.fromCharCode(...b.subarray(0,4));
+ if(tag==='OTTO')return 'font/otf';if(tag==='wOF2')return 'font/woff2';if(tag==='wOFF')return 'font/woff';
+ if(tag==='true'||(b[0]===0&&b[1]===1&&b[2]===0&&b[3]===0))return 'font/ttf';
+ throw Error('The file is not an OTF, TTF, WOFF or WOFF2 font.');
+}
+async function supplyFont(id,buffer){
+ const face=P.FACES[id];if(!face)throw Error('Unknown face '+id);
+ if(!(buffer instanceof ArrayBuffer)||buffer.byteLength>5000000)throw Error('Choose a font file smaller than 5 MB.');
+ const mime=fontMime(buffer),copy=buffer.slice(0);
+ // Validate before replacing a working selection. No request or persistent storage.
+ await new FontFace(face.family,copy,{weight:String(face.weight),style:'normal'}).load();
+ suppliedFonts.set(id,{bytes:copy,mime});retryFonts();return loadFace(id,false);
+}
 function invalidateMetrics(){cache.clear();advanceCache.clear();}
 const timeout=(promise,ms)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(Error('Font loading timed out')),ms))]);
 async function loadFace(id,allowNetwork=false){
@@ -30,22 +46,25 @@ async function loadFace(id,allowNetwork=false){
  const generation=fontGeneration,task=(async()=>{
   // First-party files from the host page (BC_FONT_SOURCES[id] = [{url, unicodeRange}])
   // come first: every browser then measures the same pinned binary.
+  const supplied=suppliedFonts.get(id);
+  if(supplied){const f=new FontFace(face.family,supplied.bytes,{weight:String(face.weight),style:'normal'});await f.load();document.fonts.add(f);
+   return settle(id,{source:'uploaded',loaded:[{font:f,...supplied,range:null}]},generation,allowNetwork);}
   let bundledError;const bundled=global.BC_FONT_SOURCES?.[id];
   if(Array.isArray(bundled)&&bundled.length){try{
    const loaded=[];
    for(const item of bundled){const buf=await timeout(fetch(item.url).then(r=>{if(!r.ok)throw Error('Font file HTTP '+r.status);return r.arrayBuffer();}),8000);
-    const f=new FontFace(face.family,buf,{weight:String(face.weight),style:'normal',...(face.stretch?{stretch:face.stretch}:{}),...(item.unicodeRange?{unicodeRange:item.unicodeRange}:{})});await f.load();document.fonts.add(f);loaded.push({font:f,bytes:buf,range:item.unicodeRange||null});}
+    const f=new FontFace(face.family,buf,{weight:String(face.weight),style:'normal',...(face.stretch?{stretch:face.stretch}:{}),...(item.unicodeRange?{unicodeRange:item.unicodeRange}:{})});await f.load();document.fonts.add(f);loaded.push({font:f,bytes:buf,mime:fontMime(buf),range:item.unicodeRange||null});}
    return settle(id,{source:'bundled',loaded},generation,allowNetwork);
   }catch(e){bundledError='Bundled face failed: '+e.message;}}
   for(const name of face.locals){try{const f=new FontFace(face.family,`local("${name}")`,{weight:String(face.weight),style:'normal',...(face.stretch?{stretch:face.stretch}:{})});await timeout(f.load(),1800);document.fonts.add(f);return settle(id,{source:'local',font:f},generation,allowNetwork);}catch{}}
-  if(allowNetwork){try{
+  if(allowNetwork&&face.google){try{
    const css=await timeout(fetch('https://fonts.googleapis.com/css2?family='+face.google+'&display=block').then(r=>{if(!r.ok)throw Error('Font CSS HTTP '+r.status);return r.text();}),6500);
    // Request full available latin/latin-extended subsets, never a text-subset tied
    // to one recipe. A new name must not silently lack letters.
    const blocks=[...css.matchAll(/@font-face\s*\{([\s\S]*?)\}/g)];let loaded=[];
    for(const b of blocks){const body=b[1],u=body.match(/url\(([^)]+)\)/),range=body.match(/unicode-range:\s*([^;]+);/);if(!u)continue;
     const url=u[1].replace(/["']/g,''),buf=await timeout(fetch(url).then(r=>{if(!r.ok)throw Error('Font bytes HTTP '+r.status);return r.arrayBuffer();}),6500);
-    const f=new FontFace(face.family,buf,{weight:String(face.weight),style:'normal',...(face.stretch?{stretch:face.stretch}:{}),...(range?{unicodeRange:range[1]}:{})});await f.load();document.fonts.add(f);loaded.push({font:f,bytes:buf,range:range?.[1]||null});
+    const f=new FontFace(face.family,buf,{weight:String(face.weight),style:'normal',...(face.stretch?{stretch:face.stretch}:{}),...(range?{unicodeRange:range[1]}:{})});await f.load();document.fonts.add(f);loaded.push({font:f,bytes:buf,mime:fontMime(buf),range:range?.[1]||null});
    }
    if(!loaded.length)throw Error('No font faces in stylesheet');return settle(id,{source:'web',loaded},generation,allowNetwork);
   }catch(e){if(generation===fontGeneration)fontState.set(id,{status:'fallback',source:'fallback',face:id,family:face.family,weight:face.weight,error:e.message});}}
@@ -85,13 +104,15 @@ function clean(value,max=320){return String(value??'').replace(/[\u0000-\u0008\u
 function normalise(input={}){
  if(!input||typeof input!=='object'||Array.isArray(input))throw Error('Configuration must be an object');
  const rid=P.RECIPES.some(r=>r.id===input.recipe)?input.recipe:'forests';const r=P.recipe(rid);
+ const treeLettering=input.treeLettering??'reference-v2';
+ if(!['reference-v2','kabel-black'].includes(treeLettering))throw Error('Unknown tree lettering: '+treeLettering);
  const textFit=input.textFit??'legacy';
  if(typeof textFit!=='string'||!Object.hasOwn(TEXT_FIT_POLICIES,textFit))throw Error('Unknown lettering fit policy: '+textFit);
  // Version 2 only added tree profiles to version 1, so a version-1 configuration upgrades.
  let referenceModelVersion=input.referenceModelVersion??P.REFERENCE_LETTERING?.version;
  if(referenceModelVersion===1&&P.REFERENCE_LETTERING?.version===2)referenceModelVersion=2;
  if(textFit==='reference-calibrated'&&referenceModelVersion!==P.REFERENCE_LETTERING?.version)throw Error('Unsupported reference lettering model version: '+referenceModelVersion);
- const s={version:5,textFit,...(textFit==='reference-calibrated'?{referenceModelVersion}:{}),tabSizing:input.tabSizing==='follow-text'?'follow-text':'reference',tabBacking:['paper','transparent'].includes(input.tabBacking)?input.tabBacking:r.tabBacking||'paper',separatorPlacement:input.separatorPlacement==='follow-text'?'follow-text':'reference',fanOut:input.fanOut===true,centreInRing:input.centreInRing===true,recipe:rid,crest:input.crest||r.crest,tab:input.tab||r.tab,layout:input.layout||r.layout,theme:input.theme||r.theme,autoProfile:input.autoProfile===true,content:{...r.content},roles:{},slots:{},colours:{},outputWidth:clamp(Number(input.outputWidth)||1200,100,6000)};
+ const s={version:5,textFit,treeLettering,...(textFit==='reference-calibrated'?{referenceModelVersion}:{}),tabSizing:input.tabSizing==='follow-text'?'follow-text':'reference',tabBacking:['paper','transparent'].includes(input.tabBacking)?input.tabBacking:r.tabBacking||'paper',separatorPlacement:input.separatorPlacement==='follow-text'?'follow-text':'reference',fanOut:input.fanOut===true,centreInRing:input.centreInRing===true,recipe:rid,crest:input.crest||r.crest,tab:input.tab||r.tab,layout:input.layout||r.layout,theme:input.theme||r.theme,autoProfile:input.autoProfile===true,content:{...r.content},roles:{},slots:{},colours:{},outputWidth:clamp(Number(input.outputWidth)||1200,100,6000)};
  for(const [k,v]of Object.entries(input.content||{}))if(['upper','lower','service','word','descriptor','district','lines','branch'].includes(k))s.content[k]=clean(v);
  for(const k of ['crest','tab','layout','theme']){const t={crest:P.CRESTS,tab:P.TABS,layout:P.LOCKUPS,theme:P.THEMES}[k];if(!t[s[k]])throw Error('Unknown '+k+': '+s[k]);}
  for(const[id,v]of Object.entries(input.roles||{})){if(!P.ROLES[id]||!v||typeof v!=='object')continue;const out={};if(v.face&&P.FACES[v.face])out.face=v.face;if(Number.isFinite(v.capScale))out.capScale=clamp(v.capScale,.5,1.5);if(Number.isFinite(v.trackingEm))out.trackingEm=clamp(v.trackingEm,-.06,.18);s.roles[id]=out;}
@@ -99,9 +120,15 @@ function normalise(input={}){
  for(const[k,v]of Object.entries(input.colours||{}))if(k in P.THEMES[s.theme]&&/^#[0-9a-f]{6}$/i.test(v))s.colours[k]=v;
  return s;
 }
-function role(id,s){return {...P.ROLES[id],...(s.textFit==='reference-calibrated'?P.REFERENCE_LETTERING?.roles[id]:{}),...(s.roles[id]||{})};}
+function usesKabel(s){return s.treeLettering==='kabel-black'&&['tree-heavy','tree-long'].includes(s.crest);}
+function role(id,s){return {...P.ROLES[id],...(s.textFit==='reference-calibrated'?P.REFERENCE_LETTERING?.roles[id]:{}),
+ ...(usesKabel(s)&&['crest-service-upper','crest-tree-lower','crest-condensed'].includes(id)?{face:'kabel-black'}:{}),...(s.roles[id]||{})};}
 function referenceProfile(id,s){
  if(s.textFit!=='reference-calibrated')return null;
+ if(usesKabel(s)){
+  if(P.KABEL_LETTERING?.slots[id])return P.KABEL_LETTERING.slots[id];
+  if(id==='long-upper'||id==='long-lower')return null;
+ }
  if(id==='service-bottom')return P.REFERENCE_LETTERING?.serviceByCrest[effectiveCrest(s)]||null;
  return P.REFERENCE_LETTERING?.slots[id]||null;
 }
@@ -449,7 +476,7 @@ function makeLogo(input={},options={}){
   else{composition.append(badge);const rows=blockMetrics(s,l),h=blockHeight(rows,l.lineGap);wordBlock(composition,s,l,theme,bn.x+bn.w+l.gap,(l.centerY||422)-h/2,report);nominal={x:bn.x,y:Math.min(bn.y,(844-h)/2),w:bn.w+l.gap+l.wordWidth,h:Math.max(bn.h,h)};}
  }
  const fontIds=[...new Set(report.map(r=>r.face))];for(const id of fontIds){const f=fontState.get(id);if(f?.status==='ready'&&f.verified===false)warnings.push({code:'FONT_METRICS_MISMATCH',message:`${P.FACES[id].family} ${P.FACES[id].weight} (${f.source}) measures ${((f.advance/P.FACES[id].advance-1)*100).toFixed(2)}% different from the calibration face. Its fit is not the reference fit.`});}
- for(const id of fontIds)if(fontState.get(id)?.status!=='ready')warnings.push({code:'FONT_FALLBACK',message:P.FACES[id].family+' '+P.FACES[id].weight+' is not verified. Load the reference faces or install that exact weight.'});
+ for(const id of fontIds)if(fontState.get(id)?.status!=='ready')warnings.push({code:'FONT_FALLBACK',message:id==='kabel-black'?'Kabel Black is missing. Load your Kabel-Black.otf in the editor, or run tools/setup_kabel.py and rebuild. Google Fonts does not supply this face.':P.FACES[id].family+' '+P.FACES[id].weight+' is not verified. Load the reference faces or install that exact weight.'});
  for(const r of report)if(r.tooSmall)warnings.push({code:'SMALL_TEXT',message:`${r.slot||r.role}: fitted cap height ${r.cap.toFixed(1)}. Shorten the wording for a readable mark.`});
  for(const r of report){
   if(s.textFit==='reference-calibrated'&&r.slot&&!r.referenceProfile)warnings.push({code:'REFERENCE_PROFILE_UNAVAILABLE',message:`${r.slot}: no reference calibration is applied here; the existing fitting policy is used (reactive tabs keep their own solver).`});
@@ -487,14 +514,14 @@ async function png(result,width=1600){
  await document.fonts.ready;const svg=result.svg.cloneNode(true);let css='';
  // Web-font bytes are used only in this transient rasterization image, then
  // discarded. They are not included in downloadable SVGs or source packages.
- for(const id of result.fontIds){const state=fontState.get(id),face=P.FACES[id];if(state?.source==='web'||state?.source==='bundled')for(const item of state.loaded)css+=`@font-face{font-family:"${face.family}";font-style:normal;font-weight:${face.weight};font-stretch:${face.stretch||'normal'};src:url(data:font/woff2;base64,${base64(item.bytes)});${item.range?'unicode-range:'+item.range+';':''}}`;
+ for(const id of result.fontIds){const state=fontState.get(id),face=P.FACES[id];if(state?.source==='web'||state?.source==='bundled'||state?.source==='uploaded')for(const item of state.loaded)css+=`@font-face{font-family:"${face.family}";font-style:normal;font-weight:${face.weight};font-stretch:${face.stretch||'normal'};src:url(data:${item.mime||fontMime(item.bytes)};base64,${base64(item.bytes)});${item.range?'unicode-range:'+item.range+';':''}}`;
  else if(state?.source==='local')css+=`@font-face{font-family:"${face.family}";font-weight:${face.weight};font-stretch:${face.stretch||'normal'};src:${face.locals.map(x=>'local("'+x+'")').join(',')}}`;
  }
  if(css)svg.querySelector('defs').append(node('style',{},css));
  const w=clamp(Math.round(width),100,6000),h=Math.round(w*result.viewBox.h/result.viewBox.w);if(w*h>32000000)throw Error('PNG is too large; reduce export width.');svg.setAttribute('width',w);svg.setAttribute('height',h);
  const url=URL.createObjectURL(new Blob([serialise(svg)],{type:'image/svg+xml'}));try{const img=new Image();await new Promise((ok,bad)=>{img.onload=ok;img.onerror=()=>bad(Error('SVG rasterization failed'));img.src=url;});const c=document.createElement('canvas');c.width=w;c.height=h;const context=c.getContext('2d');context.drawImage(img,0,0,w,h);return await new Promise((ok,bad)=>c.toBlob(b=>b?ok(b):bad(Error('PNG export failed')),'image/png'));}finally{URL.revokeObjectURL(url);}
 }
-function recipeState(id,shared={}){return normalise({recipe:id,textFit:shared.textFit,referenceModelVersion:shared.referenceModelVersion,tabSizing:shared.tabSizing,autoProfile:shared.autoProfile,separatorPlacement:shared.separatorPlacement,fanOut:shared.fanOut,centreInRing:shared.centreInRing,roles:shared.roles||{},slots:shared.slots||{}});}
+function recipeState(id,shared={}){return normalise({recipe:id,treeLettering:shared.treeLettering,textFit:shared.textFit,referenceModelVersion:shared.referenceModelVersion,tabSizing:shared.tabSizing,autoProfile:shared.autoProfile,separatorPlacement:shared.separatorPlacement,fanOut:shared.fanOut,centreInRing:shared.centreInRing,roles:shared.roles||{},slots:shared.slots||{}});}
 function dependencies(roleId){return P.RECIPES.filter(x=>!x.excluded).filter(r=>{const s=recipeState(r.id),c=P.CRESTS[s.crest],t=P.TABS[s.tab],l=P.LOCKUPS[s.layout];return [...(l.kind!=='wordmark'?[P.SLOTS[c.upper]?.role,P.SLOTS[c.lower]?.role,P.SLOTS[t.slot]?.role]:[]),...(l.kind==='wordmark'||l.kind==='horizontal'||l.kind==='stacked'?['wordmark-heavy','descriptor-slab',...(s.content.district?['district-slab']:[])]:[]),...(l.kind==='words'?['plain-label']:[]),...(l.kind==='strip'?['branch-condensed']:[])].includes(roleId);}).map(x=>x.name);}
-global.BCLogo={P,ART,TEXT_FIT_POLICIES,normalise,recipeState,makeLogo,render,serialise,png,metrics,fitRun,fitPlain,curve,effectiveCrest,separatorLayout,typeBody,role,slot,referenceProfile,dependencies,ensureFonts,retryFonts,fontState,invalidateMetrics,node,clone};
+global.BCLogo={P,ART,TEXT_FIT_POLICIES,normalise,recipeState,makeLogo,render,serialise,png,metrics,fitRun,fitPlain,curve,effectiveCrest,separatorLayout,typeBody,role,slot,referenceProfile,dependencies,ensureFonts,supplyFont,retryFonts,fontState,invalidateMetrics,node,clone};
 })(window);

@@ -27,22 +27,18 @@ const SOURCES: [Source, string, string][] = [
   ['v5', 'Saved v5 examples · legacy', 'The lettering in the saved v5 examples, as generated.'],
 ];
 
-// Rendered once per page load: the engine's lettering for every recipe used here.
-let livePending: Promise<LiveLettering> | undefined;
-function loadLive(): Promise<LiveLettering> {
-  livePending ??= (async () => {
-    const { E } = await loadLetteringRuntime();
-    const live: LiveLettering = { svgs: {}, backing: {}, warnings: {} };
-    for (const id of liveRecipes()) {
-      const r = await E.render(E.recipeState(id, NEW_DRAFT));
-      live.svgs[id] = new XMLSerializer().serializeToString(r.svg);
-      live.backing[id] = r.state.tabBacking;
-      live.warnings[id] = r.warnings.filter((w) => w.code.startsWith('FONT_') || w.code === 'REFERENCE_PROFILE_UNAVAILABLE').map((w) => w.message);
-    }
-    return live;
-  })();
-  livePending.catch(() => { livePending = undefined; });
-  return livePending;
+// Cache in the mounted view (useLive), not globally for the whole page.
+// Returning from Compose after loading an OTF must remeasure the recreations.
+async function loadLive(): Promise<LiveLettering> {
+  const { E } = await loadLetteringRuntime();
+  const live: LiveLettering = { svgs: {}, backing: {}, warnings: {} };
+  for (const id of liveRecipes()) {
+    const r = await E.render(E.recipeState(id, NEW_DRAFT));
+    live.svgs[id] = new XMLSerializer().serializeToString(r.svg);
+    live.backing[id] = r.state.tabBacking;
+    live.warnings[id] = r.warnings.filter((w) => w.code.startsWith('FONT_') || w.code === 'REFERENCE_PROFILE_UNAVAILABLE').map((w) => w.message);
+  }
+  return live;
 }
 function useLive(enabled: boolean) {
   const [state, setState] = useState<{ live?: LiveLettering; error?: string }>({});
