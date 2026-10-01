@@ -1,0 +1,8 @@
+{
+  "version": 5,
+  "recipe": "long-wildfire",
+  "textFit": "reference-calibrated",
+  "referenceModelVersion": 1,
+  "tabSizing": "reference",
+  "autoProfile": false
+}

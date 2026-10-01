@@ -2,3 +2,6 @@
 # airtanker-operations/generate.py and bc-ministry-primitives-v5/build.py need none.
 pillow>=10          # shared-primitives/build_gallery.py
 playwright>=1.40    # shared-primitives/fit_lettering.py, bc-ministry-primitives-v5/tests/test_browser.py
+numpy>=1.26         # bc-ministry-primitives-v5/tools/*_reference_*.py, tests/test_reference_lettering.py
+scipy>=1.11         # bc-ministry-primitives-v5/tools/calibrate_reference_lettering.py
+opencv-python-headless>=4.8  # bc-ministry-primitives-v5/tools/*_reference_*.py, tests/test_reference_lettering.py

@@ -1,0 +1,11 @@
+{
+  "version": 5,
+  "recipe": "forests",
+  "textFit": "style-preserving",
+  "tabSizing": "reference",
+  "autoProfile": false,
+  "content": {
+    "upper": "BRITISH COLUMBIA",
+    "lower": "NATURAL RESOURCES"
+  }
+}
