@@ -23,8 +23,8 @@ import sans400 from '@fontsource/roboto/files/roboto-latin-400-normal.woff2?url'
 import sans400Ext from '@fontsource/roboto/files/roboto-latin-ext-400-normal.woff2?url';
 import sans700 from '@fontsource/roboto/files/roboto-latin-700-normal.woff2?url';
 import sans700Ext from '@fontsource/roboto/files/roboto-latin-ext-700-normal.woff2?url';
-import jost900 from '@fontsource/jost/files/jost-latin-900-normal.woff2?url';
-import jost900Ext from '@fontsource/jost/files/jost-latin-ext-900-normal.woff2?url';
+import raleway900 from '@fontsource/raleway/files/raleway-latin-900-normal.woff2?url';
+import raleway900Ext from '@fontsource/raleway/files/raleway-latin-ext-900-normal.woff2?url';
 
 export interface FontSource { url: string; unicodeRange: string }
 
@@ -45,5 +45,5 @@ export const FONT_SOURCES: Record<string, FontSource[]> = {
   'slab-medium': face(slab500, slab500Ext),
   'sans-regular': face(sans400, sans400Ext),
   'sans-bold': face(sans700, sans700Ext),
-  'jost-black': face(jost900, jost900Ext),
+  'raleway-black': face(raleway900, raleway900Ext),
 };

@@ -68,8 +68,9 @@ drafts, let one preset become another by editing its text:
   Forest Service vector does. That puts both lines within 1 unit of it in
   radius and within 1° at their ends. The tree crest's lettering is calibrated
   to that vector too (reference model version 2): Open Sans Bold above, and
-  Jost Black below, because the vector's lower line is a geometric typeface.
-  The letters overlap it 0.61 / 0.65, up from 0.40 / 0.36.
+  Raleway Black below. The vector's lower line is a geometric gothic whose A
+  has a flat apex, which rules out Futura-style faces. The letters overlap it
+  0.61 / 0.67, up from 0.40 / 0.36.
 
   The Wildfire Management tab sits on the oval. Its holder is built on the
   frame's outer oval at ±60° (what its wording needs at its cap height),

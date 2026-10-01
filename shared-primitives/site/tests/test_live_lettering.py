@@ -165,8 +165,8 @@ def main():
   pick('forest-service');reset()
   marks=lambda:root.locator('[data-part="canvas"] [data-layer="separators"] path').count()
   home=crest()=='tree-heavy' and marks()==2 and abs(dots()['y']-397.65)<.01 and root.get_by_label('Pick the short or long crest from the wording',exact=True).is_enabled()
-  # Calibrated against the Forest Service vector: Open Sans Bold above, Jost Black (geometric) below.
-  record('The tree crest uses its calibrated faces and profiles',text('upper').get_attribute('data-face')=='open-bold' and text('lower').get_attribute('data-face')=='jost-black' and resolved('tree-upper').get('referenceProfile')=='tree-upper' and resolved('tree-lower').get('referenceProfile')=='tree-lower')
+  # Calibrated against the Forest Service vector: Open Sans Bold above, Raleway Black (flat-apex A) below.
+  record('The tree crest uses its calibrated faces and profiles',text('upper').get_attribute('data-face')=='open-bold' and text('lower').get_attribute('data-face')=='raleway-black' and resolved('tree-upper').get('referenceProfile')=='tree-upper' and resolved('tree-lower').get('referenceProfile')=='tree-lower')
   field('lower').fill('Forests, Lands and Natural Resource Operations');wait()
   state=root.locator('[data-layer="separators"]').get_attribute('data-separator-state')
   record('The tree crest switches to its long profile and keeps its diamonds halfway between the lines',home and crest()=='tree-long' and marks()==2 and state=='centred' and all(abs(u-l)<.1 for u,l in gaps()) and resolved('long-lower')['ringCentred'],{'crest':crest(),'state':state,'gaps':gaps()})

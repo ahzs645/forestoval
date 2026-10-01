@@ -16,9 +16,10 @@
   touch a line. `'reference'` (the default) keeps `separatorY`.
 - Reference lettering model version 2: the tree crest is calibrated to the
   Forest Service vector (`tools/extract_tree_masks.py`, groups `tree-*`):
-  Open Sans Bold for FOREST SERVICE and Jost Black (new face, geometric) for
-  BRITISH COLUMBIA, on a new `crest-tree-lower` role. Letters now overlap the
-  vector 0.61 / 0.65 (was 0.40 / 0.36). Version-1 configurations upgrade.
+  Open Sans Bold for FOREST SERVICE and Raleway Black (new face; flat-apex A
+  like the vector's) for BRITISH COLUMBIA, on a new `crest-tree-lower` role.
+  Letters now overlap the vector 0.61 / 0.67 (was 0.40 / 0.36).
+  Version-1 configurations upgrade.
 - The Wildfire Management tab (`TABS['management-top']`, `holder: 'oval'`,
   `halfSpan: 60`) is built on the frame's outer oval (tab-layout.js) with the
   reference holder too, so it sits on the oval as in the patch photos. It

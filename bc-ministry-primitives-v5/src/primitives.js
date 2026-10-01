@@ -18,7 +18,7 @@ const FACES={
  'slab-bold':{family:'Roboto Slab',weight:700,advance:15.52247,locals:['Roboto Slab Bold','RobotoSlab-Bold'],google:'Roboto+Slab:wght@700',fallback:'Rockwell, Georgia, serif',label:'Roboto Slab Bold · substitute'},
  'slab-medium':{family:'Roboto Slab',weight:500,advance:15.41114,locals:['Roboto Slab Medium','RobotoSlab-Medium'],google:'Roboto+Slab:wght@500',fallback:'Rockwell, Georgia, serif',label:'Roboto Slab Medium · substitute'},
  'sans-regular':{family:'Roboto',weight:400,advance:14.65528,locals:['Roboto Regular','Roboto-Regular'],google:'Roboto:wght@400',fallback:'Arial, sans-serif',label:'Roboto Regular · substitute'},
- 'jost-black':{family:'Jost',weight:900,advance:16.51198,locals:['Jost Black','Jost-Black'],google:'Jost:wght@900',fallback:'Futura, "Century Gothic", Arial, sans-serif',label:'Jost Black · substitute (geometric)'},
+ 'raleway-black':{family:'Raleway',weight:900,advance:15.82798,locals:['Raleway Black','Raleway-Black'],google:'Raleway:wght@900',fallback:'"Century Gothic", Arial, sans-serif',label:'Raleway Black · substitute (geometric, flat-apex A)'},
  'sans-bold':{family:'Roboto',weight:700,advance:14.88086,locals:['Roboto Bold','Roboto-Bold'],google:'Roboto:wght@700',fallback:'Arial, sans-serif',label:'Roboto Bold · substitute'}
 };
 // Change a role once: every slot/recipe using it updates together.
@@ -67,7 +67,7 @@ const REFERENCE_LETTERING={
       "face": "open-bold"
     },
     "crest-tree-lower": {
-      "face": "jost-black"
+      "face": "raleway-black"
     }
   },
   "slots": {
@@ -86,14 +86,14 @@ const REFERENCE_LETTERING={
     "tree-lower": {
       "referenceProfile": "tree-lower",
       "heightModel": "cap",
-      "cap": 58.07448,
-      "anchorCap": 58.07448,
-      "rx": 291.41,
-      "ry": 380.59,
-      "tracking": 0.0407052,
+      "cap": 59.11813,
+      "anchorCap": 59.11813,
+      "rx": 291.844,
+      "ry": 381.024,
+      "tracking": 0.0944909,
       "minTracking": -0.025,
-      "wordSpacingEm": 0.1655718,
-      "anchorBias": 8.83579
+      "wordSpacingEm": 0.1238914,
+      "anchorBias": 8.00585
     },
     "wildlife-upper": {
       "referenceProfile": "caps-upper",

@@ -66,7 +66,7 @@ These are working substitutes, not authenticated historical font identifications
 | Descriptor / district | Roboto Slab Bold 700 | Separate scale and role from the acronym; a serif substitute, not an exact Clarendon identification |
 | Thin crest / plain labels | Roboto Regular 400 | Parks and plain BC/Timber/Sales treatment |
 | Tree crest upper, calibrated | Open Sans Bold 700 | Fitted to the Forest Service vector (reference-calibrated) |
-| Tree crest lower, calibrated | Jost Black 900 | The vector's lower line is geometric; its own role (`crest-tree-lower`) so the wildlife crest is unaffected |
+| Tree crest lower, calibrated | Raleway Black 900 | The vector's lower line is a geometric gothic with a flat-apex A; its own role (`crest-tree-lower`) so the wildlife crest is unaffected |
 
 The face catalogue also offers alternatives; they are not silently chosen as a substitute for an unavailable weight. The default role weights were loaded locally during testing. Online loading and weights not used by the defaults were not externally verified in this environment.
 
@@ -138,7 +138,7 @@ python tests/test_browser.py
 
 The test runner also supports an existing browser through `CHROMIUM=/path/to/chromium`. It builds the page into `tests/output/` and loads it directly into a browser document, so no HTTP server is needed. The screenshots, PNG export and `results.json` also go to `tests/output/` (not tracked); `--update` also refreshes the committed copies in `review/` and `tests/results.json`.
 
-The default faces (Open Sans ExtraBold, Roboto Condensed Bold, Roboto Slab Bold, Roboto Regular; Jost Black for the reference-calibrated tree crest) must be installed locally, or pass `--network-fonts` to load them from Google Fonts. Without them the font check fails and three lettering-band checks measure fallback fonts, so 36/40 is the expected result on a machine without the faces. The results record where the faces came from.
+The default faces (Open Sans ExtraBold, Roboto Condensed Bold, Roboto Slab Bold, Roboto Regular; Raleway Black for the reference-calibrated tree crest) must be installed locally, or pass `--network-fonts` to load them from Google Fonts. Without them the font check fails and three lettering-band checks measure fallback fonts, so 36/40 is the expected result on a machine without the faces. The results record where the faces came from.
 
 The recorded run passed **40/40 checks**, including all active recipes, exact inherited crest-typography equality, no stretched text, finite bounds, reference integrity, PNG/ZIP export, configuration round trip, 27 wording stress cases, all composition types, six pixel-mask checks that lettering remains inside its band, and a 390-pixel mobile viewport. The full results are in `tests/results.json`.
 
