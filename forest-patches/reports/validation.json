@@ -1,0 +1,162 @@
+{
+  "scope": "Structural vector integrity, not fidelity approval",
+  "files": [
+    {
+      "file": "svg/editable/F01-tree-light.svg",
+      "idCount": 9,
+      "referenceCount": 5,
+      "pathCount": 12,
+      "valid": true
+    },
+    {
+      "file": "svg/editable/F02-tree-green.svg",
+      "idCount": 9,
+      "referenceCount": 5,
+      "pathCount": 12,
+      "valid": true
+    },
+    {
+      "file": "svg/editable/F03-tree-decal.svg",
+      "idCount": 9,
+      "referenceCount": 5,
+      "pathCount": 12,
+      "valid": true
+    },
+    {
+      "file": "svg/editable/F04-shoulder.svg",
+      "idCount": 14,
+      "referenceCount": 9,
+      "pathCount": 15,
+      "valid": true
+    },
+    {
+      "file": "svg/editable/F05-fire-control.svg",
+      "idCount": 11,
+      "referenceCount": 5,
+      "pathCount": 54,
+      "valid": true
+    },
+    {
+      "file": "svg/editable/F06-map-deer.svg",
+      "idCount": 9,
+      "referenceCount": 0,
+      "pathCount": 4,
+      "valid": true
+    },
+    {
+      "file": "svg/editable/F07-map-tree.svg",
+      "idCount": 6,
+      "referenceCount": 0,
+      "pathCount": 3,
+      "valid": true
+    },
+    {
+      "file": "svg/editable/F08-long-wildfire.svg",
+      "idCount": 27,
+      "referenceCount": 7,
+      "pathCount": 14,
+      "valid": true
+    },
+    {
+      "file": "svg/editable/F09-forest-parks.svg",
+      "idCount": 11,
+      "referenceCount": 5,
+      "pathCount": 12,
+      "valid": true
+    },
+    {
+      "file": "svg/editable/F10-ministry-forests.svg",
+      "idCount": 24,
+      "referenceCount": 5,
+      "pathCount": 12,
+      "valid": true
+    },
+    {
+      "file": "svg/outlined/F01-tree-light.svg",
+      "idCount": 9,
+      "referenceCount": 1,
+      "pathCount": 40,
+      "valid": true
+    },
+    {
+      "file": "svg/outlined/F02-tree-green.svg",
+      "idCount": 9,
+      "referenceCount": 1,
+      "pathCount": 40,
+      "valid": true
+    },
+    {
+      "file": "svg/outlined/F03-tree-decal.svg",
+      "idCount": 9,
+      "referenceCount": 1,
+      "pathCount": 40,
+      "valid": true
+    },
+    {
+      "file": "svg/outlined/F04-shoulder.svg",
+      "idCount": 14,
+      "referenceCount": 1,
+      "pathCount": 43,
+      "valid": true
+    },
+    {
+      "file": "svg/outlined/F05-fire-control.svg",
+      "idCount": 11,
+      "referenceCount": 1,
+      "pathCount": 93,
+      "valid": true
+    },
+    {
+      "file": "svg/outlined/F06-map-deer.svg",
+      "idCount": 9,
+      "referenceCount": 0,
+      "pathCount": 21,
+      "valid": true
+    },
+    {
+      "file": "svg/outlined/F07-map-tree.svg",
+      "idCount": 6,
+      "referenceCount": 0,
+      "pathCount": 3,
+      "valid": true
+    },
+    {
+      "file": "svg/outlined/F08-long-wildfire.svg",
+      "idCount": 27,
+      "referenceCount": 1,
+      "pathCount": 85,
+      "valid": true
+    },
+    {
+      "file": "svg/outlined/F09-forest-parks.svg",
+      "idCount": 11,
+      "referenceCount": 1,
+      "pathCount": 45,
+      "valid": true
+    },
+    {
+      "file": "svg/outlined/F10-ministry-forests.svg",
+      "idCount": 24,
+      "referenceCount": 1,
+      "pathCount": 44,
+      "valid": true
+    }
+  ],
+  "originalArtMatches": {
+    "wildlifeScene": true,
+    "wildlifeClip": true,
+    "wildlifeFrame": true,
+    "sourceRibbon": true,
+    "treeScene": true,
+    "treeTransform": true,
+    "treeMono": true,
+    "treeMonoTransform": true,
+    "treeSourceTransform": true,
+    "treeFrame": true,
+    "treeInner": true
+  },
+  "textRunsFitTheirAvailableLength": true,
+  "sourceCount": 59,
+  "svgCount": 20,
+  "passed": true
+}

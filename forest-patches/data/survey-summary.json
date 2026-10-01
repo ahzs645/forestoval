@@ -1,0 +1,15 @@
+{
+  "folderId": "1Wl1B2GEi-8GW2pdPZx8xEd61MZCvSvdQ",
+  "observedFiles": 59,
+  "imageFiles": 57,
+  "pdfFiles": 2,
+  "pdfPages": 109,
+  "exactDuplicateImages": [
+    {
+      "sourceId": "S16",
+      "duplicateOf": "S15"
+    }
+  ],
+  "recreationPresets": 10,
+  "scope": "Only the 59 direct files in the supplied Forest service folder; supplementary primitives are not counted as folder contents."
+}

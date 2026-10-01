@@ -1,0 +1,261 @@
+{
+  "F01-tree-light": [
+    {
+      "text": "FOREST SERVICE",
+      "font": "Roboto Condensed",
+      "size": 86,
+      "preferredSize": 86,
+      "available": 824.75,
+      "width": 592.848,
+      "tracking": 0,
+      "shrink": 1.0
+    },
+    {
+      "text": "BRITISH COLUMBIA",
+      "font": "Open Sans",
+      "size": 76,
+      "preferredSize": 76,
+      "available": 1060.516,
+      "width": 737.996,
+      "tracking": 0,
+      "shrink": 1.0
+    }
+  ],
+  "F02-tree-green": [
+    {
+      "text": "FOREST SERVICE",
+      "font": "Roboto Condensed",
+      "size": 84,
+      "preferredSize": 84,
+      "available": 824.75,
+      "width": 579.061,
+      "tracking": 0,
+      "shrink": 1.0
+    },
+    {
+      "text": "BRITISH COLUMBIA",
+      "font": "Open Sans",
+      "size": 76,
+      "preferredSize": 76,
+      "available": 1060.516,
+      "width": 737.996,
+      "tracking": 0,
+      "shrink": 1.0
+    }
+  ],
+  "F03-tree-decal": [
+    {
+      "text": "FOREST SERVICE",
+      "font": "Roboto Condensed",
+      "size": 84,
+      "preferredSize": 84,
+      "available": 824.75,
+      "width": 579.061,
+      "tracking": 0,
+      "shrink": 1.0
+    },
+    {
+      "text": "BRITISH COLUMBIA",
+      "font": "Open Sans",
+      "size": 76,
+      "preferredSize": 76,
+      "available": 1060.516,
+      "width": 737.996,
+      "tracking": 0,
+      "shrink": 1.0
+    }
+  ],
+  "F04-shoulder": [
+    {
+      "text": "BRITISH",
+      "font": "Roboto Condensed",
+      "size": 88,
+      "preferredSize": 88,
+      "available": 768.896,
+      "width": 293.866,
+      "tracking": 0,
+      "shrink": 1.0
+    },
+    {
+      "text": "COLUMBIA",
+      "font": "Roboto Condensed",
+      "size": 84,
+      "preferredSize": 84,
+      "available": 1054.698,
+      "width": 370.332,
+      "tracking": 0,
+      "shrink": 1.0
+    },
+    {
+      "text": "FOREST",
+      "font": "Roboto",
+      "size": 42,
+      "preferredSize": 42,
+      "available": 166.489,
+      "width": 154.261,
+      "tracking": 0,
+      "shrink": 1.0
+    },
+    {
+      "text": "SERVICE",
+      "font": "Roboto",
+      "size": 34.6615,
+      "preferredSize": 42,
+      "available": 137.58,
+      "width": 137.58,
+      "tracking": 0,
+      "shrink": 0.8253
+    }
+  ],
+  "F05-fire-control": [
+    {
+      "text": "FIRE CONTROL",
+      "font": "Roboto",
+      "size": 58,
+      "preferredSize": 58,
+      "available": 552.46,
+      "width": 395.354,
+      "tracking": 0,
+      "shrink": 1.0
+    },
+    {
+      "text": "BRITISH COLUMBIA",
+      "font": "Roboto",
+      "size": 47,
+      "preferredSize": 47,
+      "available": 554.354,
+      "width": 425.689,
+      "tracking": 0,
+      "shrink": 1.0
+    },
+    {
+      "text": "FOREST",
+      "font": "Roboto",
+      "size": 54,
+      "preferredSize": 54,
+      "available": 415,
+      "width": 198.335,
+      "tracking": 0,
+      "shrink": 1.0
+    },
+    {
+      "text": "SERVICE",
+      "font": "Roboto",
+      "size": 54,
+      "preferredSize": 54,
+      "available": 415,
+      "width": 214.339,
+      "tracking": 0,
+      "shrink": 1.0
+    }
+  ],
+  "F06-map-deer": [
+    {
+      "text": "B.C.",
+      "font": "Roboto Condensed",
+      "size": 62,
+      "preferredSize": 62,
+      "available": 500,
+      "width": 106.32,
+      "tracking": 0,
+      "shrink": 1.0
+    },
+    {
+      "text": "FOREST SERVICE",
+      "font": "Roboto Condensed",
+      "size": 59,
+      "preferredSize": 59,
+      "available": 555,
+      "width": 406.721,
+      "tracking": 0,
+      "shrink": 1.0
+    }
+  ],
+  "F07-map-tree": [],
+  "F08-long-wildfire": [
+    {
+      "text": "British Columbia",
+      "font": "Roboto Condensed",
+      "size": 73,
+      "preferredSize": 73,
+      "available": 535.822,
+      "width": 485.8,
+      "tracking": 0,
+      "shrink": 1.0
+    },
+    {
+      "text": "Forests, Lands and Natural Resource Operations",
+      "font": "Roboto Condensed",
+      "size": 68,
+      "preferredSize": 68,
+      "available": 1425.173,
+      "width": 1309.602,
+      "tracking": 0,
+      "shrink": 1.0
+    },
+    {
+      "text": "WILDFIRE SERVICE",
+      "font": "Open Sans",
+      "size": 69,
+      "preferredSize": 69,
+      "available": 696.416,
+      "width": 644.154,
+      "tracking": 1,
+      "shrink": 1.0
+    }
+  ],
+  "F09-forest-parks": [
+    {
+      "text": "FOREST SERVICE",
+      "font": "Roboto",
+      "size": 85,
+      "preferredSize": 85,
+      "available": 836.218,
+      "width": 658.004,
+      "tracking": 0,
+      "shrink": 1.0
+    },
+    {
+      "text": "BRITISH COLUMBIA",
+      "font": "Roboto",
+      "size": 83,
+      "preferredSize": 83,
+      "available": 1053.903,
+      "width": 734.519,
+      "tracking": 0,
+      "shrink": 1.0
+    },
+    {
+      "text": "PARKS",
+      "font": "Roboto",
+      "size": 89,
+      "preferredSize": 89,
+      "available": 480,
+      "width": 283.738,
+      "tracking": 3,
+      "shrink": 1.0
+    }
+  ],
+  "F10-ministry-forests": [
+    {
+      "text": "British Columbia",
+      "font": "Roboto Condensed",
+      "size": 68,
+      "preferredSize": 68,
+      "available": 538.557,
+      "width": 452.526,
+      "tracking": 0,
+      "shrink": 1.0
+    },
+    {
+      "text": "Ministry of Forests",
+      "font": "Roboto Condensed",
+      "size": 68,
+      "preferredSize": 68,
+      "available": 655.623,
+      "width": 514.75,
+      "tracking": 0,
+      "shrink": 1.0
+    }
+  ]
+}

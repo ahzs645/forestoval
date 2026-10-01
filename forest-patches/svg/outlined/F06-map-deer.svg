@@ -1,0 +1,71 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 676 820" width="1000" height="1213.018">
+  <title>B.C. Forest Service — map and animal</title>
+  <desc>Reference-based reconstruction. Not an official master or an embroidery stitch file. The animal silhouette and stylized BC outline are schematic redraws from a blurred screenshot. Not suitable as a fidelity-approved master.</desc>
+  <metadata>{"preset": {"id": "F06-map-deer", "label": "B.C. Forest Service — map and animal", "family": "map-deer", "sourceIndices": [45], "group": "Forestry cloth", "status": "Experimental reconstruction", "note": "The animal silhouette and stylized BC outline are schematic redraws from a blurred screenshot. Not suitable as a fidelity-approved master.", "palette": {"ink": "#438464", "paper": "#174d36", "text": "#e3e0c9", "inner": "#231f20", "sky": "#6dc9ef", "mountain": "#0091c4", "water": "#478cca", "animal": "#185192", "distant": "#93d0aa", "earth": "#4b3216", "tree": "#172b21", "snow": "#ffffff", "map": "#91ac61", "mapEdge": "#674c25", "treeEdge": "#963e30", "deer": "#c1bca3"}, "issueDate": null, "viewBox": "0 0 676 820", "sourceCrop": "references/F06-map-deer-source.jpg", "sourceCropPixels": [423, 491]}, "textFit": [{"text": "B.C.", "font": "Roboto Condensed", "size": 62, "preferredSize": 62, "available": 500, "width": 106.32, "tracking": 0, "shrink": 1.0}, {"text": "FOREST SERVICE", "font": "Roboto Condensed", "size": 59, "preferredSize": 59, "available": 555, "width": 406.721, "tracking": 0, "shrink": 1.0}], "outlined": true, "fontFilesEmbedded": false}</metadata>
+  <defs/>
+  <g id="F06-map-deer-patch">
+    <rect x="25" y="25" width="626" height="770" rx="40" fill="#174d36" stroke="#438464" stroke-width="18" id="F06-map-deer-patch-base"/>
+    <g transform="translate(40 150) scale(.9)" id="F06-map-deer-map-emblem">
+      <path d="M 71 121 L 370 121 L 333 174 L 313 218 L 373 289 L 343 322 L 497 485 L 285 485 L 242 444 L 222 400 L 193 380 L 176 348 L 149 334 L 161 303 L 145 284 L 178 254 L 141 222 L 123 174 Z" fill="#91ac61" stroke="#674c25" stroke-width="13" stroke-linejoin="round" id="F06-map-deer-bc-map-main"/>
+      <path d="M 152 354 L 170 368 L 189 401 L 208 429 L 231 451 L 245 477 L 220 467 L 201 447 L 182 424 L 169 398 Z" fill="#91ac61" id="F06-map-deer-vancouver-island"/>
+      <path d="M 439 100 L 526 319 L 457 319 L 457 355 L 426 355 L 426 319 L 358 319 Z" fill="#172b21" stroke="#963e30" stroke-width="13" stroke-linejoin="round" id="F06-map-deer-triangle-tree"/>
+      <path d="M 213 327 Q 228 302 282 306 L 345 295 L 376 253 L 391 226 L 422 217 L 435 208 L 437 224 L 421 234 L 413 269 L 397 290 L 389 337 L 374 365 L 374 426 L 361 443 L 350 440 L 357 427 L 350 376 L 308 353 L 280 357 L 261 389 L 249 425 L 233 436 L 221 432 L 235 418 L 240 371 L 216 354 L 199 335 L 180 322 L 191 315 Z" fill="#c1bca3" id="F06-map-deer-ungulate-schematic"/>
+    </g>
+    <g id="F06-map-deer-lettering-1" data-label="B.C.">
+      <g transform="translate(302.24731 122.00000) rotate(0.00000) scale(0.03027344 -0.03027344) translate(-575.00800 0)">
+        <path d="M1054 429Q1054 216 941.5 108.5Q829 1 603 0H117V1456H567Q785 1456 908.5 1358.5Q1032 1261 1032 1057Q1032 958 988.5 875.0Q945 792 849 750Q961 718 1007.5 626.0Q1054 534 1054 429ZM412 1211V847H564Q737 847 737 1026Q737 1207 574 1211ZM760 432Q760 628 621 634H412V244H599Q685 244 722.5 297.5Q760 351 760 432Z" fill="#e3e0c9"/>
+      </g>
+      <g transform="translate(328.69128 122.00000) rotate(0.00000) scale(0.03027344 -0.03027344) translate(-298.49600 0)">
+        <path d="M126 144Q126 211 170.5 255.5Q215 300 291 300Q366 300 410.5 255.5Q455 211 455 144Q455 78 410.5 33.5Q366 -11 291 -11Q215 -11 170.5 33.5Q126 78 126 144Z" fill="#e3e0c9"/>
+      </g>
+      <g transform="translate(355.40747 122.00000) rotate(0.00000) scale(0.03027344 -0.03027344) translate(-584.00000 0)">
+        <path d="M810 486H1104Q1094 238 964.0 109.0Q834 -20 600 -20Q360 -20 227.0 137.0Q94 294 91 590V851Q91 1156 228.5 1316.5Q366 1477 604.0 1477.0Q842 1477 966.0 1343.5Q1090 1210 1106 962H812Q807 1118 763.0 1175.5Q719 1233 604 1233Q491 1233 439.0 1152.0Q387 1071 385 869V604Q385 398 430.0 311.0Q475 224 600 224Q709 224 757.0 276.0Q805 328 810 486Z" fill="#e3e0c9"/>
+      </g>
+      <g transform="translate(382.12366 122.00000) rotate(0.00000) scale(0.03027344 -0.03027344) translate(-298.49600 0)">
+        <path d="M126 144Q126 211 170.5 255.5Q215 300 291 300Q366 300 410.5 255.5Q455 211 455 144Q455 78 410.5 33.5Q366 -11 291 -11Q215 -11 170.5 33.5Q126 78 126 144Z" fill="#e3e0c9"/>
+      </g>
+    </g>
+    <g id="F06-map-deer-lettering-2" data-label="FOREST SERVICE">
+      <g transform="translate(148.68375 738.00000) rotate(0.00000) scale(0.02880859 -0.02880859) translate(-487.50400 0)">
+        <path d="M117 0V1456H923V1211H412V838H868V594H412V0Z" fill="#e3e0c9"/>
+      </g>
+      <g transform="translate(180.53177 738.00000) rotate(0.00000) scale(0.02880859 -0.02880859) translate(-618.00000 0)">
+        <path d="M1142 598Q1142 290 998.0 135.0Q854 -20 619 -20Q385 -20 239.0 135.0Q93 290 93 598V840Q93 1155 238.0 1315.5Q383 1476 617 1476Q852 1476 997.0 1315.5Q1142 1155 1142 840ZM848 842Q848 1050 789.0 1140.0Q730 1230 617 1230Q505 1230 446.5 1141.5Q388 1053 387 850V598Q387 400 446.5 312.5Q506 225 619 225Q731 225 789.0 311.0Q847 397 848 591Z" fill="#e3e0c9"/>
+      </g>
+      <g transform="translate(214.67018 738.00000) rotate(0.00000) scale(0.02880859 -0.02880859) translate(-567.00800 0)">
+        <path d="M778 0 559 532H413V0H118V1456H587Q805 1456 927.0 1343.5Q1049 1231 1049 1016Q1049 858 993.0 761.0Q937 664 838 611L1094 14V0ZM413 1211V777H579Q667 777 711.0 835.5Q755 894 755 992Q755 1207 593 1211Z" fill="#e3e0c9"/>
+      </g>
+      <g transform="translate(245.48109 738.00000) rotate(0.00000) scale(0.02880859 -0.02880859) translate(-502.49600 0)">
+        <path d="M117 0V1456H951V1211H412V867H869V630H412V244H953V0Z" fill="#e3e0c9"/>
+      </g>
+      <g transform="translate(275.88867 738.00000) rotate(0.00000) scale(0.02880859 -0.02880859) translate(-553.00800 0)">
+        <path d="M733 383Q733 458 696.5 506.5Q660 555 505.0 618.0Q350 681 234 778Q111 881 111 1069Q111 1253 240.0 1364.5Q369 1476 572 1476Q781 1476 905.5 1350.0Q1030 1224 1030 1027H736Q736 1118 696.5 1177.0Q657 1236 567 1236Q484 1236 444.5 1187.0Q405 1138 405 1068Q405 997 464.5 949.0Q524 901 622 858Q826 785 927.0 675.0Q1028 565 1028 385Q1028 193 907.0 86.5Q786 -20 578 -20Q453 -20 337.5 31.0Q222 82 148.0 188.0Q74 294 74 460H369Q369 328 421.5 274.0Q474 220 578 220Q663 220 698.0 266.5Q733 313 733 383Z" fill="#e3e0c9"/>
+      </g>
+      <g transform="translate(307.85192 738.00000) rotate(0.00000) scale(0.02880859 -0.02880859) translate(-556.49600 0)">
+        <path d="M52 1211V1456H1061V1211H700V0H406V1211Z" fill="#e3e0c9"/>
+      </g>
+      <g transform="translate(351.68431 738.00000) rotate(0.00000) scale(0.02880859 -0.02880859) translate(-553.00800 0)">
+        <path d="M733 383Q733 458 696.5 506.5Q660 555 505.0 618.0Q350 681 234 778Q111 881 111 1069Q111 1253 240.0 1364.5Q369 1476 572 1476Q781 1476 905.5 1350.0Q1030 1224 1030 1027H736Q736 1118 696.5 1177.0Q657 1236 567 1236Q484 1236 444.5 1187.0Q405 1138 405 1068Q405 997 464.5 949.0Q524 901 622 858Q826 785 927.0 675.0Q1028 565 1028 385Q1028 193 907.0 86.5Q786 -20 578 -20Q453 -20 337.5 31.0Q222 82 148.0 188.0Q74 294 74 460H369Q369 328 421.5 274.0Q474 220 578 220Q663 220 698.0 266.5Q733 313 733 383Z" fill="#e3e0c9"/>
+      </g>
+      <g transform="translate(382.09190 738.00000) rotate(0.00000) scale(0.02880859 -0.02880859) translate(-502.49600 0)">
+        <path d="M117 0V1456H951V1211H412V867H869V630H412V244H953V0Z" fill="#e3e0c9"/>
+      </g>
+      <g transform="translate(412.90280 738.00000) rotate(0.00000) scale(0.02880859 -0.02880859) translate(-567.00800 0)">
+        <path d="M778 0 559 532H413V0H118V1456H587Q805 1456 927.0 1343.5Q1049 1231 1049 1016Q1049 858 993.0 761.0Q937 664 838 611L1094 14V0ZM413 1211V777H579Q667 777 711.0 835.5Q755 894 755 992Q755 1207 593 1211Z" fill="#e3e0c9"/>
+      </g>
+      <g transform="translate(446.01840 738.00000) rotate(0.00000) scale(0.02880859 -0.02880859) translate(-582.49600 0)">
+        <path d="M1164 1456 744 0H439L21 1456H347L591 400L836 1456Z" fill="#e3e0c9"/>
+      </g>
+      <g transform="translate(470.77950 738.00000) rotate(0.00000) scale(0.02880859 -0.02880859) translate(-277.00800 0)">
+        <path d="M424 1456V0H130V1456Z" fill="#e3e0c9"/>
+      </g>
+      <g transform="translate(495.58393 738.00000) rotate(0.00000) scale(0.02880859 -0.02880859) translate(-584.00000 0)">
+        <path d="M810 486H1104Q1094 238 964.0 109.0Q834 -20 600 -20Q360 -20 227.0 137.0Q94 294 91 590V851Q91 1156 228.5 1316.5Q366 1477 604.0 1477.0Q842 1477 966.0 1343.5Q1090 1210 1106 962H812Q807 1118 763.0 1175.5Q719 1233 604 1233Q491 1233 439.0 1152.0Q387 1071 385 869V604Q385 398 430.0 311.0Q475 224 600 224Q709 224 757.0 276.0Q805 328 810 486Z" fill="#e3e0c9"/>
+      </g>
+      <g transform="translate(526.88435 738.00000) rotate(0.00000) scale(0.02880859 -0.02880859) translate(-502.49600 0)">
+        <path d="M117 0V1456H951V1211H412V867H869V630H412V244H953V0Z" fill="#e3e0c9"/>
+      </g>
+    </g>
+  </g>
+</svg>

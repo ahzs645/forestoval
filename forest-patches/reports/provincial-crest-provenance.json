@@ -1,0 +1,10 @@
+{
+  "source": "Supplementary user Drive artwork, outside surveyed folder",
+  "name": "COAT OF ARM.svg",
+  "driveId": "14G3ctnodz5QOB7r6uO-lodvIrOYXnWm_",
+  "sha256": "72d05dff2385544d38097c5e79bda8e561374c7642b1268def724ee0aff1fc60",
+  "selection": "top-level frame index 187 and drawing group index 188; normalized; vector motto replacement",
+  "repositoryInterface": "ahzs645/PofBC src/assets/markup.js exports PROVINCIAL_MARK",
+  "repositoryBlobRead": "c1a9ba689f731986308c1d37697f65fd2f237913",
+  "matchStatus": "Compatible source family; NOT claimed byte-identical to PofBC normalized markup. Import tool can replace with exact local repository asset."
+}

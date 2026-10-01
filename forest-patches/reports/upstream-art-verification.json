@@ -1,0 +1,63 @@
+{
+  "repository": "ahzs645/forestoval",
+  "commit": "244276dcf0b55e14b694b5cee569c78a978cc734",
+  "manifest": "bc-ministry-primitives-v5/data/art-sha256.json",
+  "recovered_from": "bc-ministry-primitives-v5.html, user Library",
+  "checks": {
+    "wildlifeScene": {
+      "expected": "925871ab6f392f8400b1a4d487101541e7788c9e3705da14321bc930fa22e25d",
+      "actual": "925871ab6f392f8400b1a4d487101541e7788c9e3705da14321bc930fa22e25d",
+      "match": true
+    },
+    "wildlifeClip": {
+      "expected": "3661effe9141a0a6cf0da894e8ba9818ad18e521c2f92e6b2f5c269e11a9dc42",
+      "actual": "3661effe9141a0a6cf0da894e8ba9818ad18e521c2f92e6b2f5c269e11a9dc42",
+      "match": true
+    },
+    "wildlifeFrame": {
+      "expected": "1053b70c51484d29137389ef4741a8949135ca4aa066fa444778eb75971781c0",
+      "actual": "1053b70c51484d29137389ef4741a8949135ca4aa066fa444778eb75971781c0",
+      "match": true
+    },
+    "sourceRibbon": {
+      "expected": "187af81c55a1c0450a01af510599e156c8367c6e5d5b889e35fcdfc25237f129",
+      "actual": "187af81c55a1c0450a01af510599e156c8367c6e5d5b889e35fcdfc25237f129",
+      "match": true
+    },
+    "treeScene": {
+      "expected": "c95a254aad93c9dd5f21a6116ba525b0d908d2aeebeeab9faa884c7d0c1bb375",
+      "actual": "c95a254aad93c9dd5f21a6116ba525b0d908d2aeebeeab9faa884c7d0c1bb375",
+      "match": true
+    },
+    "treeTransform": {
+      "expected": "ae6eb3e4cc348a2264693e7f1b3b516df8e5daaa3ac93b68311b78a240ead630",
+      "actual": "ae6eb3e4cc348a2264693e7f1b3b516df8e5daaa3ac93b68311b78a240ead630",
+      "match": true
+    },
+    "treeMono": {
+      "expected": "6fce32984eda28b164d702b10796834878af46071a9f89f27b45bce2161edc85",
+      "actual": "6fce32984eda28b164d702b10796834878af46071a9f89f27b45bce2161edc85",
+      "match": true
+    },
+    "treeMonoTransform": {
+      "expected": "cadc7322279e6c01ef8c13851ec45830bc15e867cda738521953176fccd1d310",
+      "actual": "cadc7322279e6c01ef8c13851ec45830bc15e867cda738521953176fccd1d310",
+      "match": true
+    },
+    "treeSourceTransform": {
+      "expected": "ff91b898256a7128fdf2745a843e6d9f16ffbe7f71a71c5a29e9b93b9a6cafbe",
+      "actual": "ff91b898256a7128fdf2745a843e6d9f16ffbe7f71a71c5a29e9b93b9a6cafbe",
+      "match": true
+    },
+    "treeFrame": {
+      "expected": "0e32cb7d198bd94c911d22c2a548117ee39965924adb2da0c66059f946c45cff",
+      "actual": "0e32cb7d198bd94c911d22c2a548117ee39965924adb2da0c66059f946c45cff",
+      "match": true
+    },
+    "treeInner": {
+      "expected": "7b6375ed8b46e70242268af14d8993f19b2994a3ad34b3f082212aa625f925d1",
+      "actual": "7b6375ed8b46e70242268af14d8993f19b2994a3ad34b3f082212aa625f925d1",
+      "match": true
+    }
+  }
+}

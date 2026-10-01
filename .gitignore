@@ -1,4 +1,4 @@
-# Only the three source folders are tracked; the loose review exports and zips
+# Only the source folders are tracked; the loose review exports and zips
 # at the top level stay local.
 /*
 !/.gitignore
@@ -8,6 +8,7 @@
 !/shared-primitives/
 !/bc-ministry-primitives-v5/
 !/airtanker-operations/
+!/forest-patches/
 
 node_modules/
 dist/

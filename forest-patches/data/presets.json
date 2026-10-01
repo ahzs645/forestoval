@@ -1,0 +1,389 @@
+[
+  {
+    "id": "F01-tree-light",
+    "label": "Forest Service \u2014 light lettering band",
+    "family": "tree",
+    "sourceIndices": [
+      46
+    ],
+    "group": "Forestry cloth",
+    "status": "Reconstruction draft",
+    "note": "Shared tree geometry reused. Letterform proportions and the photographed mountain/ground treatment still need specimen-specific calibration.",
+    "palette": {
+      "ink": "#231f20",
+      "paper": "#ffffff",
+      "text": "#231f20",
+      "inner": "#231f20",
+      "sky": "#6dc9ef",
+      "mountain": "#0091c4",
+      "water": "#478cca",
+      "animal": "#185192",
+      "distant": "#93d0aa",
+      "earth": "#4b3216",
+      "tree": "#008450",
+      "snow": "#ffffff"
+    },
+    "issueDate": null,
+    "upper": "FOREST SERVICE",
+    "lower": "BRITISH COLUMBIA",
+    "sourceCrop": "references/F01-tree-light-source.jpg",
+    "sourceCropPixels": [
+      386,
+      643
+    ],
+    "lettering": {
+      "upperSize": 86,
+      "lowerSize": 76
+    },
+    "separators": "none"
+  },
+  {
+    "id": "F02-tree-green",
+    "label": "Forest Service \u2014 green and gold oval",
+    "family": "tree",
+    "sourceIndices": [
+      47
+    ],
+    "group": "Forestry cloth",
+    "status": "Reconstruction draft",
+    "note": "Low-resolution screenshot; colours are visual estimates. This is not an authenticated thread palette.",
+    "palette": {
+      "ink": "#dfd5b5",
+      "paper": "#133d32",
+      "text": "#d9bd67",
+      "inner": "#cfbe75",
+      "sky": "#a8c4cf",
+      "mountain": "#cad8d6",
+      "water": "#478cca",
+      "animal": "#185192",
+      "distant": "#a6b97c",
+      "earth": "#708758",
+      "tree": "#467b4b",
+      "snow": "#ffffff"
+    },
+    "issueDate": null,
+    "upper": "FOREST SERVICE",
+    "lower": "BRITISH COLUMBIA",
+    "separators": "none",
+    "sourceCrop": "references/F02-tree-green-source.jpg",
+    "sourceCropPixels": [
+      346,
+      528
+    ],
+    "lettering": {
+      "upperSize": 84,
+      "lowerSize": 76
+    }
+  },
+  {
+    "id": "F03-tree-decal",
+    "label": "Forest Service \u2014 green decal reference",
+    "family": "tree",
+    "sourceIndices": [
+      35
+    ],
+    "group": "Non-patch emblem",
+    "status": "Reconstruction draft",
+    "note": "A decal, not evidence of a cloth patch. Historic tree/mountain linework differs from the shared contemporary scene.",
+    "palette": {
+      "ink": "#dbdeca",
+      "paper": "#133d32",
+      "text": "#b5b161",
+      "inner": "#aca95e",
+      "sky": "#87c6e4",
+      "mountain": "#cfddcb",
+      "water": "#478cca",
+      "animal": "#185192",
+      "distant": "#a6b97c",
+      "earth": "#a4ac6a",
+      "tree": "#467b4b",
+      "snow": "#ffffff"
+    },
+    "issueDate": null,
+    "upper": "FOREST SERVICE",
+    "lower": "BRITISH COLUMBIA",
+    "separators": "none",
+    "sourceCrop": "references/F03-tree-decal-source.jpg",
+    "sourceCropPixels": [
+      1080,
+      1080
+    ],
+    "lettering": {
+      "upperSize": 84,
+      "lowerSize": 76
+    }
+  },
+  {
+    "id": "F04-shoulder",
+    "label": "Forest Service \u2014 shoulder rocker",
+    "family": "shoulder",
+    "sourceIndices": [
+      44,
+      56
+    ],
+    "group": "Forestry cloth",
+    "status": "Experimental reconstruction",
+    "note": "FOREST and SERVICE occupy the side arms; BRITISH/COLUMBIA belongs on the small central oval. Do not map this to Airtanker wings.",
+    "palette": {
+      "ink": "#d1b967",
+      "paper": "#133d32",
+      "text": "#d9bd67",
+      "inner": "#cfbe75",
+      "sky": "#a8c4cf",
+      "mountain": "#cad8d6",
+      "water": "#478cca",
+      "animal": "#185192",
+      "distant": "#a6b97c",
+      "earth": "#708758",
+      "tree": "#467b4b",
+      "snow": "#ffffff"
+    },
+    "issueDate": null,
+    "viewBox": "15 215 646 320",
+    "sourceCrop": "references/F04-shoulder-source.jpg",
+    "sourceCropPixels": [
+      399,
+      164
+    ]
+  },
+  {
+    "id": "F05-fire-control",
+    "label": "Forest Service \u2014 shield + Fire Control tab",
+    "family": "shield",
+    "sourceIndices": [
+      49
+    ],
+    "group": "Forestry cloth",
+    "status": "Reconstruction draft",
+    "note": "Different silhouette and identity from the oval. The central crest uses the supplementary editable provincial source; the PofBC import hook replaces it with the exact repository asset.",
+    "palette": {
+      "ink": "#e4dfd1",
+      "paper": "#171a18",
+      "text": "#e4dfd1",
+      "inner": "#231f20",
+      "sky": "#6dc9ef",
+      "mountain": "#0091c4",
+      "water": "#478cca",
+      "animal": "#185192",
+      "distant": "#93d0aa",
+      "earth": "#4b3216",
+      "tree": "#008450",
+      "snow": "#ffffff"
+    },
+    "issueDate": null,
+    "viewBox": "25 38 626 814",
+    "sourceCrop": "references/F05-fire-control-source.jpg",
+    "sourceCropPixels": [
+      392,
+      473
+    ]
+  },
+  {
+    "id": "F06-map-deer",
+    "label": "B.C. Forest Service \u2014 map and animal",
+    "family": "map-deer",
+    "sourceIndices": [
+      45
+    ],
+    "group": "Forestry cloth",
+    "status": "Experimental reconstruction",
+    "note": "The animal silhouette and stylized BC outline are schematic redraws from a blurred screenshot. Not suitable as a fidelity-approved master.",
+    "palette": {
+      "ink": "#438464",
+      "paper": "#174d36",
+      "text": "#e3e0c9",
+      "inner": "#231f20",
+      "sky": "#6dc9ef",
+      "mountain": "#0091c4",
+      "water": "#478cca",
+      "animal": "#185192",
+      "distant": "#93d0aa",
+      "earth": "#4b3216",
+      "tree": "#172b21",
+      "snow": "#ffffff",
+      "map": "#91ac61",
+      "mapEdge": "#674c25",
+      "treeEdge": "#963e30",
+      "deer": "#c1bca3"
+    },
+    "issueDate": null,
+    "viewBox": "0 0 676 820",
+    "sourceCrop": "references/F06-map-deer-source.jpg",
+    "sourceCropPixels": [
+      423,
+      491
+    ]
+  },
+  {
+    "id": "F07-map-tree",
+    "label": "Map-and-tree square \u2014 affiliation unconfirmed",
+    "family": "map-tree",
+    "sourceIndices": [
+      48
+    ],
+    "group": "Unconfirmed affiliation",
+    "status": "Experimental reconstruction",
+    "note": "The screenshot has no identifying wording. Its association with this collection is not proof of ministry ownership, issue date or official use.",
+    "palette": {
+      "ink": "#48804b",
+      "paper": "#e8dfb6",
+      "text": "#231f20",
+      "inner": "#231f20",
+      "sky": "#6dc9ef",
+      "mountain": "#0091c4",
+      "water": "#478cca",
+      "animal": "#185192",
+      "distant": "#93d0aa",
+      "earth": "#4b3216",
+      "tree": "#252a1e",
+      "snow": "#ffffff",
+      "map": "#4ca479"
+    },
+    "issueDate": null,
+    "viewBox": "0 0 676 676",
+    "sourceCrop": "references/F07-map-tree-source.jpg",
+    "sourceCropPixels": [
+      354,
+      314
+    ]
+  },
+  {
+    "id": "F08-long-wildfire",
+    "label": "Forests, Lands and Natural Resource Operations / Wildfire Service",
+    "family": "wildlife",
+    "sourceIndices": [
+      43
+    ],
+    "group": "Forestry cloth",
+    "status": "Reconstruction draft",
+    "note": "Wording is legible in the cloth photograph. Shared wildlife vectors retained; embroidery, precise band width and mixed-case letterforms are not manufacturing-calibrated.",
+    "palette": {
+      "ink": "#231f20",
+      "paper": "#ffffff",
+      "text": "#15864a",
+      "inner": "#231f20",
+      "sky": "#70c6ea",
+      "mountain": "#0091c4",
+      "water": "#478cca",
+      "animal": "#185192",
+      "distant": "#93d0aa",
+      "earth": "#604b3d",
+      "tree": "#15864a",
+      "snow": "#ffffff"
+    },
+    "issueDate": null,
+    "upper": "British Columbia",
+    "lower": "Forests, Lands and Natural Resource Operations",
+    "tab": "WILDFIRE SERVICE",
+    "viewBox": "-24 -10 726 962",
+    "lettering": {
+      "upperSpan": 116,
+      "upperRx": 249,
+      "upperRy": 334,
+      "upperSize": 73,
+      "lowerSpan": 240,
+      "lowerRx": 290,
+      "lowerRy": 379,
+      "lowerSize": 68,
+      "lowerFont": "condensed",
+      "separatorY": 215,
+      "separatorRadius": 9
+    },
+    "sourceCrop": "references/F08-long-wildfire-source.jpg",
+    "sourceCropPixels": [
+      540,
+      770
+    ]
+  },
+  {
+    "id": "F09-forest-parks",
+    "label": "Forest Service \u2014 Parks lower plate",
+    "family": "parks",
+    "sourceIndices": [
+      26
+    ],
+    "group": "Related Parks cloth",
+    "status": "Reconstruction draft",
+    "note": "Forestry/Parks transition-style composition, kept separate from direct Ministry of Forests items. Plate, pale border and thin lettering need individual specimen fitting.",
+    "palette": {
+      "ink": "#ece6cd",
+      "paper": "#133d32",
+      "text": "#caba62",
+      "inner": "#ded6a9",
+      "sky": "#a8c4cf",
+      "mountain": "#cad8d6",
+      "water": "#478cca",
+      "animal": "#185192",
+      "distant": "#a6b97c",
+      "earth": "#708758",
+      "tree": "#3a7741",
+      "snow": "#ffffff"
+    },
+    "issueDate": null,
+    "upper": "FOREST SERVICE",
+    "lower": "BRITISH COLUMBIA",
+    "separators": "none",
+    "viewBox": "-10 -10 696 946",
+    "lettering": {
+      "upperFont": "thin",
+      "upperSize": 85,
+      "lowerFont": "thin",
+      "lowerSize": 83,
+      "upperSpan": 172,
+      "lowerSpan": 183
+    },
+    "sourceCrop": "references/F09-forest-parks-source.jpg",
+    "sourceCropPixels": [
+      1080,
+      1080
+    ]
+  },
+  {
+    "id": "F10-ministry-forests",
+    "label": "British Columbia / Ministry of Forests",
+    "family": "wildlife",
+    "sourceIndices": [],
+    "group": "Non-patch emblem",
+    "status": "Reconstruction draft",
+    "note": "Clean crest artwork from physical page 75 of the 107-page FOI PDF, not a photographed cloth patch. Mixed-case wording is preserved; issue period is not inferred from the FOI filename.",
+    "palette": {
+      "ink": "#231f20",
+      "paper": "#ffffff",
+      "text": "#15864a",
+      "inner": "#231f20",
+      "sky": "#70c6ea",
+      "mountain": "#0091c4",
+      "water": "#478cca",
+      "animal": "#185192",
+      "distant": "#93d0aa",
+      "earth": "#604b3d",
+      "tree": "#15864a",
+      "snow": "#ffffff"
+    },
+    "issueDate": null,
+    "upper": "British Columbia",
+    "lower": "Ministry of Forests",
+    "pdfSource": {
+      "sourceId": "S58",
+      "page": 75
+    },
+    "lettering": {
+      "upperSpan": 118,
+      "upperRx": 244,
+      "upperRy": 332,
+      "upperSize": 68,
+      "lowerSpan": 122,
+      "lowerRx": 288,
+      "lowerRy": 379,
+      "lowerSize": 68,
+      "lowerFont": "condensed",
+      "separatorY": 171,
+      "separatorRadius": 8
+    },
+    "sourceCrop": "references/F10-ministry-forests-source.jpg",
+    "sourceCropPixels": [
+      2260,
+      2846
+    ]
+  }
+]

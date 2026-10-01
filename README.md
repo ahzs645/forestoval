@@ -14,6 +14,11 @@ The v5 studio is at https://projects.ahmadjalil.com/forestoval/studio/.
 - `bc-ministry-primitives-v5/`: the v5 studio the pieces are cut from; the site
   takes its lettering from `examples/`. `python build.py` builds the standalone page.
 - `airtanker-operations/`: the Airtanker Operations badge package.
+- `forest-patches/`: the Forest Service patch survey and reconstruction kit:
+  ten reference-based patch drafts (outlined and editable SVGs), the 59-file
+  source inventory, and an offline catalogue (`index.html`). See
+  [`forest-patches/README.md`](forest-patches/README.md) and
+  [`forest-patches/integration/README.md`](forest-patches/integration/README.md).
 
 ## Run locally
 

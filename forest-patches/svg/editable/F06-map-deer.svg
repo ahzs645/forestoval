@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 676 820" width="1000" height="1213.018">
+  <title>B.C. Forest Service — map and animal</title>
+  <desc>Reference-based reconstruction. Not an official master or an embroidery stitch file. The animal silhouette and stylized BC outline are schematic redraws from a blurred screenshot. Not suitable as a fidelity-approved master.</desc>
+  <metadata>{"preset": {"id": "F06-map-deer", "label": "B.C. Forest Service — map and animal", "family": "map-deer", "sourceIndices": [45], "group": "Forestry cloth", "status": "Experimental reconstruction", "note": "The animal silhouette and stylized BC outline are schematic redraws from a blurred screenshot. Not suitable as a fidelity-approved master.", "palette": {"ink": "#438464", "paper": "#174d36", "text": "#e3e0c9", "inner": "#231f20", "sky": "#6dc9ef", "mountain": "#0091c4", "water": "#478cca", "animal": "#185192", "distant": "#93d0aa", "earth": "#4b3216", "tree": "#172b21", "snow": "#ffffff", "map": "#91ac61", "mapEdge": "#674c25", "treeEdge": "#963e30", "deer": "#c1bca3"}, "issueDate": null, "viewBox": "0 0 676 820", "sourceCrop": "references/F06-map-deer-source.jpg", "sourceCropPixels": [423, 491]}, "textFit": [{"text": "B.C.", "font": "Roboto Condensed", "size": 62, "preferredSize": 62, "available": 500, "width": 106.32, "tracking": 0, "shrink": 1.0}, {"text": "FOREST SERVICE", "font": "Roboto Condensed", "size": 59, "preferredSize": 59, "available": 555, "width": 406.721, "tracking": 0, "shrink": 1.0}], "outlined": false, "fontFilesEmbedded": false}</metadata>
+  <defs/>
+  <g id="F06-map-deer-patch">
+    <rect x="25" y="25" width="626" height="770" rx="40" fill="#174d36" stroke="#438464" stroke-width="18" id="F06-map-deer-patch-base"/>
+    <g transform="translate(40 150) scale(.9)" id="F06-map-deer-map-emblem">
+      <path d="M 71 121 L 370 121 L 333 174 L 313 218 L 373 289 L 343 322 L 497 485 L 285 485 L 242 444 L 222 400 L 193 380 L 176 348 L 149 334 L 161 303 L 145 284 L 178 254 L 141 222 L 123 174 Z" fill="#91ac61" stroke="#674c25" stroke-width="13" stroke-linejoin="round" id="F06-map-deer-bc-map-main"/>
+      <path d="M 152 354 L 170 368 L 189 401 L 208 429 L 231 451 L 245 477 L 220 467 L 201 447 L 182 424 L 169 398 Z" fill="#91ac61" id="F06-map-deer-vancouver-island"/>
+      <path d="M 439 100 L 526 319 L 457 319 L 457 355 L 426 355 L 426 319 L 358 319 Z" fill="#172b21" stroke="#963e30" stroke-width="13" stroke-linejoin="round" id="F06-map-deer-triangle-tree"/>
+      <path d="M 213 327 Q 228 302 282 306 L 345 295 L 376 253 L 391 226 L 422 217 L 435 208 L 437 224 L 421 234 L 413 269 L 397 290 L 389 337 L 374 365 L 374 426 L 361 443 L 350 440 L 357 427 L 350 376 L 308 353 L 280 357 L 261 389 L 249 425 L 233 436 L 221 432 L 235 418 L 240 371 L 216 354 L 199 335 L 180 322 L 191 315 Z" fill="#c1bca3" id="F06-map-deer-ungulate-schematic"/>
+    </g>
+    <g id="F06-map-deer-lettering-1" data-label="B.C.">
+      <text fill="#e3e0c9" font-family="Roboto Condensed" font-weight="700" font-size="62.00000" letter-spacing="0" text-anchor="middle" data-preferred-size="62" data-available="500" data-font-key="condensed" x="338" y="122">B.C.</text>
+    </g>
+    <g id="F06-map-deer-lettering-2" data-label="FOREST SERVICE">
+      <text fill="#e3e0c9" font-family="Roboto Condensed" font-weight="700" font-size="59.00000" letter-spacing="0" text-anchor="middle" data-preferred-size="59" data-available="555" data-font-key="condensed" x="338" y="738">FOREST SERVICE</text>
+    </g>
+  </g>
+</svg>

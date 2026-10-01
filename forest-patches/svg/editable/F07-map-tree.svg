@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 676 676" width="1000" height="1000.0">
+  <title>Map-and-tree square — affiliation unconfirmed</title>
+  <desc>Reference-based reconstruction. Not an official master or an embroidery stitch file. The screenshot has no identifying wording. Its association with this collection is not proof of ministry ownership, issue date or official use.</desc>
+  <metadata>{"preset": {"id": "F07-map-tree", "label": "Map-and-tree square — affiliation unconfirmed", "family": "map-tree", "sourceIndices": [48], "group": "Unconfirmed affiliation", "status": "Experimental reconstruction", "note": "The screenshot has no identifying wording. Its association with this collection is not proof of ministry ownership, issue date or official use.", "palette": {"ink": "#48804b", "paper": "#e8dfb6", "text": "#231f20", "inner": "#231f20", "sky": "#6dc9ef", "mountain": "#0091c4", "water": "#478cca", "animal": "#185192", "distant": "#93d0aa", "earth": "#4b3216", "tree": "#252a1e", "snow": "#ffffff", "map": "#4ca479"}, "issueDate": null, "viewBox": "0 0 676 676", "sourceCrop": "references/F07-map-tree-source.jpg", "sourceCropPixels": [354, 314]}, "textFit": [], "outlined": false, "fontFilesEmbedded": false}</metadata>
+  <defs/>
+  <g id="F07-map-tree-patch">
+    <rect x="25" y="25" width="626" height="626" rx="9" fill="#e8dfb6" stroke="#48804b" stroke-width="18" id="F07-map-tree-patch-base"/>
+    <g transform="translate(39 45) scale(.9)" id="F07-map-tree-map-emblem">
+      <path d="M 71 121 L 370 121 L 333 174 L 313 218 L 373 289 L 343 322 L 497 485 L 285 485 L 242 444 L 222 400 L 193 380 L 176 348 L 149 334 L 161 303 L 145 284 L 178 254 L 141 222 L 123 174 Z" fill="#4ca479" stroke="none" stroke-width="13" stroke-linejoin="round" id="F07-map-tree-bc-map-main"/>
+      <path d="M 152 354 L 170 368 L 189 401 L 208 429 L 231 451 L 245 477 L 220 467 L 201 447 L 182 424 L 169 398 Z" fill="#4ca479" id="F07-map-tree-vancouver-island"/>
+      <path d="M 439 100 L 526 319 L 457 319 L 457 355 L 426 355 L 426 319 L 358 319 Z" fill="#252a1e" stroke="none" stroke-width="13" stroke-linejoin="round" id="F07-map-tree-triangle-tree"/>
+    </g>
+  </g>
+</svg>

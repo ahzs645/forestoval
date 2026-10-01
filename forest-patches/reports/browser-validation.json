@@ -1,0 +1,19 @@
+{
+  "browser": "headless Chromium, page.set_content; local-file navigation is restricted in this environment",
+  "desktopViewport": [
+    1440,
+    1000
+  ],
+  "mobileViewport": [
+    390,
+    844
+  ],
+  "designCards": 10,
+  "sourceCards": 59,
+  "categorySearch": true,
+  "liveEditor": true,
+  "customSVGSerialization": true,
+  "downloadClickNotTested": true,
+  "horizontalOverflow": false,
+  "pageErrors": []
+}
