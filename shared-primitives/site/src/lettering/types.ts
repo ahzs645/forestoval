@@ -12,6 +12,7 @@ export interface Configuration {
   tabBacking: string;
   separatorPlacement: string;
   fanOut: boolean;
+  centreInRing: boolean;
   autoProfile: boolean;
   referenceModelVersion?: number;
   outputWidth: number;

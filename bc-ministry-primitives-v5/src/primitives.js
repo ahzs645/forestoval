@@ -162,8 +162,12 @@ const CRESTS={
 // ../shared-primitives reads these tables too, so both draw the same pieces.
 // Separators sit on the ellipse separatorBand (about the crest centre): at their
 // crest's separatorY, or between the lettering's ends (engine separatorLayout).
+// rings: the white lettering ring of each scene's frame, as [rx, ry] of its
+// inner and outer edges about the centre: the wildlife frame's own ellipses, and
+// a fit to the rendered tree frame (within 0.4 units outside, 2.2 inside).
 const SHAPES={
  centre:[338.36631,420.96480],
+ rings:{wildlife:{inner:[222.52573,313.12995],outer:[310.34551,398.06377]},tree:{inner:[222.83,313.41],outer:[310.74,398.52]}},
  separatorBand:{rx:266,ry:369},
  plate:{x:20,y:805,width:637,height:130,rx:3,strokeWidth:16},
  wings:{outline:'M 106 350 L -297 350 Q -340 350 -326 383 Q -318 408 -270 410 Q -297 440 -241 448 Q -262 478 -205 482 Q -215 511 -149 516 L 112 516 L 160 438 Z',rules:[[-279,402],[-249,440],[-212,478]],ruleEnd:106,fill:'#e4c681',stroke:'#172747',strokeWidth:12,ruleWidth:5,

@@ -44,6 +44,9 @@ def main():
    return {'placement':g.get_attribute('data-separator-placement'),'y':float(g.get_attribute('data-separator-y'))}
   def gaps():return root.locator('[data-part="canvas"] [data-layer="separators"] circle').evaluate_all('(cs)=>cs.map(c=>[+c.getAttribute("data-clearance-upper"),+c.getAttribute("data-clearance-lower")])')
   def upper_size():return float(text('upper').get_attribute('font-size'))
+  def resolved(slot):
+   meta=json.loads(root.locator('[data-part="canvas"] svg metadata').text_content())
+   return next(r for r in meta['resolved'] if r.get('slot')==slot)
   def dot_x():return root.locator('[data-part="canvas"] [data-layer="separators"] circle').evaluate_all('(cs)=>cs.map(c=>+c.getAttribute("cx"))')
   def reset():root.get_by_role('button',name='Reset this preset',exact=True).click();wait()
   def click_character(key,index=0):
@@ -146,6 +149,14 @@ def main():
   spread=root.get_by_label('Spread the upper line when there is room',exact=True)
   wide=upper_size();home=dots()['y'];spread.uncheck();wait();narrow=upper_size();spread.check();wait()
   record('With room, the long crest spreads its upper line and keeps the dots at the sides',wide>narrow*1.1 and abs(home-446)<.01,{'spread':wide,'compact':narrow,'dots':home})
+  # The screenshot case: a mixed-case ministry line climbing the sides of the capitals crest.
+  reset();pick('forests-wildfire');field('upper').fill('British Columbia');field('lower').fill('Forests, Lands and Mines');wait()
+  low=resolved('wildlife-lower');body=low['cap']*low['bodyRatio']
+  ring_ok=crest()=='wildlife-caps' and abs(low['curve']['rx']-body/2-266.43562)<.01 and abs(low['curve']['ry']-body/2-355.59686)<.01 and low['bodyRatio']<1
+  record('Lines are centred in the white ring on their x-height (mixed case) all the way round',ring_ok,low)
+  ring=root.get_by_label('Centre each line in the white ring',exact=True);ring.uncheck();wait()
+  record('Unticking ring centring restores the calibrated slot geometry',abs(resolved('wildlife-lower')['curve']['rx']-300.30455-(47.99913-resolved('wildlife-lower')['cap'])/2)<.01,resolved('wildlife-lower')['curve'])
+  ring.check();wait()
   reset();pick('forests')
   field('lower').fill('FORESTS, LANDS AND NATURAL RESOURCE OPERATIONS');wait()
   record('Capitals that fill both arcs leave room for the dots',crest()=='wildlife-long' and root.locator('[data-warning="SEPARATOR_CROWDED"]').count()==0 and root.locator('[data-warning="TEXT_FIT_OVERFLOW"]').count()==0,dots())
@@ -203,7 +214,7 @@ def main():
    page.wait_for_function("document.querySelectorAll('.reccard svg text[data-live-text]').length>10",timeout=60000)
    cards=page.evaluate('''async()=>{const out={},names={'forests':'Forests','forests-wildfire':'Forests · Wildfire Service','long-ministry':'Long ministry','long-wildfire':'Long ministry · Wildfire Service'};
        for(const id of Object.keys(names)){
-       const r=await BCLogo.render(BCLogo.recipeState(id,{textFit:'reference-calibrated',autoProfile:true,separatorPlacement:'follow-text',fanOut:true}));
+       const r=await BCLogo.render(BCLogo.recipeState(id,{textFit:'reference-calibrated',autoProfile:true,separatorPlacement:'follow-text',fanOut:true,centreInRing:true}));
        const card=[...document.querySelectorAll('.reccard')].find(c=>c.querySelector('h3').textContent===names[id]);
        const shown=[...card.querySelectorAll('svg text[data-live-text]')].map(t=>[t.textContent,t.getComputedTextLength()]);
        out[id]={expected:r.report.map(x=>[x.text,x.width]),shown};}return out;}''')
@@ -212,7 +223,7 @@ def main():
    # Drafts saved before the profile/dot controls existed take their new defaults.
    page.evaluate('''()=>localStorage.setItem('forestoval-compose-lettering-v1',JSON.stringify({version:1,active:'forests',drafts:{forests:{...BCLogo.recipeState('forests',{textFit:'reference-calibrated'}),content:{upper:'BRITISH COLUMBIA',lower:'Forests, Lands and Natural Resource Operations'}}}}))''')
    page.goto(a.url);page.get_by_role('button',name='Live lettering',exact=True).click();wait()
-   record('Older saved drafts adopt the automatic crest, following dots and spreading',root.get_by_label('Current preset',exact=True).input_value()=='forests' and auto.is_checked() and crest()=='wildlife-long' and dots()['placement']=='follow-text' and root.get_by_label('Spread the upper line when there is room',exact=True).is_checked())
+   record('Older saved drafts adopt the automatic crest, following dots, spreading and ring centring',root.get_by_label('Current preset',exact=True).input_value()=='forests' and auto.is_checked() and crest()=='wildlife-long' and dots()['placement']=='follow-text' and root.get_by_label('Spread the upper line when there is room',exact=True).is_checked() and root.get_by_label('Centre each line in the white ring',exact=True).is_checked())
    reset();pick('long-wildfire')
   root.get_by_role('button',name='Reset this preset',exact=True).click();wait()
   click_character('lower',0);dock.fill('Environmental Monitoring and Conservation');wait()

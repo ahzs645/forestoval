@@ -45,7 +45,7 @@ lettering has received reference calibration.
 
 ## The crest follows its wording
 
-A preset is a starting point, not a fixed layout. Three options, all on for new
+A preset is a starting point, not a fixed layout. Four options, all on for new
 drafts, let one preset become another by editing its text:
 
 - **Pick the short or long crest from the wording** (`autoProfile`). On the
@@ -73,6 +73,25 @@ drafts, let one preset become another by editing its text:
   then grows toward the capitals look (letter height up to ×1.166, plus letter
   and word spacing) until its ends come within 129 units of dots at home, or
   as close to pushed dots as the lower line is. The dots then end up halfway.
+- **Centre each line in the white ring** (`centreInRing`). Each slot's baseline
+  ellipse was calibrated where its reference wording sits, so wording that runs
+  further round could drift toward one black ring. The capitals ministry slot
+  was 10 units too wide at the sides. With this option every crest line follows
+  the ring's own centre line at every angle, and centres its type body there:
+  the cap height for capitals, and for lowercase the x-height plus 30% of the
+  way to the cap height. That is the usual practice of centring mixed case on
+  the x-height, then adjusting by eye; the long ministry reference sits 30% up.
+  The two are blended by the share of lowercase letters, so typing never makes
+  a line jump. The ring is the frame's own white ellipse, which is the same in
+  the tree frame to within half a unit. A slot whose radii were set by hand
+  keeps them.
+
+  Measured against the white ring, *Forests, Lands and Mines* on the capitals
+  crest goes from 13 units nearer the outer ring to centred. All-caps lines now
+  stay within about 3 units of centre all the way round (the long crest used to
+  drift by 20). The cost is 1–3 units against individual references, which were
+  not all centred the same way. Unticking the option gives the calibrated slot
+  geometry back exactly.
 
 Either way the dots sit on the separator band drawn in by the crest's
 `separatorInset`: 3.34 units on the capitals crest, measured from
@@ -82,7 +101,7 @@ far out, mostly sideways.
 
 The note under these controls names the crest the wording picked and what the
 dots and upper line are doing. Drafts saved before these controls existed
-(storage payload versions 1 and 2) adopt the new defaults when loaded.
+(storage payload versions 1–3) adopt the new defaults when loaded.
 
 A mouse click on a text character or keyboard Enter/Space opens the selected
 line's HTML input below the preview. The caret remains in a conventional input;
@@ -91,7 +110,7 @@ updates while typing. Escape/Done returns focus to the sidebar. Multiline stacke
 wordmarks use their textarea. Empty inscriptions remain recoverable there.
 
 Each preset keeps its own normalized draft using a separate localStorage key,
-`forestoval-compose-lettering-v1` (payload version 3); restricted storage leaves an in-memory draft.
+`forestoval-compose-lettering-v1` (payload version 4); restricted storage leaves an in-memory draft.
 Reset restores only the current preset. Opening a v5 configuration validates the
 version and preset before replacing the draft. The engine's own normalization
 still validates fitting policies and geometry overrides.
@@ -158,14 +177,14 @@ Playwright dependency from the repository requirements and Chromium (or
 Beyond the editing checks, it confirms that the crest follows its wording in
 both directions, that the dots sit where the references put them and halfway
 between squeezed lines, that the long crest spreads its upper line when there is
-room, that the dots move with
+room, that lines are centred in the ring (and that unticking restores the slots), that the dots move with
 the wording and leave room when both lines are full, and that older drafts adopt
 the new defaults. It also confirms that every face loads from the bundle and
 matches its calibration advance, that the service backing defaults per preset,
 that exports with a fallback face need consent (it blocks the bundled Noto file
 and all local faces in a second page), and that the Recreations cards show the
 engine's lettering with the same advances, and that the font button reloads the
-bundled face once it is reachable again. All 47 checks passed against
+bundled face once it is reachable again. All 49 checks passed against
 `npm run dev` and against the production build on a machine with none of the
 faces installed. A separate check confirmed that the three engine scripts load
 from `assets/` when the build is served under a sub-path like `/forestoval/`, that

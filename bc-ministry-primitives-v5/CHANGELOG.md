@@ -14,10 +14,15 @@
   pushed by a line that comes within 50 units, and exactly halfway between the
   lines once the gap is under 100. The lower arc narrows when the marks would
   touch a line. `'reference'` (the default) keeps `separatorY`.
+- `centreInRing`: crest lines follow the white ring (`SHAPES.rings`, the
+  frame's own ellipses) and centre their type body on its centre line: cap
+  height for capitals, and x-height plus 30% toward the cap height for
+  lowercase. Slot ellipses were only calibrated where the reference wording
+  sits, so longer wording drifted toward one black ring.
 - `fanOut`: the long crest's upper line spreads toward the capitals look
   (height, spacing, word spacing) when the lower line leaves room.
-  `recipeState()` carries `autoProfile`, `separatorPlacement` and `fanOut`;
-  the site's editor and a fresh studio turn all three on.
+  `recipeState()` carries `autoProfile`, `separatorPlacement`, `fanOut` and
+  `centreInRing`; the site's editor and a fresh studio turn all four on.
 - `separatorInset` per crest: the marks sit on the separator band drawn in by
   3.34 (capitals, from `wildfire-source.svg`) or 7.67 units (long, from both
   long-crest rasters). The long crest's marks were about 8 units too far out.

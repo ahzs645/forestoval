@@ -13,7 +13,7 @@ declare global {
   interface BCSlot {role:BCRoleId; side:'top'|'bottom'|'flat'; cap:number; anchorCap:number; rx?:number; ry?:number; span?:number; maxSpan?:number; tracking:number; minTracking:number; endPad?:number; minCap:number; width?:number; y?:number}
   interface BCContent {upper?:string;lower?:string;service?:string;word?:string;descriptor?:string;district?:string;lines?:string;branch?:string}
   interface BCSharedRules {roles?:Partial<Record<BCRoleId,Partial<BCRole>>>;slots?:Partial<Record<BCSlotId,Partial<Pick<BCSlot,'cap'|'tracking'|'rx'|'ry'|'y'>>>>}
-  interface BCConfiguration extends BCSharedRules {version:5;recipe:BCRecipeId;crest:BCCrestId;tab:BCTabId;layout:BCLayoutId;theme:BCThemeId;tabSizing:'reference'|'follow-text';tabBacking:'paper'|'transparent';separatorPlacement:'reference'|'follow-text';fanOut:boolean;autoProfile:boolean;content:BCContent;colours:Record<string,string>;outputWidth:number}
+  interface BCConfiguration extends BCSharedRules {version:5;recipe:BCRecipeId;crest:BCCrestId;tab:BCTabId;layout:BCLayoutId;theme:BCThemeId;tabSizing:'reference'|'follow-text';tabBacking:'paper'|'transparent';separatorPlacement:'reference'|'follow-text';fanOut:boolean;centreInRing:boolean;autoProfile:boolean;content:BCContent;colours:Record<string,string>;outputWidth:number}
   interface BCRecipe {id:BCRecipeId;name:string;extends?:BCRecipeId;crest?:BCCrestId;tab?:BCTabId;tabBacking?:'paper'|'transparent';layout?:BCLayoutId;theme?:BCThemeId;content:BCContent;reference?:string;confidence?:string;excluded?:boolean}
   interface BCTypeReport {text:string;role:BCRoleId;slot?:BCSlotId;face:BCFaceId;weight:number;size:number;cap:number;preferredCap:number;tracking:number;trackingEm:number;width:number;widthBasis:'browser advance'|'visible ink';available:number;stage:'natural'|'tracking'|'arc-expanded'|'uniform-shrink';tooSmall:boolean;ascent:number;descent:number;curve?:{rx:number;ry:number;span:number}}
   interface BCRenderResult {svg:SVGSVGElement;state:BCConfiguration;report:BCTypeReport[];warnings:{code:string;message:string}[];viewBox:{x:number;y:number;w:number;h:number};nominal:{x:number;y:number;w:number;h:number};crest:BCCrestId;separators:BCSeparatorLayout|null;fontIds:BCFaceId[]}
@@ -46,7 +46,7 @@ declare global {
   };
   const BCLogo: {
     normalise(input?:Partial<BCConfiguration>):BCConfiguration;
-    recipeState(id:BCRecipeId,shared?:BCSharedRules&Partial<Pick<BCConfiguration,'tabSizing'|'autoProfile'|'separatorPlacement'|'fanOut'>>&{textFit?:string}):BCConfiguration;
+    recipeState(id:BCRecipeId,shared?:BCSharedRules&Partial<Pick<BCConfiguration,'tabSizing'|'autoProfile'|'separatorPlacement'|'fanOut'|'centreInRing'>>&{textFit?:string}):BCConfiguration;
     render(input?:Partial<BCConfiguration>,options?:{prefix?:string;allowNetwork?:boolean}):Promise<BCRenderResult>;
     /** Synchronous only after ensureFonts()/render() has completed. */
     makeLogo(input?:Partial<BCConfiguration>,options?:{prefix?:string}):BCRenderResult;

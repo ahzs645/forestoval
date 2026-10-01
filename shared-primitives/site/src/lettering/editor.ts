@@ -3,8 +3,9 @@ import type { Catalogue, Configuration, ContentKey, EditorOptions, LogoResult, R
 const STORAGE_KEY = 'forestoval-compose-lettering-v1';
 /** A new or reset draft: calibrated fitting, and a crest that follows its wording
  * (short/long wildlife profile, separator marks placed from the lines, and a
- * long-crest upper line that spreads out when the lower line leaves room). */
-export const NEW_DRAFT = { textFit: 'reference-calibrated', autoProfile: true, separatorPlacement: 'follow-text', fanOut: true } as const;
+ * long-crest upper line that spreads out when the lower line leaves room, and
+ * every line centred in the white ring). */
+export const NEW_DRAFT = { textFit: 'reference-calibrated', autoProfile: true, separatorPlacement: 'follow-text', fanOut: true, centreInRing: true } as const;
 const LABELS: Record<ContentKey, string> = {
   upper: 'Upper oval text', lower: 'Lower / ministry text', service: 'Service tab text',
   word: 'Acronym / wordmark', descriptor: 'Descriptor', district: 'District',
@@ -82,6 +83,7 @@ export class LetteringEditor {
           <option value="follow-text">Follow the lettering</option><option value="reference">Keep the reference position</option>
         </select></label>
         <label class="fo-check"><input type="checkbox" data-control="fanOut"> Spread the upper line when there is room</label>
+        <label class="fo-check"><input type="checkbox" data-control="centreInRing"> Centre each line in the white ring</label>
         <p class="fo-muted fo-small" data-part="profile-note"></p>
         <label>Service holder<select data-control="tabSizing" aria-label="Service holder">
           <option value="reference">Keep the reference holder</option><option value="follow-text">Grow to follow service text</option>
@@ -147,11 +149,12 @@ export class LetteringEditor {
       let active = 'long-wildfire';
       try {
         const saved = JSON.parse(this.storage?.getItem(STORAGE_KEY) ?? 'null');
-        if ([1, 2, 3].includes(saved?.version) && saved.drafts && typeof saved.drafts === 'object') {
+        if ([1, 2, 3, 4].includes(saved?.version) && saved.drafts && typeof saved.drafts === 'object') {
           for (const [id, draft] of Object.entries(saved.drafts)) {
             // Older drafts predate some of the dynamic controls; they take the new defaults
-            // (version 1: profile and separators; versions 1–2: spreading the upper line).
-            const adopt = { ...(saved.version === 1 ? { autoProfile: NEW_DRAFT.autoProfile, separatorPlacement: NEW_DRAFT.separatorPlacement } : {}), ...(saved.version < 3 ? { fanOut: NEW_DRAFT.fanOut } : {}) };
+            // (version 1: profile and separators; 1–2: spreading the upper line; 1–3: ring centring).
+            const adopt = { ...(saved.version === 1 ? { autoProfile: NEW_DRAFT.autoProfile, separatorPlacement: NEW_DRAFT.separatorPlacement } : {}),
+              ...(saved.version < 3 ? { fanOut: NEW_DRAFT.fanOut } : {}), ...(saved.version < 4 ? { centreInRing: NEW_DRAFT.centreInRing } : {}) };
             const raw = draft && typeof draft === 'object' ? { ...draft, ...adopt } : draft;
             try { const s = this.validate(raw); if (s.recipe === id) this.drafts.set(id, s); } catch { /* Ignore only this invalid saved draft. */ }
           }
@@ -173,7 +176,7 @@ export class LetteringEditor {
   private remember() {
     if (!this.state) return;
     this.drafts.set(this.state.recipe, this.runtime!.E.normalise(this.state));
-    try { this.storage?.setItem(STORAGE_KEY, JSON.stringify({ version: 3, active: this.state.recipe, drafts: Object.fromEntries(this.drafts) })); }
+    try { this.storage?.setItem(STORAGE_KEY, JSON.stringify({ version: 4, active: this.state.recipe, drafts: Object.fromEntries(this.drafts) })); }
     catch { /* Restricted/full storage: the live in-memory draft is still usable. */ }
   }
   private choose(id: string) {
@@ -198,6 +201,8 @@ export class LetteringEditor {
     // Spreading reads the marks' position, so it needs marks that follow the lettering.
     const fan = this.checkbox('fanOut');
     fan.checked = s.fanOut; fan.disabled = !marks || s.separatorPlacement !== 'follow-text';
+    const ring = this.checkbox('centreInRing');
+    ring.checked = s.centreInRing; ring.disabled = !badge;
     this.part('name').textContent = P.recipe(s.recipe).name;
     this.part('confidence').textContent = P.recipe(s.recipe).confidence ?? 'Reference-based reconstruction';
     this.part('policy-note').textContent = this.runtime.E.TEXT_FIT_POLICIES[s.textFit].description;
@@ -217,8 +222,8 @@ export class LetteringEditor {
     this.on(this.root, 'change', event => {
       const target = event.target;
       if (!this.state) return;
-      if (target instanceof HTMLInputElement && (target.dataset.control === 'autoProfile' || target.dataset.control === 'fanOut')) {
-        this.state = this.runtime!.E.normalise({ ...this.state, [target.dataset.control]: target.checked }); this.sync(); this.schedule(); return;
+      if (target instanceof HTMLInputElement && ['autoProfile', 'fanOut', 'centreInRing'].includes(target.dataset.control ?? '')) {
+        this.state = this.runtime!.E.normalise({ ...this.state, [target.dataset.control!]: target.checked }); this.sync(); this.schedule(); return;
       }
       if (!(target instanceof HTMLSelectElement)) return;
       const key = target.dataset.control;
