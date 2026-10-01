@@ -5,11 +5,14 @@ into shared vector primitives, with a browser viewer for comparing each logo
 against its reference images.
 
 **Site:** https://projects.ahmadjalil.com/forestoval/ (also reachable at https://ahzs645.github.io/forestoval/).
-The v5 studio is at https://projects.ahmadjalil.com/forestoval/studio/.
+The live lettering editor opens there first, and also runs on its own page at
+https://projects.ahmadjalil.com/forestoval/lettering/. The v5 studio is at
+https://projects.ahmadjalil.com/forestoval/studio/.
 
 - `shared-primitives/`: the isolated building blocks (SVG), the layout and
-  lettering data, the scripts that generate them, the reference images, and
-  `site/`, the viewer. See [`shared-primitives/README.md`](shared-primitives/README.md),
+  lettering data, the scripts that generate them, the reference images,
+  `live-lettering/`, the live lettering editor package (engine bridge, bundled
+  faces, badge presets), and `site/`, the viewer that mounts it. See [`shared-primitives/README.md`](shared-primitives/README.md),
   which also lists where each shared value lives.
 - `bc-ministry-primitives-v5/`: the v5 studio the pieces are cut from; the site
   takes its lettering from `examples/`. `python build.py` builds the standalone page.
@@ -18,16 +21,17 @@ The v5 studio is at https://projects.ahmadjalil.com/forestoval/studio/.
 ## Run locally
 
 ```sh
-cd shared-primitives/site
-npm install
-npm run dev
+cd shared-primitives
+npm install          # one npm workspace: site/ and live-lettering/
+npm run dev          # the viewer (the editor is its first tab)
+npm run lettering    # the editor on its own page
 ```
 
 Python tools beyond the standard library (reference gallery, lettering fit,
 studio browser tests) need `pip install -r requirements.txt`.
 
 Pushing to `main` checks that the generated files are up to date, builds the site
-(with the studio at `studio/`) and deploys it to GitHub Pages
+(with the studio at `studio/` and the standalone editor at `lettering/`) and deploys it to GitHub Pages
 (`.github/workflows/pages.yml`). Pull requests run the same checks and build
 without deploying.
 

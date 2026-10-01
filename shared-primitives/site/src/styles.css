@@ -257,3 +257,6 @@ tr:hover td { background: #f8faf7; }
   .recgrid { grid-template-columns: 1fr; }
   .checks { padding: 16px; }
 }
+
+/* The live lettering editor's frame in this page (its own styles come with the package). */
+.fo-live-host { border: 1px solid #d6ddd7; border-radius: 10px; overflow: hidden; }

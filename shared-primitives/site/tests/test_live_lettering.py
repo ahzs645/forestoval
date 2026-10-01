@@ -274,7 +274,7 @@ def main():
    ktext=lambda k:kroot.locator(f'[data-part="canvas"] [data-live-text="{k}"]')
    kselect=kroot.get_by_label('Tree oval lettering',exact=True)
    without=kselect.input_value()=='reference-v2' and ktext('lower').get_attribute('data-face')=='raleway-black' and kroot.locator('[data-warning="FONT_FALLBACK"]').count()==0 and kroot.get_by_role('button',name='SVG',exact=True).is_enabled()
-   kroot.locator('[data-part="kabel-file"]').set_input_files(str(Path(__file__).resolve().parents[1]/'node_modules/@fontsource/raleway/files/raleway-latin-900-normal.woff2'))
+   kroot.locator('[data-part="kabel-file"]').set_input_files(str(Path(__file__).resolve().parents[2]/'node_modules/@fontsource/raleway/files/raleway-latin-900-normal.woff2'))
    kp.wait_for_function('''()=>document.querySelector('.fo-editor [data-live-text="lower"]')?.getAttribute('data-face')==='kabel-black'&&!document.querySelector('.fo-editor [data-action="save"]').disabled''',timeout=30000)
    record('Without the Kabel OTF tree crests keep the calibrated faces; loading one switches the crest to it',without and kselect.input_value()=='kabel-black' and ktext('upper').get_attribute('data-face')=='kabel-black',{'without':without})
    kp.close()

@@ -113,6 +113,7 @@ export default function App() {
             </select>
           </label>
           {backdrop === 'custom' && <input type="color" value={backdropColour} onChange={(e) => setBackdropColour(e.target.value)} />}
+          {import.meta.env.PROD && <a className="studiolink" href="./lettering/" title="The live lettering editor on its own page">Lettering app ↗</a>}
           {import.meta.env.PROD && <a className="studiolink" href="./studio/" title="The v5 studio: live lettering engine">v5 studio ↗</a>}
         </div>
       </header>

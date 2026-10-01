@@ -54,7 +54,7 @@ proof of historical identity.
 ### Open the application
 
 ```sh
-cd shared-primitives/site
+cd shared-primitives
 npm ci
 npm run dev
 ```

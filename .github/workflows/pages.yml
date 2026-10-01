@@ -27,7 +27,8 @@ jobs:
         with:
           node-version: lts/*
           cache: npm
-          cache-dependency-path: shared-primitives/site/package-lock.json
+          # One npm workspace: the site and the live lettering package share a lockfile.
+          cache-dependency-path: shared-primitives/package-lock.json
       # The primitives, layout and lettering data are generated and committed;
       # fail if they no longer match their sources (rerun extract_primitives.py).
       - name: Check generated files are up to date
@@ -49,7 +50,8 @@ jobs:
             echo "No deployment font supplied; use Load Kabel-Black.otf in the editor."
           fi
       - run: npm ci
-      # Also builds the v5 studio into dist/studio/.
+      # Also builds the v5 studio into dist/studio/ and the standalone live
+      # lettering app into dist/lettering/.
       - run: npm run build
       - uses: actions/configure-pages@v5
         if: github.event_name != 'pull_request'

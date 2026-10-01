@@ -1,7 +1,14 @@
 # Live lettering
 
-The live lettering editor is the site's main app: it is the first tab, and the
-site opens on it (`#/` or `#/lettering`).
+The live lettering editor is the `@forestoval/live-lettering` package
+(`shared-primitives/live-lettering/`; see its [README](../README.md) for the API
+and how badges are defined). It runs in two places:
+
+- the viewer site's main app: the first tab, and the site opens on it (`#/` or
+  `#/lettering`), with the site's colour and backdrop controls;
+- on its own page: `npm run lettering` in `shared-primitives/`, deployed at `lettering/`.
+
+In the viewer:
 
 - **Live lettering** mounts the same v5 engine and reads the same `BCPrimitives.RECIPES`
   catalogue as the standalone studio. Click curved text to open its inline input,
@@ -16,15 +23,15 @@ font-fitting patch. It does not retune or copy the calibration coefficients.
 ## Run
 
 ```sh
-cd shared-primitives/site
+cd shared-primitives
 npm ci
-npm run dev
+npm run dev          # the viewer; the editor is the first tab
+npm run lettering    # the editor on its own page
 ```
 
-Open the URL printed by Vite; the editor is the first tab. The production route
-is the site's existing base URL (`#/lettering` also links to it). The existing
-build script builds both the React viewer and standalone `dist/studio/` page.
-No package.json, lockfile, workflow or extra npm dependency change is required.
+The production route is the site's base URL (`#/lettering` also links to it).
+The site's build script builds the React viewer, the standalone studio at
+`dist/studio/` and the standalone editor at `dist/lettering/`.
 
 The editor needs the reference-lettering v2 engine (`src/engine.js` and
 `src/primitives.js` under `bc-ministry-primitives-v5/`). The runtime checks for the
@@ -160,8 +167,9 @@ crest frame, tree scene and ridge line scaled into that layout
   (to 60% at most), kept centred on the band. A shrink is reported as
   `TEXT_STYLE_REDUCED`; wording that still does not fit as `TEXT_FIT_OVERFLOW`.
 
-It is a composition over an engine recipe (`lettering/airtanker.ts`, passed to
-the editor as `compositions`), not a new engine recipe: its drafts are kept under
+It is a badge definition over an engine recipe (`src/badges/airtanker.ts`, built
+by the generic `defineBadge` in `src/badges/badge.ts` and passed to the editor as
+one of its `compositions`), not a new engine recipe: its drafts are kept under
 its own preset id with the `airtanker` recipe's configuration, so it does not
 share a draft with the engine's Airtanker preset. Its crest, tab and layout
 selectors are fixed. Saved configurations are v5 `airtanker` configurations;
@@ -171,7 +179,7 @@ and PNG exports are the composed badge, through the engine's `serialise` and
 
 ## Shared engine bridge
 
-`lettering/runtime.ts` imports the checkout's `art.json`, generated `layout.json`
+`src/runtime.ts` imports the checkout's `art.json`, generated `layout.json`
 and three script asset URLs. Vite serves/emits those same source files. The
 loader sets artwork/tab data and loads primitives, tab layout and engine in
 order, once. It does not use eval, an iframe, runtime GitHub fetches, or a duplicate
@@ -186,7 +194,7 @@ latest edit is still rendering. Input nodes are not replaced during typing.
 
 ## Fonts and exports
 
-The site ships its own copies of every lettering face (`lettering/fonts.ts`,
+The site ships its own copies of every lettering face (`src/fonts.ts`,
 pinned Fontsource packages, emitted by Vite) and hands them to the engine before
 it measures anything, so a machine without the fonts fits the same lettering.
 Each loaded face is checked against the advance recorded for the calibration
@@ -215,7 +223,8 @@ with this editor's default configuration, with no saved corrections.
 With the app running:
 
 ```sh
-python3 tests/test_live_lettering.py --url http://localhost:5173/
+python3 site/tests/test_live_lettering.py --url http://localhost:5173/
+python3 live-lettering/tests/test_standalone.py --url http://localhost:5174/
 ```
 
 Use the actual Vite URL/base path when it differs (`npx vite preview` serves the
@@ -223,7 +232,9 @@ production build on port 4173). The full-URL mode checks the React wrapper, that
 the site opens on the editor, the Layer assembly presets, and the airtanker package
 preset (artwork, live runs, band fitting, export, separate draft). It requires the normal Python
 Playwright dependency from the repository requirements and Chromium (or
-`CHROMIUM=/path/to/browser`). Results and screenshots go to `tests/output/`.
+`CHROMIUM=/path/to/browser`). Results and screenshots go to `site/tests/output/`.
+The standalone test is a smoke test of the package on its own page (engine,
+bundled faces, the badge preset and its export); the site test covers the editor in full.
 
 Beyond the editing checks, it confirms that the crest follows its wording in
 both directions, that the dots sit where the references put them and halfway

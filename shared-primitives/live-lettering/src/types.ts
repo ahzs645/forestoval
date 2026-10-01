@@ -34,7 +34,7 @@ export interface Catalogue {
   CRESTS: Record<string, { upper: string; lower: string; separator: string; separatorSize?: number; longer?: string; shorter?: string }>;
   TABS: Record<string, { slot?: string; shape?: string }>;
   LOCKUPS: Record<string, { kind: string }>;
-  FACES: Record<string, { family: string; weight: number; advance?: number }>;
+  FACES: Record<string, { family: string; weight: number; advance?: number; fallback?: string }>;
   REFERENCE_LETTERING?: { version: number };
   recipe(id: string): Recipe;
 }
@@ -57,6 +57,8 @@ export interface Engine {
   serialise(result: LogoResult): string;
   png(result: LogoResult, width: number): Promise<Blob>;
   supplyFont(id: string, bytes: ArrayBuffer): Promise<unknown>;
+  /** A face's measurements for some text, in em (cap: capital height). */
+  metrics(text: string, faceId: string): { cap: number; xHeight: number; width: number };
   ensureFonts(ids: string[], allowNetwork?: boolean): Promise<Array<{ status: string; source: string }>>;
   retryFonts(): void;
   fontState: Map<string, { status: string; source: string; verified?: boolean; advance?: number }>;

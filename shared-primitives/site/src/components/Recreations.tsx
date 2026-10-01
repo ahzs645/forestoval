@@ -16,8 +16,7 @@ import {
   type ReferenceImage,
 } from '../recreations';
 import type { ViewSettings } from '../App';
-import { draftDefaults } from '../lettering/editor';
-import { loadLetteringRuntime } from '../lettering/runtime';
+import { draftDefaults, loadLetteringRuntime } from '@forestoval/live-lettering';
 
 type Mode = 'side' | 'wipe' | 'overlay' | 'difference';
 type Source = 'live' | 'fitted' | 'v5';

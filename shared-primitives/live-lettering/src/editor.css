@@ -1,6 +1,5 @@
-/* Namespaced to avoid changing Library, Recreations, or Layer assembly. */
+/* Namespaced (.fo-*) so a host page's own styles are unaffected. */
 .fo-editor [hidden] { display: none !important; }
-.fo-live-host { border: 1px solid #d6ddd7; border-radius: 10px; overflow: hidden; }
 .fo-editor { --fo-ink: #182c24; --fo-muted: #627067; color: var(--fo-ink); display: grid; grid-template-columns: minmax(280px, 340px) minmax(0, 1fr); font: 14px/1.45 system-ui, sans-serif; min-width: 0; }
 .fo-editor * { box-sizing: border-box; }
 .fo-sidebar { background: #fafbf9; padding: 26px; border-right: 1px solid #d6ddd7; min-width: 0; }
