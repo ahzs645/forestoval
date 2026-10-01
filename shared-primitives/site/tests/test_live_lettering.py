@@ -38,6 +38,11 @@ def main():
   def field(key):return root.locator(f'[data-part="fields"] [data-content="{key}"]')
   def text(key):return root.locator(f'[data-part="canvas"] [data-live-text="{key}"]')
   def pick(id):root.get_by_label('Current preset',exact=True).select_option(id);wait()
+  def crest():return root.locator('[data-part="canvas"] [data-layer="badge"]').get_attribute('data-crest')
+  def dots():
+   g=root.locator('[data-part="canvas"] [data-layer="separators"]')
+   return {'placement':g.get_attribute('data-separator-placement'),'y':float(g.get_attribute('data-separator-y'))}
+  def reset():root.get_by_role('button',name='Reset this preset',exact=True).click();wait()
   def click_character(key,index=0):
    xy=text(key).evaluate('''(t,i)=>{const r=t.getExtentOfChar(i),p=new DOMPoint(r.x+r.width/2,r.y+r.height/2).matrixTransform(t.getScreenCTM());return {x:p.x,y:p.y}}''',index)
    page.mouse.click(xy['x'],xy['y'])
@@ -108,6 +113,30 @@ def main():
    keys=root.locator('[data-part="fields"] [data-content]').evaluate_all('(es)=>es.map(e=>e.dataset.content)')
    rows.append({'recipe':id,'fields':keys,'textRuns':root.locator('[data-part="canvas"] text[data-live-text]').count()})
   record('Every active recipe renders with its applicable text fields',len(rows)==len(expected) and all(r['fields'] for r in rows),rows)
+  # The crest follows its wording: the short/long profile and the separator dots.
+  pick('forests-wildfire');reset()
+  auto=root.get_by_label('Pick the short or long crest from the wording',exact=True)
+  record('New drafts pick the crest from the wording and let the dots follow it',auto.is_checked() and root.get_by_label('Separator dots',exact=True).input_value()=='follow-text' and dots()['placement']=='follow-text' and abs(dots()['y']-446)<.01,dots())
+  field('upper').fill('British Columbia');field('lower').fill('Forests, Lands and Natural Resource Operations');wait()
+  long_dots=dots()
+  record('Long ministry wording turns Forests · Wildfire into the long crest with its dots on the reference height',crest()=='wildlife-long' and abs(long_dots['y']-215)<.01 and root.locator('[data-warning]').count()==0,{'crest':crest(),**long_dots})
+  reset();pick('long-wildfire')
+  field('upper').fill('BRITISH COLUMBIA');field('lower').fill('FORESTS');wait()
+  record('Short capitals turn Long ministry · Wildfire into the capitals crest with its dots on the reference height',crest()=='wildlife-caps' and abs(dots()['y']-446)<.01,{'crest':crest(),**dots()})
+  field('upper').fill('BRITISH COLUMBIA');field('lower').fill('FORESTS AND RANGE');wait()
+  moved=dots()['y']
+  record('Dots move with the lower wording',crest()=='wildlife-caps' and moved<440,moved)
+  root.get_by_label('Separator dots',exact=True).select_option('reference');wait()
+  record('Separator dots can be kept at the reference position',dots()=={'placement':'reference','y':446.0},dots())
+  root.get_by_label('Separator dots',exact=True).select_option('follow-text')
+  root.get_by_text('Change the composition',exact=True).click()
+  root.get_by_label('Crest profile',exact=True).select_option('wildlife-long');wait()
+  root.get_by_text('Change the composition',exact=True).click()
+  record('Choosing a crest profile by hand turns the automatic pick off',crest()=='wildlife-long' and not auto.is_checked())
+  reset();pick('forests')
+  field('lower').fill('FORESTS, LANDS AND NATURAL RESOURCE OPERATIONS');wait()
+  record('Capitals that fill both arcs leave room for the dots',crest()=='wildlife-long' and root.locator('[data-warning="SEPARATOR_CROWDED"]').count()==0 and root.locator('[data-warning="TEXT_FIT_OVERFLOW"]').count()==0,dots())
+  reset()
   pick('long-wildfire')
   root.get_by_role('button',name='Reset this preset',exact=True).click();wait()
   record('Reset restores default wording and calibrated mode',field('lower').input_value()=='Forests, Lands and Natural Resource Operations' and root.get_by_label('Lettering style',exact=True).input_value()=='reference-calibrated')
@@ -161,13 +190,17 @@ def main():
    page.wait_for_function("document.querySelectorAll('.reccard svg text[data-live-text]').length>10",timeout=60000)
    cards=page.evaluate('''async()=>{const out={},names={'forests':'Forests','forests-wildfire':'Forests · Wildfire Service','long-ministry':'Long ministry','long-wildfire':'Long ministry · Wildfire Service'};
        for(const id of Object.keys(names)){
-       const r=await BCLogo.render(BCLogo.recipeState(id,{textFit:'reference-calibrated'}));
+       const r=await BCLogo.render(BCLogo.recipeState(id,{textFit:'reference-calibrated',autoProfile:true,separatorPlacement:'follow-text'}));
        const card=[...document.querySelectorAll('.reccard')].find(c=>c.querySelector('h3').textContent===names[id]);
        const shown=[...card.querySelectorAll('svg text[data-live-text]')].map(t=>[t.textContent,t.getComputedTextLength()]);
        out[id]={expected:r.report.map(x=>[x.text,x.width]),shown};}return out;}''')
    same=all(len(c['expected'])==len(c['shown']) and all(e[0]==v[0] and abs(e[1]-v[1])<.1 for e,v in zip(c['expected'],c['shown'])) for c in cards.values())
    record('Recreations shows the live engine lettering with the editor configuration and advances',same,cards)
+   # Drafts saved before the profile/dot controls existed take their new defaults.
+   page.evaluate('''()=>localStorage.setItem('forestoval-compose-lettering-v1',JSON.stringify({version:1,active:'forests',drafts:{forests:{...BCLogo.recipeState('forests',{textFit:'reference-calibrated'}),content:{upper:'BRITISH COLUMBIA',lower:'Forests, Lands and Natural Resource Operations'}}}}))''')
    page.goto(a.url);page.get_by_role('button',name='Live lettering',exact=True).click();wait()
+   record('Older saved drafts adopt the automatic crest and following dots',root.get_by_label('Current preset',exact=True).input_value()=='forests' and auto.is_checked() and crest()=='wildlife-long' and dots()['placement']=='follow-text')
+   reset();pick('long-wildfire')
   root.get_by_role('button',name='Reset this preset',exact=True).click();wait()
   click_character('lower',0);dock.fill('Environmental Monitoring and Conservation');wait()
   page.screenshot(path=str(out/'live-lettering-desktop.png'),full_page=True)

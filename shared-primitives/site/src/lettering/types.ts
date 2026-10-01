@@ -10,6 +10,7 @@ export interface Configuration {
   textFit: string;
   tabSizing: string;
   tabBacking: string;
+  separatorPlacement: string;
   autoProfile: boolean;
   referenceModelVersion?: number;
   outputWidth: number;
@@ -27,7 +28,7 @@ export interface Recipe {
 }
 export interface Catalogue {
   RECIPES: Recipe[];
-  CRESTS: Record<string, { upper: string; lower: string }>;
+  CRESTS: Record<string, { upper: string; lower: string; separator: string }>;
   TABS: Record<string, { slot?: string; shape?: string }>;
   LOCKUPS: Record<string, { kind: string }>;
   FACES: Record<string, { family: string; weight: number; advance?: number }>;
@@ -40,6 +41,9 @@ export interface LogoResult {
   report: Array<{ slot?: string; role: string; cap: number; trackingEm: number; stage: string; referenceProfile?: string }>;
   warnings: Array<{ code: string; message: string }>;
   fontIds: string[];
+  /** The crest profile actually drawn (autoProfile can differ from state.crest). */
+  crest: string;
+  separators: { placement: string; y: number; angle: number; crowded: boolean } | null;
   viewBox: { x: number; y: number; w: number; h: number };
 }
 export interface Engine {

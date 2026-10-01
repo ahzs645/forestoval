@@ -16,6 +16,7 @@ import {
   type ReferenceImage,
 } from '../recreations';
 import type { ViewSettings } from '../App';
+import { NEW_DRAFT } from '../lettering/editor';
 import { loadLetteringRuntime } from '../lettering/runtime';
 
 type Mode = 'side' | 'wipe' | 'overlay' | 'difference';
@@ -33,7 +34,7 @@ function loadLive(): Promise<LiveLettering> {
     const { E } = await loadLetteringRuntime();
     const live: LiveLettering = { svgs: {}, backing: {}, warnings: {} };
     for (const id of liveRecipes()) {
-      const r = await E.render(E.recipeState(id, { textFit: 'reference-calibrated' }));
+      const r = await E.render(E.recipeState(id, NEW_DRAFT));
       live.svgs[id] = new XMLSerializer().serializeToString(r.svg);
       live.backing[id] = r.state.tabBacking;
       live.warnings[id] = r.warnings.filter((w) => w.code.startsWith('FONT_') || w.code === 'REFERENCE_PROFILE_UNAVAILABLE').map((w) => w.message);

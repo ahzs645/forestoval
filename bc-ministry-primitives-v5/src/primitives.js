@@ -143,16 +143,20 @@ const REFERENCE_LETTERING={
     }
   }
 };
+// separatorGap: where the marks sit between the upper run's ends (0) and the
+// lower run's ends (1) when they follow the lettering. Each is measured from
+// the recipe's reference wording (reference-calibrated fit), so that wording
+// puts the marks back on separatorY.
 const CRESTS={
- 'wildlife-caps':{scene:'wildlife',upper:'wildlife-upper',lower:'wildlife-lower',separator:'circle',separatorY:446,separatorSize:12.65},
- 'wildlife-long':{scene:'wildlife',upper:'long-upper',lower:'long-lower',separator:'circle',separatorY:215,separatorSize:9},
- 'tree-heavy':{scene:'tree',upper:'tree-upper',lower:'tree-lower',separator:'diamond',separatorY:397.65,separatorSize:16.76},
+ 'wildlife-caps':{scene:'wildlife',upper:'wildlife-upper',lower:'wildlife-lower',separator:'circle',separatorY:446,separatorSize:12.65,separatorGap:.3191},
+ 'wildlife-long':{scene:'wildlife',upper:'long-upper',lower:'long-lower',separator:'circle',separatorY:215,separatorSize:9,separatorGap:.6367},
+ 'tree-heavy':{scene:'tree',upper:'tree-upper',lower:'tree-lower',separator:'diamond',separatorY:397.65,separatorSize:16.76,separatorGap:.5752},
  'tree-thin':{scene:'tree',upper:'thin-upper',lower:'thin-lower',separator:'none',separatorY:397.65,separatorSize:0}
 };
 // Shapes the engine draws itself, not taken from the artwork. The generator in
 // ../shared-primitives reads these tables too, so both draw the same pieces.
-// Separators sit on the ellipse separatorBand (about the crest centre) at their
-// crest's separatorY.
+// Separators sit on the ellipse separatorBand (about the crest centre): at their
+// crest's separatorY, or between the lettering's ends (engine separatorLayout).
 const SHAPES={
  centre:[338.36631,420.96480],
  separatorBand:{rx:266,ry:369},

@@ -89,7 +89,7 @@ function normalise(input={}){
  if(typeof textFit!=='string'||!Object.hasOwn(TEXT_FIT_POLICIES,textFit))throw Error('Unknown lettering fit policy: '+textFit);
  const referenceModelVersion=input.referenceModelVersion??P.REFERENCE_LETTERING?.version;
  if(textFit==='reference-calibrated'&&referenceModelVersion!==P.REFERENCE_LETTERING?.version)throw Error('Unsupported reference lettering model version: '+referenceModelVersion);
- const s={version:5,textFit,...(textFit==='reference-calibrated'?{referenceModelVersion}:{}),tabSizing:input.tabSizing==='follow-text'?'follow-text':'reference',tabBacking:['paper','transparent'].includes(input.tabBacking)?input.tabBacking:r.tabBacking||'paper',recipe:rid,crest:input.crest||r.crest,tab:input.tab||r.tab,layout:input.layout||r.layout,theme:input.theme||r.theme,autoProfile:input.autoProfile===true,content:{...r.content},roles:{},slots:{},colours:{},outputWidth:clamp(Number(input.outputWidth)||1200,100,6000)};
+ const s={version:5,textFit,...(textFit==='reference-calibrated'?{referenceModelVersion}:{}),tabSizing:input.tabSizing==='follow-text'?'follow-text':'reference',tabBacking:['paper','transparent'].includes(input.tabBacking)?input.tabBacking:r.tabBacking||'paper',separatorPlacement:input.separatorPlacement==='follow-text'?'follow-text':'reference',recipe:rid,crest:input.crest||r.crest,tab:input.tab||r.tab,layout:input.layout||r.layout,theme:input.theme||r.theme,autoProfile:input.autoProfile===true,content:{...r.content},roles:{},slots:{},colours:{},outputWidth:clamp(Number(input.outputWidth)||1200,100,6000)};
  for(const [k,v]of Object.entries(input.content||{}))if(['upper','lower','service','word','descriptor','district','lines','branch'].includes(k))s.content[k]=clean(v);
  for(const k of ['crest','tab','layout','theme']){const t={crest:P.CRESTS,tab:P.TABS,layout:P.LOCKUPS,theme:P.THEMES}[k];if(!t[s[k]])throw Error('Unknown '+k+': '+s[k]);}
  for(const[id,v]of Object.entries(input.roles||{})){if(!P.ROLES[id]||!v||typeof v!=='object')continue;const out={};if(v.face&&P.FACES[v.face])out.face=v.face;if(Number.isFinite(v.capScale))out.capScale=clamp(v.capScale,.5,1.5);if(Number.isFinite(v.trackingEm))out.trackingEm=clamp(v.trackingEm,-.06,.18);s.roles[id]=out;}
@@ -122,7 +122,7 @@ function curve(t,cap=t.cap,span=t.span){
  let a=point(rx,ry,start),b=point(rx,ry,end),last=a,length=0;
  for(let i=1;i<=360;i++){const next=point(rx,ry,start+(end-start)*i/360);length+=Math.hypot(next[0]-last[0],next[1]-last[1]);last=next;}
  const y=t.y||0;
- return {d:`M ${round(a[0])} ${round(a[1]+y)} A ${round(rx)} ${round(ry)} 0 ${span>180?1:0} ${dir>0?1:0} ${round(b[0])} ${round(b[1]+y)}`,length,rx,ry,span,side:t.side,start,end};
+ return {d:`M ${round(a[0])} ${round(a[1]+y)} A ${round(rx)} ${round(ry)} 0 ${span>180?1:0} ${dir>0?1:0} ${round(b[0])} ${round(b[1]+y)}`,length,rx,ry,span,side:t.side,start,end,y};
 }
 function fitRunLegacy(text,slotId,s){
  const t=slot(slotId,s),r=role(t.role,s),m=metrics(text,r.face),count=Array.from(text).length;
@@ -272,15 +272,66 @@ function reactiveRibbon(layout,theme,backing='paper'){
  else g.append(node('path',{d:layout.geometry.border+' '+layout.geometry.face,'fill-rule':'evenodd',fill:theme.ink,'data-tab-part':'border'}));
  return g;
 }
-function drawBadge(s,defs,theme,report,tabLayout=null){const crestId=effectiveCrest(s),c=P.CRESTS[crestId],t=P.TABS[s.tab],g=node('g',{'data-layer':'badge','data-crest':crestId});
+// Separator marks. 'reference' keeps the crest's separatorY. 'follow-text' puts
+// the mirrored pair at the crest's separatorGap fraction of the angular gap
+// between the ends of the upper and lower runs (about the crest centre, at
+// each run's ink midline, both sides averaged), so the default wording lands
+// on separatorY and other wording moves the marks with the gap. A mark keeps
+// SEPARATOR_CLEARANCE units plus its own size clear of both runs; a gap too
+// small for that centres it and reports SEPARATOR_CROWDED.
+const SEPARATOR_CLEARANCE=10;
+const wrap180=a=>((a+180)%360+360)%360-180;
+function bandRadius(a){const b=P.SHAPES.separatorBand,r=a*Math.PI/180;return 1/Math.hypot(Math.cos(r)/b.rx,Math.sin(r)/b.ry);}
+// Polar angles (degrees, screen y down) of a curved run's first and last
+// visible glyph edges, at its ink midline. Both crest baselines run left to right.
+function runEnds(f){
+ const c=f.curve;if(!c||c.side==='flat'||!(f.width>0))return null;
+ const shift=(c.side==='top'?1:-1)*f.cap/2,mid=c.length/2+(f.anchorBias||0);
+ const at=dist=>{let last=point(c.rx,c.ry,c.start),acc=0;
+  for(let i=1;i<=360;i++){const a=c.start+(c.end-c.start)*i/360,next=point(c.rx,c.ry,a),d=Math.hypot(next[0]-last[0],next[1]-last[1]);
+   if(acc+d>=dist||i===360){const prev=c.start+(c.end-c.start)*(i-1)/360,u=d?clamp((dist-acc)/d,0,1):0,p=point(c.rx+shift,c.ry+shift,prev+(a-prev)*u);return Math.atan2(p[1]+(c.y||0)-CY,p[0]-CX)*180/Math.PI;}
+   acc+=d;last=next;}};
+ return {left:at(Math.max(0,mid-f.width/2)),right:at(Math.min(c.length,mid+f.width/2-(f.tracking||0)))};
+}
+function separatorLayout(c,s,upper,lower){
+ const fixed=placement=>{const b=P.SHAPES.separatorBand,y=c.separatorY,dx=b.rx*Math.sqrt(Math.max(0,1-((y-CY)/b.ry)**2));return {placement,y,dx,angle:Math.atan2(y-CY,dx)*180/Math.PI,crowded:false};};
+ if(s.separatorPlacement!=='follow-text')return fixed('reference');
+ const u=upper&&runEnds(upper),l=lower&&runEnds(lower);
+ // A missing run leaves no gap to follow: keep the reference position.
+ if(!u||!l||!Number.isFinite(c.separatorGap))return fixed('reference-fallback');
+ // Mirror the left side onto the right so the pair stays symmetric.
+ const top=(u.right+wrap180(180-u.left))/2,bottom=(l.right+wrap180(180-l.left))/2,gap=bottom-top;
+ const clear=(c.separatorSize+SEPARATOR_CLEARANCE)/bandRadius((top+bottom)/2)*180/Math.PI;
+ let angle=top+c.separatorGap*gap,crowded=false;
+ if(gap<2*clear){angle=top+gap/2;crowded=true;}else angle=clamp(angle,top+clear,bottom-clear);
+ angle=clamp(angle,-85,85);const r=bandRadius(angle),a=angle*Math.PI/180;
+ return {placement:'follow-text',y:CY+r*Math.sin(a),dx:r*Math.cos(a),angle,crowded,upper:top,lower:bottom,fraction:c.separatorGap};
+}
+// Following marks need room between the lines. When both runs reach each other,
+// narrow the lower run's arc (its fit then tightens or shrinks as usual) until
+// the marks fit; if even a short arc leaves no room, keep the fit and warn.
+function roomForSeparators(c,s,upper,lower){
+ const id=c.lower,base=slot(id,s),text=lower.text;
+ const fitAt=m=>fitRun(text,id,{...s,slots:{...s.slots,[id]:{...(s.slots[id]||{}),span:Math.min(base.span,m),maxSpan:m}}});
+ let lo=40,hi=lower.curve.span,best=fitAt(lo);
+ if(separatorLayout(c,s,upper,best).crowded)return lower;
+ for(let i=0;i<10;i++){const mid=(lo+hi)/2,f=fitAt(mid);if(separatorLayout(c,s,upper,f).crowded)hi=mid;else{lo=mid;best=f;}}
+ return {...best,stage:'separator-room',adjustments:[...(best.adjustments||[]),'separator-room']};
+}
+function drawBadge(s,defs,theme,report,tabLayout=null,layout=null){const crestId=effectiveCrest(s),c=P.CRESTS[crestId],t=P.TABS[s.tab],g=node('g',{'data-layer':'badge','data-crest':crestId});
  if(t.shape==='ribbon')g.append(tabLayout?reactiveRibbon(tabLayout,theme,s.tabBacking):ribbon(defs,t,theme,s.tabBacking));
  if(t.shape==='plate'){const p=P.SHAPES.plate;g.append(node('rect',{'data-layer':'tab-shape','data-primitive':'plate',x:p.x,y:p.y,width:p.width,height:p.height,rx:p.rx,fill:theme.paper,stroke:theme.ink,'stroke-width':p.strokeWidth}));}
  if(t.shape==='wings')g.append(wings());
  const frame=sourceShape(defs,'frame-'+c.scene,c.scene==='wildlife'?ART.wildlifeFrame:ART.treeFrame,theme,c.scene);g.append(use(frame,{'data-layer':'frame'}));
  if(c.scene==='wildlife')defs.append(fragment(ART.wildlifeClip));
  const scene=sourceShape(defs,'scene-'+c.scene,c.scene==='wildlife'?ART.wildlifeScene:ART.treeInner,theme,c.scene);g.append(use(scene,{'data-layer':'scene'}));
- if(c.separator!=='none'){const band=P.SHAPES.separatorBand,y=c.separatorY,dx=band.rx*Math.sqrt(Math.max(0,1-((y-CY)/band.ry)**2)),r=c.separatorSize,marks=node('g',{'data-layer':'separators',fill:theme.text});for(const x of[CX-dx,CX+dx])marks.append(c.separator==='circle'?node('circle',{cx:x,cy:y,r}):node('path',{d:`M ${x} ${y-r} l ${r} ${r} -${r} ${r} -${r} -${r} Z`}));g.append(marks);}
- const letters=node('g',{'data-layer':'live-lettering'});curved(letters,defs,s.content.upper,c.upper,s,theme.text,'upper',report);curved(letters,defs,s.content.lower,c.lower,s,theme.text,'lower',report);if(t.slot)curved(letters,defs,s.content.service,t.slot,s,t.shape==='wings'?P.SHAPES.wings.textFill:theme.text,'service',report,tabLayout?.fit);g.append(letters);return g;
+ // The marks follow the fitted lettering, so fit both crest runs first.
+ const letters=node('g',{'data-layer':'live-lettering'}),upper=s.content.upper?.trim()?fitRun(s.content.upper,c.upper,s):null;
+ let lower=s.content.lower?.trim()?fitRun(s.content.lower,c.lower,s):null,sep=c.separator==='none'?null:separatorLayout(c,s,upper,lower);
+ if(sep?.crowded){lower=roomForSeparators(c,s,upper,lower);sep=separatorLayout(c,s,upper,lower);}
+ curved(letters,defs,s.content.upper,c.upper,s,theme.text,'upper',report,upper);curved(letters,defs,s.content.lower,c.lower,s,theme.text,'lower',report,lower);
+ if(sep){const {y,dx}=sep,r=c.separatorSize,marks=node('g',{'data-layer':'separators',fill:theme.text,'data-separator-placement':sep.placement,'data-separator-y':round(y)});for(const x of[round(CX-dx),round(CX+dx)])marks.append(c.separator==='circle'?node('circle',{cx:x,cy:round(y),r}):node('path',{d:`M ${x} ${round(y-r)} l ${r} ${r} -${r} ${r} -${r} -${r} Z`}));g.append(marks);if(layout)layout.separators=sep;}
+ if(t.slot)curved(letters,defs,s.content.service,t.slot,s,t.shape==='wings'?P.SHAPES.wings.textFill:theme.text,'service',report,tabLayout?.fit);g.append(letters);return g;
 }
 function badgeBox(s,tabLayout=null){
  if(tabLayout){const b=tabLayout.geometry.bounds,x=Math.min(0,b.x),y=Math.min(0,b.y);return{x,y,w:Math.max(676,b.x+b.w)-x,h:Math.max(844,b.y+b.h)-y};}
@@ -290,13 +341,13 @@ function blockHeight(rows,gap){return rows.reduce((h,r)=>h+r.ascent+r.descent,0)
 function wordBlock(g,s,l,theme,x,top,report,center=false){const rows=blockMetrics(s,l);let y=top;rows.forEach((f,i)=>{y+=f.ascent;plain(g,f,x+(center?(l.wordWidth-f.width)/2:0),y,i===0&&s.content.word?theme.word:theme.descriptor,'word-line-'+i,report);y+=f.descent+l.lineGap;});return rows;}
 function uniqueIds(svg,prefix){const map=new Map();for(const e of svg.querySelectorAll('[id]')){map.set(e.id,prefix+e.id);e.id=prefix+e.id;}for(const e of[svg,...svg.querySelectorAll('*')])for(const a of[...e.attributes]){let v=a.value.replace(/url\(#([^)]+)\)/g,(_,id)=>`url(#${map.get(id)||id})`);if(a.localName==='href'&&v.startsWith('#'))v='#'+(map.get(v.slice(1))||v.slice(1));if(a.name==='aria-labelledby')v=v.split(' ').map(x=>map.get(x)||x).join(' ');if(v!==a.value)e.setAttributeNS(a.namespaceURI,a.name,v);}}
 function makeLogo(input={},options={}){
- const s=normalise(input),theme={...P.THEMES[s.theme],...s.colours},report=[],warnings=[];const l=P.LOCKUPS[s.layout],tabLayout=serviceTabLayout(s),bn=badgeBox(s,tabLayout);
+ const s=normalise(input),theme={...P.THEMES[s.theme],...s.colours},report=[],warnings=[],layoutInfo={separators:null};const l=P.LOCKUPS[s.layout],tabLayout=serviceTabLayout(s),bn=badgeBox(s,tabLayout);
  const svg=node('svg',{xmlns:NS,version:'1.1',role:'img','aria-labelledby':'title desc'});svg.setAttributeNS('http://www.w3.org/2000/xmlns/','xmlns:xlink',XL);
  svg.append(node('title',{id:'title'},Object.values(s.content).filter(Boolean).join(' — ')));svg.append(node('desc',{id:'desc'},'Reference-based reconstruction with shared vector primitives and editable text. Substitute fonts; not an authenticated official master. Font files are not embedded.'));
  const defs=node('defs');svg.append(defs);const composition=node('g',{'data-layer':'composition'});svg.append(composition);let nominal=bn;
  if(l.kind==='wordmark'){const rows=blockMetrics(s,l),h=blockHeight(rows,l.lineGap);wordBlock(composition,s,l,theme,0,0,report);nominal={x:0,y:0,w:l.wordWidth,h};}
  else{
-  const badge=drawBadge(s,defs,theme,report,tabLayout);
+  const badge=drawBadge(s,defs,theme,report,tabLayout,layoutInfo);
   if(l.kind==='badge')composition.append(badge);
   else if(l.kind==='strip'){composition.append(node('rect',{'data-layer':'branch-strip',x:330,y:l.barY,width:l.width-330,height:l.height,fill:theme.strip}));composition.append(badge);const labelX=tabLayout?Math.max(756,bn.x+bn.w+80):756;const f=fitPlain(s.content.branch||'','branch-condensed',l.textCap,l.width-labelX-74,s,.003);plain(composition,f,labelX,l.barY+(l.height-f.ascent-f.descent)/2+f.ascent,theme.stripText,'branch-label',report);nominal={x:0,y:bn.y,w:l.width,h:bn.h};}
   else if(l.kind==='words'){composition.append(badge);const lines=(s.content.lines||'').split(/\r?\n/).filter(x=>x.trim());const rows=lines.map(text=>fitPlain(text,'plain-label',l.labelCap,l.wordWidth,s)),h=blockHeight(rows,l.lineGap);let y=(844-h)/2;rows.forEach((f,i)=>{y+=f.ascent;plain(composition,f,(tabLayout?bn.x+bn.w:676)+l.gap,y,theme.descriptor,'stacked-line-'+i,report);y+=f.descent+l.lineGap;});nominal={x:0,y:Math.min(bn.y,(844-h)/2),w:(tabLayout?bn.x+bn.w:676)+l.gap+l.wordWidth,h:Math.max(bn.h,h)};}
@@ -312,6 +363,7 @@ function makeLogo(input={},options={}){
   if(r.fitPolicy&&!r.stylePreserved)warnings.push({code:'TEXT_STYLE_REDUCED',message:`${r.slot}: preferred height or spacing was reduced within the ${r.fitPolicy} limits. Shorten the wording or choose another crest profile to retain the preferred style.`});
   if(r.overflow>.05)warnings.push({code:'TEXT_FIT_OVERFLOW',message:`${r.slot}: the measured text exceeds the available arc by ${r.overflow.toFixed(2)} units. Review this configuration before export.`});
  }
+ if(layoutInfo.separators?.crowded)warnings.push({code:'SEPARATOR_CROWDED',message:'The upper and lower lettering leave no clear room for the separator marks. Shorten the wording or choose another crest profile.'});
  if(tabLayout?.fit.tab.status==='text-reduced')warnings.push({code:'TAB_TEXT_REDUCED',message:`Service tab reached its 80° half-span limit. Requested cap ${tabLayout.fit.preferredCap.toFixed(1)}; rendered ${tabLayout.fit.cap.toFixed(1)}. Shorten the wording to keep the requested size.`});
  if(P.recipe(s.recipe).excluded)warnings.push({code:'EXCLUDED_REFERENCE',message:'Fire Control is excluded from calibration. This is only a shared-component placeholder.'});
  if(s.tab==='airtanker')warnings.push({code:'APPROXIMATION',message:'Winged geometry remains a photographic approximation.'});
@@ -319,7 +371,7 @@ function makeLogo(input={},options={}){
  const pad=10,x=Math.min(nominal.x,b.x)-pad,y=Math.min(nominal.y,b.y)-pad,right=Math.max(nominal.x+nominal.w,b.x+b.width)+pad,bottom=Math.max(nominal.y+nominal.h,b.y+b.height)+pad;
  const viewBox={x:round(x),y:round(y),w:round(right-x),h:round(bottom-y)};svg.remove();svg.setAttribute('viewBox',`${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`);svg.setAttribute('width',s.outputWidth);svg.setAttribute('height',round(s.outputWidth*viewBox.h/viewBox.w));
  const summary=report.map(({curve,family,...r})=>({...r,curve:curve?{span:curve.span,rx:curve.rx,ry:curve.ry}:undefined}));svg.insertBefore(node('metadata',{'data-engine':'bc-shared-primitives','data-version':'5'},JSON.stringify({configuration:s,resolved:summary})),defs);
- uniqueIds(svg,(options.prefix||'bc'+(++seq))+'-');return{svg,state:s,report:summary,warnings,viewBox,nominal,crest:effectiveCrest(s),fontIds};
+ uniqueIds(svg,(options.prefix||'bc'+(++seq))+'-');return{svg,state:s,report:summary,warnings,viewBox,nominal,crest:effectiveCrest(s),separators:layoutInfo.separators,fontIds};
 }
 async function render(input={},options={}){const s=normalise(input);const ids=Object.keys(P.ROLES).map(id=>role(id,s).face);await ensureFonts(ids,options.allowNetwork===true);return makeLogo(s,options);}
 // Editable exports must re-establish the same aliases in a fresh document.
@@ -348,7 +400,7 @@ async function png(result,width=1600){
  const w=clamp(Math.round(width),100,6000),h=Math.round(w*result.viewBox.h/result.viewBox.w);if(w*h>32000000)throw Error('PNG is too large; reduce export width.');svg.setAttribute('width',w);svg.setAttribute('height',h);
  const url=URL.createObjectURL(new Blob([serialise(svg)],{type:'image/svg+xml'}));try{const img=new Image();await new Promise((ok,bad)=>{img.onload=ok;img.onerror=()=>bad(Error('SVG rasterization failed'));img.src=url;});const c=document.createElement('canvas');c.width=w;c.height=h;const context=c.getContext('2d');context.drawImage(img,0,0,w,h);return await new Promise((ok,bad)=>c.toBlob(b=>b?ok(b):bad(Error('PNG export failed')),'image/png'));}finally{URL.revokeObjectURL(url);}
 }
-function recipeState(id,shared={}){return normalise({recipe:id,textFit:shared.textFit,referenceModelVersion:shared.referenceModelVersion,tabSizing:shared.tabSizing,roles:shared.roles||{},slots:shared.slots||{}});}
+function recipeState(id,shared={}){return normalise({recipe:id,textFit:shared.textFit,referenceModelVersion:shared.referenceModelVersion,tabSizing:shared.tabSizing,autoProfile:shared.autoProfile,separatorPlacement:shared.separatorPlacement,roles:shared.roles||{},slots:shared.slots||{}});}
 function dependencies(roleId){return P.RECIPES.filter(x=>!x.excluded).filter(r=>{const s=recipeState(r.id),c=P.CRESTS[s.crest],t=P.TABS[s.tab],l=P.LOCKUPS[s.layout];return [...(l.kind!=='wordmark'?[P.SLOTS[c.upper]?.role,P.SLOTS[c.lower]?.role,P.SLOTS[t.slot]?.role]:[]),...(l.kind==='wordmark'||l.kind==='horizontal'||l.kind==='stacked'?['wordmark-heavy','descriptor-slab',...(s.content.district?['district-slab']:[])]:[]),...(l.kind==='words'?['plain-label']:[]),...(l.kind==='strip'?['branch-condensed']:[])].includes(roleId);}).map(x=>x.name);}
-global.BCLogo={P,ART,TEXT_FIT_POLICIES,normalise,recipeState,makeLogo,render,serialise,png,metrics,fitRun,fitPlain,curve,effectiveCrest,role,slot,referenceProfile,dependencies,ensureFonts,retryFonts,fontState,invalidateMetrics,node,clone};
+global.BCLogo={P,ART,TEXT_FIT_POLICIES,normalise,recipeState,makeLogo,render,serialise,png,metrics,fitRun,fitPlain,curve,effectiveCrest,separatorLayout,role,slot,referenceProfile,dependencies,ensureFonts,retryFonts,fontState,invalidateMetrics,node,clone};
 })(window);

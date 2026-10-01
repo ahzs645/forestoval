@@ -9,6 +9,12 @@
   (Forests · Wildfire Service is see-through, as in its reference).
 - A fresh studio starts with reference-calibrated fitting, like the site's
   editor and Recreations page; saved configurations keep their own policy.
+- `separatorPlacement: 'follow-text'` places the separator marks between the
+  upper and lower lettering (at each crest's `separatorGap` fraction of the
+  gap, measured from its reference wording), narrowing the lower arc when the
+  lines meet; `'reference'` (the default) keeps `separatorY`.
+  `recipeState()` carries `autoProfile` and `separatorPlacement`. The site's
+  editor and a fresh studio turn both on.
 - `retryFonts()` starts every face again from the top of the source order
   (dropping cached faces and their registered `FontFace`s), and a load that was
   in flight before the retry can no longer overwrite the newer result.

@@ -1,6 +1,9 @@
 import type { Catalogue, Configuration, ContentKey, EditorOptions, LogoResult, Runtime } from './types';
 
 const STORAGE_KEY = 'forestoval-compose-lettering-v1';
+/** A new or reset draft: calibrated fitting, and a crest that follows its wording
+ * (short/long wildlife profile, and separator marks placed between the runs). */
+export const NEW_DRAFT = { textFit: 'reference-calibrated', autoProfile: true, separatorPlacement: 'follow-text' } as const;
 const LABELS: Record<ContentKey, string> = {
   upper: 'Upper oval text', lower: 'Lower / ministry text', service: 'Service tab text',
   word: 'Acronym / wordmark', descriptor: 'Descriptor', district: 'District',
@@ -73,6 +76,11 @@ export class LetteringEditor {
         <div data-part="fields"></div>
         <label>Lettering style<select data-control="textFit" aria-label="Lettering style"></select></label>
         <p class="fo-muted fo-small" data-part="policy-note"></p>
+        <label class="fo-check"><input type="checkbox" data-control="autoProfile"> Pick the short or long crest from the wording</label>
+        <label>Separator dots<select data-control="separatorPlacement" aria-label="Separator dots">
+          <option value="follow-text">Follow the lettering</option><option value="reference">Keep the reference position</option>
+        </select></label>
+        <p class="fo-muted fo-small" data-part="profile-note"></p>
         <label>Service holder<select data-control="tabSizing" aria-label="Service holder">
           <option value="reference">Keep the reference holder</option><option value="follow-text">Grow to follow service text</option>
         </select></label>
@@ -119,6 +127,7 @@ export class LetteringEditor {
     if (!el) throw new Error(`Missing editor part: ${name}`); return el;
   }
   private control(name: string): HTMLSelectElement { return this.root.querySelector<HTMLSelectElement>(`[data-control="${name}"]`)!; }
+  private checkbox(name: string): HTMLInputElement { return this.root.querySelector<HTMLInputElement>(`input[data-control="${name}"]`)!; }
   private on(target: EventTarget, event: string, fn: EventListener) { target.addEventListener(event, fn, { signal: this.abort.signal }); }
   private async start() {
     try {
@@ -136,9 +145,11 @@ export class LetteringEditor {
       let active = 'long-wildfire';
       try {
         const saved = JSON.parse(this.storage?.getItem(STORAGE_KEY) ?? 'null');
-        if (saved?.version === 1 && saved.drafts && typeof saved.drafts === 'object') {
+        if ((saved?.version === 1 || saved?.version === 2) && saved.drafts && typeof saved.drafts === 'object') {
           for (const [id, draft] of Object.entries(saved.drafts)) {
-            try { const s = this.validate(draft); if (s.recipe === id) this.drafts.set(id, s); } catch { /* Ignore only this invalid saved draft. */ }
+            // Version 1 drafts predate the profile and separator controls; they take the new defaults.
+            const raw = saved.version === 1 && draft && typeof draft === 'object' ? { ...draft, autoProfile: NEW_DRAFT.autoProfile, separatorPlacement: NEW_DRAFT.separatorPlacement } : draft;
+            try { const s = this.validate(raw); if (s.recipe === id) this.drafts.set(id, s); } catch { /* Ignore only this invalid saved draft. */ }
           }
           if (this.drafts.has(saved.active)) active = saved.active;
         }
@@ -158,13 +169,13 @@ export class LetteringEditor {
   private remember() {
     if (!this.state) return;
     this.drafts.set(this.state.recipe, this.runtime!.E.normalise(this.state));
-    try { this.storage?.setItem(STORAGE_KEY, JSON.stringify({ version: 1, active: this.state.recipe, drafts: Object.fromEntries(this.drafts) })); }
+    try { this.storage?.setItem(STORAGE_KEY, JSON.stringify({ version: 2, active: this.state.recipe, drafts: Object.fromEntries(this.drafts) })); }
     catch { /* Restricted/full storage: the live in-memory draft is still usable. */ }
   }
   private choose(id: string) {
     if (!this.runtime) return;
     this.remember();
-    this.state = this.drafts.get(id) ?? this.runtime.E.recipeState(id, { textFit: 'reference-calibrated' });
+    this.state = this.drafts.get(id) ?? this.runtime.E.recipeState(id, NEW_DRAFT);
     this.state = this.runtime.E.normalise(this.state);
     this.selected = undefined; this.part('dock').hidden = true;
     this.sync(); this.schedule();
@@ -172,10 +183,13 @@ export class LetteringEditor {
   private sync() {
     if (!this.state || !this.runtime) return;
     const { P } = this.runtime, s = this.state;
-    for (const key of ['recipe', 'textFit', 'crest', 'tab', 'layout', 'tabSizing', 'tabBacking'] as const) this.control(key).value = s[key];
-    const ribbon = P.TABS[s.tab].shape === 'ribbon' && P.LOCKUPS[s.layout].kind !== 'wordmark';
+    for (const key of ['recipe', 'textFit', 'crest', 'tab', 'layout', 'tabSizing', 'tabBacking', 'separatorPlacement'] as const) this.control(key).value = s[key];
+    const badge = P.LOCKUPS[s.layout].kind !== 'wordmark', ribbon = P.TABS[s.tab].shape === 'ribbon' && badge;
     this.control('tabSizing').disabled = !ribbon;
     this.control('tabBacking').disabled = !ribbon;
+    const auto = this.checkbox('autoProfile');
+    auto.checked = s.autoProfile; auto.disabled = !badge || !s.crest.startsWith('wildlife-');
+    this.control('separatorPlacement').disabled = !badge || P.CRESTS[s.crest].separator === 'none';
     this.part('name').textContent = P.recipe(s.recipe).name;
     this.part('confidence').textContent = P.recipe(s.recipe).confidence ?? 'Reference-based reconstruction';
     this.part('policy-note').textContent = this.runtime.E.TEXT_FIT_POLICIES[s.textFit].description;
@@ -194,11 +208,17 @@ export class LetteringEditor {
   private bind() {
     this.on(this.root, 'change', event => {
       const target = event.target;
-      if (!(target instanceof HTMLSelectElement) || !this.state) return;
+      if (!this.state) return;
+      if (target instanceof HTMLInputElement && target.dataset.control === 'autoProfile') {
+        this.state = this.runtime!.E.normalise({ ...this.state, autoProfile: target.checked }); this.sync(); this.schedule(); return;
+      }
+      if (!(target instanceof HTMLSelectElement)) return;
       const key = target.dataset.control;
       if (key === 'recipe') { this.choose(target.value); return; }
-      if (key && ['textFit', 'crest', 'tab', 'layout', 'tabSizing', 'tabBacking'].includes(key)) {
-        this.state = this.runtime!.E.normalise({ ...this.state, [key]: target.value }); this.sync(); this.schedule();
+      if (key && ['textFit', 'crest', 'tab', 'layout', 'tabSizing', 'tabBacking', 'separatorPlacement'].includes(key)) {
+        // Choosing a crest profile by hand stops the wording from overriding it.
+        const manual = key === 'crest' ? { autoProfile: false } : {};
+        this.state = this.runtime!.E.normalise({ ...this.state, [key]: target.value, ...manual }); this.sync(); this.schedule();
       }
     });
     this.on(this.root, 'compositionstart', () => { this.composing = true; });
@@ -305,6 +325,7 @@ export class LetteringEditor {
           const check = f?.verified === undefined ? '' : f.verified ? ' · advances match the calibration face' : ' · advances differ from the calibration face';
           return node('p', `${P.FACES[id].family} ${P.FACES[id].weight}: ${f?.status === 'ready' ? f.source : 'fallback'}${check}`);
         }));
+      this.part('profile-note').textContent = this.profileNote(result);
       const missing = result.warnings.some(w => w.code === 'FONT_FALLBACK');
       this.unverified = result.warnings.some(w => w.code === 'FONT_FALLBACK' || w.code === 'FONT_METRICS_MISMATCH');
       this.part('font-ack').hidden = !this.unverified;
@@ -313,6 +334,16 @@ export class LetteringEditor {
         : `${result.report.length} editable text runs · click a line to edit`;
       this.rendering = false; this.updateButtons();
     } catch (error) { if (!this.disposed && revision === this.revision) this.fail(error); }
+  }
+  /** Which crest the wording chose, and where the separator marks went. */
+  private profileNote(result: LogoResult): string {
+    const s = result.state, notes: string[] = [];
+    if (this.runtime!.P.LOCKUPS[s.layout].kind === 'wordmark') return '';
+    if (s.autoProfile && s.crest.startsWith('wildlife-')) notes.push(`The wording uses the ${title(result.crest)} crest.`);
+    const sep = result.separators;
+    if (sep?.placement === 'follow-text') notes.push(sep.crowded ? 'The dots are crowded between the lines.' : 'The dots sit between the upper and lower lines.');
+    if (sep?.placement === 'reference-fallback') notes.push('With one line empty the dots keep their reference position.');
+    return notes.join(' ');
   }
   private updateButtons() {
     const busy = !this.result || this.rendering || this.working;
@@ -332,7 +363,7 @@ export class LetteringEditor {
     if (action === 'open') { this.part<HTMLInputElement>('file').click(); return; }
     if (!this.state || !this.runtime) return;
     if (action === 'reset') {
-      this.state = this.runtime.E.recipeState(this.state.recipe, { textFit: 'reference-calibrated' });
+      this.state = this.runtime.E.recipeState(this.state.recipe, NEW_DRAFT);
       this.selected = undefined; this.part('dock').hidden = true; this.sync(); this.schedule(); return;
     }
     if (action === 'fonts') {

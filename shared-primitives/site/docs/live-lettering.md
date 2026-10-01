@@ -39,9 +39,36 @@ are 14 active recipes; excluded Fire Control is not offered. Recipe inheritance
 still supplies the wording, crest, tab and layout. The UI does not maintain a
 second collection of preset coordinates.
 
-New drafts default to `reference-calibrated`, with automatic profile switching
-off. Uncalibrated slots retain the engine's own warning; having a selectable
-preset does not mean all its lettering has received reference calibration.
+New drafts default to `reference-calibrated`. Uncalibrated slots retain the
+engine's own warning; having a selectable preset does not mean all its
+lettering has received reference calibration.
+
+## The crest follows its wording
+
+A preset is a starting point, not a fixed layout. Two options, both on for new
+drafts, let one preset become another by editing its text:
+
+- **Pick the short or long crest from the wording** (`autoProfile`). On the
+  wildlife crests the engine measures the lower wording. A short name keeps the
+  capitals crest; a ministry-length name moves to the long crest. Typing
+  *British Columbia* / *Forests, Lands and Natural Resource Operations* into
+  Forests · Wildfire Service gives the long ministry badge, and *FORESTS* in
+  Long ministry · Wildfire gives the capitals badge. The wording's case is kept.
+  Choosing a crest profile by hand turns this off.
+- **Separator dots: follow the lettering** (`separatorPlacement: 'follow-text'`).
+  The dots sit in the gap between the end of the upper line and the start of
+  the lower line, at the crest's `separatorGap` fraction of that gap. Each
+  fraction is measured from the reference wording. The reference wording
+  therefore puts the dots back on the crest's `separatorY`, and other wording
+  moves them with the gap. When both lines run into each other, the lower
+  line's arc narrows until the dots have room. If the dots still don't fit,
+  they are centred and `SEPARATOR_CROWDED` is reported. With one line empty,
+  the dots keep their reference position. *Keep the reference position*
+  restores the fixed heights.
+
+The note under these controls names the crest the wording picked. Drafts saved
+before these controls existed (storage payload version 1) adopt both defaults
+when loaded.
 
 A mouse click on a text character or keyboard Enter/Space opens the selected
 line's HTML input below the preview. The caret remains in a conventional input;
@@ -50,7 +77,7 @@ updates while typing. Escape/Done returns focus to the sidebar. Multiline stacke
 wordmarks use their textarea. Empty inscriptions remain recoverable there.
 
 Each preset keeps its own normalized draft using a separate localStorage key,
-`forestoval-compose-lettering-v1`; restricted storage leaves an in-memory draft.
+`forestoval-compose-lettering-v1` (payload version 2); restricted storage leaves an in-memory draft.
 Reset restores only the current preset. Opening a v5 configuration validates the
 version and preset before replacing the draft. The engine's own normalization
 still validates fitting policies and geometry overrides.
@@ -114,12 +141,15 @@ Compose modes and the existing layer presets. It requires the normal Python
 Playwright dependency from the repository requirements and Chromium (or
 `CHROMIUM=/path/to/browser`). Results and screenshots go to `tests/output/`.
 
-Beyond the editing checks, it confirms that every face loads from the bundle and
+Beyond the editing checks, it confirms that the crest follows its wording in
+both directions with the dots on their reference heights, that the dots move with
+the wording and leave room when both lines are full, and that older drafts adopt
+the new defaults. It also confirms that every face loads from the bundle and
 matches its calibration advance, that the service backing defaults per preset,
 that exports with a fallback face need consent (it blocks the bundled Noto file
 and all local faces in a second page), and that the Recreations cards show the
 engine's lettering with the same advances, and that the font button reloads the
-bundled face once it is reachable again. All 36 checks passed against
+bundled face once it is reachable again. All 44 checks passed against
 `npm run dev` and against the production build on a machine with none of the
 faces installed. A separate check confirmed that the three engine scripts load
 from `assets/` when the build is served under a sub-path like `/forestoval/`, that

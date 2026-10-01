@@ -1,7 +1,7 @@
 /* UI owns the shared patch maps. Every recipe renders through the same engine. */
 (function(){'use strict';
 const P=BCPrimitives,E=BCLogo,$=id=>document.getElementById(id),R=JSON.parse($('reference-data').textContent),STORAGE='bc-shared-primitives-v5';
-let state=E.recipeState('long-wildfire',{textFit:'reference-calibrated'}),mode='design',current,revision=0,toastTimer,renderTimer;
+let state=E.recipeState('long-wildfire',{textFit:'reference-calibrated',autoProfile:true,separatorPlacement:'follow-text'}),mode='design',current,revision=0,toastTimer,renderTimer;
 let alignment={scale:1,x:0,y:0};
 try{const raw=localStorage.getItem(STORAGE);if(raw)state=E.normalise(JSON.parse(raw));}catch{}
 const label=s=>s.replace(/-/g,' ');
@@ -63,7 +63,7 @@ function fields(){syncTabSizing();syncTextFit();const l=P.LOCKUPS[state.layout],
  if(l.kind!=='wordmark')keys.push('upper','lower');if(tab.slot&&l.kind!=='wordmark')keys.push('service');if(['horizontal','stacked','wordmark'].includes(l.kind))keys.push('word','descriptor','district');if(l.kind==='words')keys.push('lines');if(l.kind==='strip')keys.push('branch');
  $('contentFields').replaceChildren(...keys.map(k=>{const w=document.createElement('label');w.textContent=fieldLabels[k];const input=document.createElement(['lower','lines','branch'].includes(k)?'textarea':'input');input.value=state.content[k]||'';input.id='content-'+k;input.dataset.content=k;input.maxLength=320;if(input.tagName==='TEXTAREA')input.rows=k==='lines'?3:2;input.addEventListener('input',()=>{state.content[k]=input.value;schedule();});w.append(input);return w;}));
 }
-function sync(){for(const k of['recipe','crest','tab','layout','theme'])$(k).value=state[k];$('autoProfile').checked=state.autoProfile;$('outputWidth').value=state.outputWidth;fields();syncRole();syncSlot();}
+function sync(){for(const k of['recipe','crest','tab','layout','theme'])$(k).value=state[k];$('autoProfile').checked=state.autoProfile;$('separatorFollow').checked=state.separatorPlacement==='follow-text';$('outputWidth').value=state.outputWidth;fields();syncRole();syncSlot();}
 function syncRole(){const id=$('typeRole').value,r=E.role(id,state);$('typeFace').value=r.face;$('roleCap').value=r.capScale;$('roleTracking').value=r.trackingEm;const uses=E.dependencies(id);$('roleUses').textContent='Shared by '+uses.length+' reference recipes: '+(uses.join(' · ')||'none in this family')+'.';}
 function syncSlot(){const id=$('typeSlot').value,t=E.slot(id,state);$('slotCap').value=t.cap;$('slotTracking').value=t.tracking;
  $('slotTracking').min=state.textFit==='reference-calibrated'?-.06:0;$('roleTracking').min=state.textFit==='reference-calibrated'?-.06:-.01;
@@ -78,6 +78,7 @@ function startRecipe(id){if(P.recipe(id).excluded)throw Error('This distorted re
 $('recipe').addEventListener('change',()=>startRecipe($('recipe').value));
 for(const k of['crest','tab','layout','theme'])$(k).addEventListener('change',()=>{state[k]=$(k).value;fields();refresh();});
 $('autoProfile').addEventListener('change',()=>{state.autoProfile=$('autoProfile').checked;refresh();});
+$('separatorFollow').addEventListener('change',()=>{state.separatorPlacement=$('separatorFollow').checked?'follow-text':'reference';refresh();});
 $('resetRecipe').onclick=()=>startRecipe(state.recipe);
 $('typeRole').onchange=syncRole;$('typeSlot').onchange=syncSlot;
 function changeRole(){if(['roleCap','roleTracking'].some(id=>!$(id).value.trim()||!Number.isFinite(Number($(id).value))))return;const id=$('typeRole').value;state.roles[id]={face:$('typeFace').value,capScale:Number($('roleCap').value),trackingEm:Number($('roleTracking').value)};state=E.normalise(state);schedule();}

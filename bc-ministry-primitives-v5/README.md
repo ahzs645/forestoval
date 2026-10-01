@@ -80,7 +80,9 @@ The saved vector-reference character measurements were used only as calibration 
 6. Reduce font size uniformly if the run still does not fit. Move a curved baseline with the cap-height change so its ink midline stays near the intended band centre. Do not stretch glyph width independently of height.
 7. Warn when the resulting lettering is below its minimum cap height. Fitting 320 characters proves the engine retains the wording; it does not make that wording a usable logo.
 
-Changing output width scales the complete SVG. The family is designed in a shared 676-unit crest coordinate space. The optional measured-name switch chooses the short or long wildlife profile; it does not force uppercase or replace the user's wording.
+8. With `separatorPlacement: 'follow-text'`, place the separator marks in the gap between the upper and lower runs, at the crest's `separatorGap` fraction (measured from the reference wording, so that wording keeps `separatorY`). When the runs leave no room, narrow the lower arc until the marks fit; otherwise centre them and warn (`SEPARATOR_CROWDED`). The fractions are measured on the reference-calibrated fit. Under legacy fitting the long crest's text sits differently, so its marks land about 43 units lower than `separatorY`.
+
+Changing output width scales the complete SVG. The family is designed in a shared 676-unit crest coordinate space. The optional measured-name switch (`autoProfile`) chooses the short or long wildlife profile; it does not force uppercase or replace the user's wording.
 
 Manual shared-slot calibration is intentionally exposed, but extreme radius or cap changes can move text out of its intended band. The automatic defaults and stress cases were tested; arbitrary manual combinations are not a guarantee of an acceptable design.
 
