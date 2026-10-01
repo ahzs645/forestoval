@@ -19,4 +19,5 @@ __pycache__/
 # `extract_primitives.py --theme` writes recoloured copies to themes/.
 /bc-ministry-primitives-v5/bc-ministry-primitives-v5.html
 /bc-ministry-primitives-v5/tests/output/
+/shared-primitives/site/tests/output/
 /shared-primitives/themes/
