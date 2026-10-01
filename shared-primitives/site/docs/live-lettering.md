@@ -66,8 +66,10 @@ drafts, let one preset become another by editing its text:
   sit within 1.5 units of the Forest Service reference's diamonds. The tree
   crests centre their lines 4.5 units inside the ring (`ringOffset`), as the
   Forest Service vector does. That puts both lines within 1 unit of it in
-  radius and within 2° at their ends. Their letters still differ from the
-  artwork's, which uses a wider typeface than the substitutes.
+  radius and within 1° at their ends. The tree crest's lettering is calibrated
+  to that vector too (reference model version 2): Open Sans Bold above, and
+  Jost Black below, because the vector's lower line is a geometric typeface.
+  The letters overlap it 0.61 / 0.65, up from 0.40 / 0.36.
 
   The Wildfire Management tab sits on the oval. Its holder is built on the
   frame's outer oval at ±60° (what its wording needs at its cap height),
@@ -203,7 +205,7 @@ matches its calibration advance, that the service backing defaults per preset,
 that exports with a fallback face need consent (it blocks the bundled Noto file
 and all local faces in a second page), and that the Recreations cards show the
 engine's lettering with the same advances, and that the font button reloads the
-bundled face once it is reachable again. All 52 checks passed against
+bundled face once it is reachable again. All 53 checks passed against
 `npm run dev` and against the production build on a machine with none of the
 faces installed. A separate check confirmed that the three engine scripts load
 from `assets/` when the build is served under a sub-path like `/forestoval/`, that

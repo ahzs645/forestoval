@@ -87,7 +87,9 @@ function normalise(input={}){
  const rid=P.RECIPES.some(r=>r.id===input.recipe)?input.recipe:'forests';const r=P.recipe(rid);
  const textFit=input.textFit??'legacy';
  if(typeof textFit!=='string'||!Object.hasOwn(TEXT_FIT_POLICIES,textFit))throw Error('Unknown lettering fit policy: '+textFit);
- const referenceModelVersion=input.referenceModelVersion??P.REFERENCE_LETTERING?.version;
+ // Version 2 only added tree profiles to version 1, so a version-1 configuration upgrades.
+ let referenceModelVersion=input.referenceModelVersion??P.REFERENCE_LETTERING?.version;
+ if(referenceModelVersion===1&&P.REFERENCE_LETTERING?.version===2)referenceModelVersion=2;
  if(textFit==='reference-calibrated'&&referenceModelVersion!==P.REFERENCE_LETTERING?.version)throw Error('Unsupported reference lettering model version: '+referenceModelVersion);
  const s={version:5,textFit,...(textFit==='reference-calibrated'?{referenceModelVersion}:{}),tabSizing:input.tabSizing==='follow-text'?'follow-text':'reference',tabBacking:['paper','transparent'].includes(input.tabBacking)?input.tabBacking:r.tabBacking||'paper',separatorPlacement:input.separatorPlacement==='follow-text'?'follow-text':'reference',fanOut:input.fanOut===true,centreInRing:input.centreInRing===true,recipe:rid,crest:input.crest||r.crest,tab:input.tab||r.tab,layout:input.layout||r.layout,theme:input.theme||r.theme,autoProfile:input.autoProfile===true,content:{...r.content},roles:{},slots:{},colours:{},outputWidth:clamp(Number(input.outputWidth)||1200,100,6000)};
  for(const [k,v]of Object.entries(input.content||{}))if(['upper','lower','service','word','descriptor','district','lines','branch'].includes(k))s.content[k]=clean(v);

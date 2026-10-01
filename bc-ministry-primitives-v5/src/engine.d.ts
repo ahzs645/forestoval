@@ -1,8 +1,8 @@
 /** Browser globals after primitives.js and engine.js are loaded. */
 export {};
 declare global {
-  type BCFaceId = 'noto-condensed'|'open-heavy'|'open-bold'|'condensed-bold'|'condensed-heavy'|'inter-black'|'slab-bold'|'slab-medium'|'sans-regular'|'sans-bold';
-  type BCRoleId = 'crest-heavy'|'crest-service-upper'|'crest-condensed'|'crest-thin'|'service-heavy'|'service-condensed'|'wordmark-heavy'|'descriptor-slab'|'district-slab'|'plain-label'|'branch-condensed';
+  type BCFaceId = 'noto-condensed'|'open-heavy'|'open-bold'|'condensed-bold'|'condensed-heavy'|'inter-black'|'slab-bold'|'slab-medium'|'sans-regular'|'sans-bold'|'jost-black';
+  type BCRoleId = 'crest-heavy'|'crest-service-upper'|'crest-tree-lower'|'crest-condensed'|'crest-thin'|'service-heavy'|'service-condensed'|'wordmark-heavy'|'descriptor-slab'|'district-slab'|'plain-label'|'branch-condensed';
   type BCCrestId = 'wildlife-caps'|'wildlife-long'|'tree-heavy'|'tree-long'|'tree-thin';
   type BCTabId = 'none'|'wildfire-bottom'|'management-top'|'parks'|'airtanker';
   type BCLayoutId = 'badge'|'horizontal'|'horizontal-compact'|'words'|'wordmark'|'strip'|'stacked';

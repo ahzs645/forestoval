@@ -18,12 +18,14 @@ const FACES={
  'slab-bold':{family:'Roboto Slab',weight:700,advance:15.52247,locals:['Roboto Slab Bold','RobotoSlab-Bold'],google:'Roboto+Slab:wght@700',fallback:'Rockwell, Georgia, serif',label:'Roboto Slab Bold · substitute'},
  'slab-medium':{family:'Roboto Slab',weight:500,advance:15.41114,locals:['Roboto Slab Medium','RobotoSlab-Medium'],google:'Roboto+Slab:wght@500',fallback:'Rockwell, Georgia, serif',label:'Roboto Slab Medium · substitute'},
  'sans-regular':{family:'Roboto',weight:400,advance:14.65528,locals:['Roboto Regular','Roboto-Regular'],google:'Roboto:wght@400',fallback:'Arial, sans-serif',label:'Roboto Regular · substitute'},
+ 'jost-black':{family:'Jost',weight:900,advance:16.51198,locals:['Jost Black','Jost-Black'],google:'Jost:wght@900',fallback:'Futura, "Century Gothic", Arial, sans-serif',label:'Jost Black · substitute (geometric)'},
  'sans-bold':{family:'Roboto',weight:700,advance:14.88086,locals:['Roboto Bold','Roboto-Bold'],google:'Roboto:wght@700',fallback:'Arial, sans-serif',label:'Roboto Bold · substitute'}
 };
 // Change a role once: every slot/recipe using it updates together.
 const ROLES={
  'crest-heavy':{face:'open-heavy',capScale:1,trackingEm:0},
  'crest-service-upper':{face:'condensed-bold',capScale:1,trackingEm:0},
+ 'crest-tree-lower':{face:'open-heavy',capScale:1,trackingEm:0},
  'crest-condensed':{face:'condensed-bold',capScale:1,trackingEm:0},
  'crest-thin':{face:'sans-regular',capScale:1,trackingEm:0},
  'service-heavy':{face:'open-heavy',capScale:1,trackingEm:0},
@@ -42,7 +44,7 @@ const SLOTS={
  'long-upper':{role:'crest-condensed',side:'top',cap:53,anchorCap:53,rx:249,ry:334,span:116,maxSpan:116,tracking:0,minTracking:0,endPad:16,minCap:28},
  'long-lower':{role:'crest-condensed',side:'bottom',cap:50,anchorCap:50,rx:290,ry:379,span:240,maxSpan:240,tracking:0,minTracking:0,endPad:20,minCap:27},
  'tree-upper':{role:'crest-service-upper',side:'top',cap:62.36874,anchorCap:62,rx:232.06115,ry:322.96198,span:172,maxSpan:177,tracking:0.00156,minTracking:0,endPad:12,minCap:30},
- 'tree-lower':{role:'crest-heavy',side:'bottom',cap:62.5,anchorCap:62.5,rx:296.07,ry:381.95,span:183,maxSpan:188,tracking:.054,minTracking:0,endPad:12,minCap:30},
+ 'tree-lower':{role:'crest-tree-lower',side:'bottom',cap:62.5,anchorCap:62.5,rx:296.07,ry:381.95,span:183,maxSpan:188,tracking:.054,minTracking:0,endPad:12,minCap:30},
  'thin-upper':{role:'crest-thin',side:'top',cap:50,anchorCap:50,rx:247,ry:326,span:192,maxSpan:192,tracking:.022,minTracking:0,endPad:14,minCap:28},
  'thin-lower':{role:'crest-thin',side:'bottom',cap:44,anchorCap:44,rx:280,ry:382,span:193,maxSpan:193,tracking:.027,minTracking:0,endPad:14,minCap:26},
  'service-bottom':{role:'service-heavy',side:'bottom',cap:48.04678,anchorCap:48,rx:402.36543,ry:484.21603,span:108,maxSpan:108,tracking:0.04075,minTracking:0,endPad:22,minCap:27},
@@ -51,14 +53,48 @@ const SLOTS={
  'wings-label':{role:'plain-label',side:'bottom',cap:45,anchorCap:45,rx:431,ry:475,span:98,maxSpan:98,tracking:.035,minTracking:0,endPad:20,minCap:27}
 };
 // Reference-calibrated defaults, opt-in. Raster sources are not font masters.
+// Version 2 adds the tree crest (tree-upper / tree-lower, fitted to the Forest
+// Service vector with tools/extract_tree_masks.py, groups tree-*-ring: radii are
+// the ring-centred baselines, so both placements agree); the wildlife values
+// are unchanged from version 1, which the engine still accepts.
 const REFERENCE_LETTERING={
-  "version": 1,
+  "version": 2,
   "roles": {
     "crest-condensed": {
       "face": "noto-condensed"
+    },
+    "crest-service-upper": {
+      "face": "open-bold"
+    },
+    "crest-tree-lower": {
+      "face": "jost-black"
     }
   },
   "slots": {
+    "tree-upper": {
+      "referenceProfile": "tree-upper",
+      "heightModel": "cap",
+      "cap": 60.60554,
+      "anchorCap": 60.60554,
+      "rx": 231.81,
+      "ry": 320.99,
+      "tracking": -0.0522613,
+      "minTracking": -0.06,
+      "wordSpacingEm": 0.0337352,
+      "anchorBias": 0.31742
+    },
+    "tree-lower": {
+      "referenceProfile": "tree-lower",
+      "heightModel": "cap",
+      "cap": 58.07448,
+      "anchorCap": 58.07448,
+      "rx": 291.41,
+      "ry": 380.59,
+      "tracking": 0.0407052,
+      "minTracking": -0.025,
+      "wordSpacingEm": 0.1655718,
+      "anchorBias": 8.83579
+    },
     "wildlife-upper": {
       "referenceProfile": "caps-upper",
       "heightModel": "cap",

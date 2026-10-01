@@ -42,7 +42,7 @@ original scene + crest profile + text roles + tab + composition + content
 | Composition | Crest/wordmark arrangement, row gaps and width budgets | `LOCKUPS` |
 | Example recipe | Inheritance, component references and wording | `RECIPES` |
 
-All tables are in `src/primitives.js`, except the artwork. `SHAPES` (crest centre, separator band, Parks plate, airtanker wings) and `RECOLOUR` (source colour → theme token) hold the few shapes and colours the engine draws itself; `../shared-primitives/extract_primitives.py` reads the same tables, so the shared primitives cannot drift from the engine. The tables are frozen. The UI owns validated patch maps and passes the same maps to all recipes. There are **14 active recipes, 11 shared typography roles, 12 baseline slots, 5 crest profiles and 7 composition types**. Fire Control remains an excluded catalogue entry, not a selectable family member or calibration target.
+All tables are in `src/primitives.js`, except the artwork. `SHAPES` (crest centre, separator band, Parks plate, airtanker wings) and `RECOLOUR` (source colour → theme token) hold the few shapes and colours the engine draws itself; `../shared-primitives/extract_primitives.py` reads the same tables, so the shared primitives cannot drift from the engine. The tables are frozen. The UI owns validated patch maps and passes the same maps to all recipes. There are **14 active recipes, 12 shared typography roles, 12 baseline slots, 5 crest profiles and 7 composition types**. Fire Control remains an excluded catalogue entry, not a selectable family member or calibration target.
 
 The basic inheritance is intentional:
 
@@ -65,6 +65,8 @@ These are working substitutes, not authenticated historical font identifications
 | BCTS acronym | Open Sans ExtraBold 800 | Shared acronym role with wider tracking calibrated against the supplied vector |
 | Descriptor / district | Roboto Slab Bold 700 | Separate scale and role from the acronym; a serif substitute, not an exact Clarendon identification |
 | Thin crest / plain labels | Roboto Regular 400 | Parks and plain BC/Timber/Sales treatment |
+| Tree crest upper, calibrated | Open Sans Bold 700 | Fitted to the Forest Service vector (reference-calibrated) |
+| Tree crest lower, calibrated | Jost Black 900 | The vector's lower line is geometric; its own role (`crest-tree-lower`) so the wildlife crest is unaffected |
 
 The face catalogue also offers alternatives; they are not silently chosen as a substitute for an unavailable weight. The default role weights were loaded locally during testing. Online loading and weights not used by the defaults were not externally verified in this environment.
 
@@ -136,7 +138,7 @@ python tests/test_browser.py
 
 The test runner also supports an existing browser through `CHROMIUM=/path/to/chromium`. It builds the page into `tests/output/` and loads it directly into a browser document, so no HTTP server is needed. The screenshots, PNG export and `results.json` also go to `tests/output/` (not tracked); `--update` also refreshes the committed copies in `review/` and `tests/results.json`.
 
-The default faces (Open Sans ExtraBold, Roboto Condensed Bold, Roboto Slab Bold, Roboto Regular) must be installed locally, or pass `--network-fonts` to load them from Google Fonts. Without them the font check fails and three lettering-band checks measure fallback fonts, so 36/40 is the expected result on a machine without the faces. The results record where the faces came from.
+The default faces (Open Sans ExtraBold, Roboto Condensed Bold, Roboto Slab Bold, Roboto Regular; Jost Black for the reference-calibrated tree crest) must be installed locally, or pass `--network-fonts` to load them from Google Fonts. Without them the font check fails and three lettering-band checks measure fallback fonts, so 36/40 is the expected result on a machine without the faces. The results record where the faces came from.
 
 The recorded run passed **40/40 checks**, including all active recipes, exact inherited crest-typography equality, no stretched text, finite bounds, reference integrity, PNG/ZIP export, configuration round trip, 27 wording stress cases, all composition types, six pixel-mask checks that lettering remains inside its band, and a 390-pixel mobile viewport. The full results are in `tests/results.json`.
 

@@ -17,6 +17,11 @@ JPEG is not an accurate master of fine glyph contours. These images are
 calibration fixtures, not authenticated official artwork or an independent
 test set. Ownership/licensing of source imagery is not newly established here.
 
-The extraction smoke test regenerated all ten mask PNGs byte-for-byte. Original
+`ref-5-upper-mask.png` and `ref-5-lower-mask.png` come from the Forest Service
+vector instead (`tools/extract_tree_masks.py`: its dark ink inside the white
+ring, diamonds removed). It is not in `manifest.json`, whose extractor reads
+green-ink rasters.
+
+The extraction smoke test regenerated all ten raster mask PNGs byte-for-byte. Original
 full images are not needed for routine regression tests; they are needed to
 rerun extraction. The patch carries masks and provenance, not any font files.
