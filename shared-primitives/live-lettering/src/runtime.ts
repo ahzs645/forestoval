@@ -1,8 +1,8 @@
-import artwork from '../../../../bc-ministry-primitives-v5/data/art.json';
-import layout from '../../../layout.json';
-import primitiveScript from '../../../../bc-ministry-primitives-v5/src/primitives.js?url';
-import tabScript from '../../../tab-layout.js?url';
-import engineScript from '../../../../bc-ministry-primitives-v5/src/engine.js?url';
+import artwork from '../../../bc-ministry-primitives-v5/data/art.json';
+import layout from '../../layout.json';
+import primitiveScript from '../../../bc-ministry-primitives-v5/src/primitives.js?url';
+import tabScript from '../../tab-layout.js?url';
+import engineScript from '../../../bc-ministry-primitives-v5/src/engine.js?url';
 import { FONT_SOURCES } from './fonts';
 import type { Catalogue, Engine, Runtime } from './types';
 

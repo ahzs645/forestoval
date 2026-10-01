@@ -32,9 +32,11 @@ def free_port():
 
 
 def vite_command(port):
-    """The site's own Vite (never a download through npx)."""
-    vite = SITE / 'node_modules' / '.bin' / ('vite.cmd' if os.name == 'nt' else 'vite')
-    if not vite.exists(): raise SystemExit('Vite is not installed: run npm install in %s first.' % SITE)
+    """The site's own Vite (never a download through npx). The site is an npm
+    workspace member, so it is normally installed in the workspace root."""
+    name = 'vite.cmd' if os.name == 'nt' else 'vite'
+    vite = next((d / 'node_modules' / '.bin' / name for d in (SITE, SITE.parent) if (d / 'node_modules' / '.bin' / name).exists()), None)
+    if not vite: raise SystemExit('Vite is not installed: run npm install in %s first.' % SITE.parent)
     return [str(vite), '--host', '127.0.0.1', '--port', str(port), '--strictPort', '--logLevel', 'error']
 
 

@@ -1,11 +1,5 @@
-/* Namespaced to avoid changing Library, Recreations, or the original Compose. */
-.fo-compose { min-width: 0; }
-.fo-mode-panel[hidden], .fo-editor [hidden] { display: none !important; }
-.fo-modes { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 12px 0 16px; }
-.fo-modes button { padding: 9px 15px; border: 1px solid #bbc4bd; background: #fff; border-radius: 7px; cursor: pointer; font: inherit; }
-.fo-modes button[aria-pressed="true"] { background: #194e3a; color: #fff; border-color: #194e3a; }
-.fo-modes span { margin-left: 8px; font-size: 12px; color: #5b655e; }
-.fo-live-host { border: 1px solid #d6ddd7; border-radius: 10px; overflow: hidden; }
+/* Namespaced (.fo-*) so a host page's own styles are unaffected. */
+.fo-editor [hidden] { display: none !important; }
 .fo-editor { --fo-ink: #182c24; --fo-muted: #627067; color: var(--fo-ink); display: grid; grid-template-columns: minmax(280px, 340px) minmax(0, 1fr); font: 14px/1.45 system-ui, sans-serif; min-width: 0; }
 .fo-editor * { box-sizing: border-box; }
 .fo-sidebar { background: #fafbf9; padding: 26px; border-right: 1px solid #d6ddd7; min-width: 0; }
@@ -48,4 +42,4 @@
 .fo-warning { font-size: 12px; padding: 9px 12px; border-left: 3px solid #cda44b; background: #fff8e8; border-radius: 3px; }
 .fo-diagnostics { color: #46594b; font-size: 12px; }
 @media(max-width: 900px) { .fo-editor { grid-template-columns: 280px minmax(0, 1fr); } .fo-sidebar { padding: 20px; } .fo-stage { padding: 0 15px 16px; } }
-@media(max-width: 700px) { .fo-editor { display: flex; flex-direction: column; } .fo-sidebar { border-right: none; border-bottom: 1px solid #d6ddd7; } .fo-canvas { height: 550px; min-height: 0; } .fo-toolbar { align-items: start; } .fo-modes span { width: 100%; margin-left: 0; } }
+@media(max-width: 700px) { .fo-editor { display: flex; flex-direction: column; } .fo-sidebar { border-right: none; border-bottom: 1px solid #d6ddd7; } .fo-canvas { height: 550px; min-height: 0; } .fo-toolbar { align-items: start; } }

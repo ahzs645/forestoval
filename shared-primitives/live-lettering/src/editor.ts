@@ -1,4 +1,4 @@
-import type { Catalogue, Configuration, ContentKey, EditorOptions, Engine, LogoResult, Runtime } from './types';
+import type { Catalogue, Composition, Configuration, ContentKey, EditorOptions, Engine, LogoResult, Runtime } from './types';
 
 const STORAGE_KEY = 'forestoval-compose-lettering-v1';
 /** A new or reset draft: calibrated fitting, and a crest that follows its wording
@@ -19,7 +19,7 @@ const LABELS: Record<ContentKey, string> = {
   word: 'Acronym / wordmark', descriptor: 'Descriptor', district: 'District',
   lines: 'Stacked words (one per line)', branch: 'Branch strip text',
 };
-const QUICK = ['forest-service', 'forests', 'forests-wildfire', 'long-ministry', 'long-wildfire'];
+const QUICK = ['forest-service', 'forests', 'forests-wildfire', 'long-ministry', 'long-wildfire', 'airtanker-package'];
 const title = (s: string) => s.replace(/-/g, ' ');
 const node = <K extends keyof HTMLElementTagNameMap>(tag: K, text?: string) => {
   const el = document.createElement(tag);
@@ -52,6 +52,8 @@ export class LetteringEditor {
   private root: HTMLDivElement;
   private runtime?: Runtime;
   private state?: Configuration;
+  /** The selected preset: an engine recipe id, or a composition built on one. */
+  private preset?: string;
   private result?: LogoResult;
   private drafts = new Map<string, Configuration>();
   private inputs = new Map<ContentKey, HTMLInputElement | HTMLTextAreaElement>();
@@ -147,6 +149,14 @@ export class LetteringEditor {
   }
   private control(name: string): HTMLSelectElement { return this.root.querySelector<HTMLSelectElement>(`[data-control="${name}"]`)!; }
   private checkbox(name: string): HTMLInputElement { return this.root.querySelector<HTMLInputElement>(`input[data-control="${name}"]`)!; }
+  private get compositions(): Composition[] { return this.options.compositions ?? []; }
+  private composition(id = this.preset): Composition | undefined { return this.compositions.find(c => c.id === id); }
+  private baseRecipe(id: string): string { return this.composition(id)?.recipe ?? id; }
+  private isPreset(id: string): boolean {
+    const recipe = this.runtime!.P.RECIPES.find(r => r.id === this.baseRecipe(id));
+    return !!recipe && !recipe.excluded;
+  }
+  private presetName(id: string): string { return this.composition(id)?.name ?? this.runtime!.P.recipe(id).name; }
   private on(target: EventTarget, event: string, fn: EventListener) { target.addEventListener(event, fn, { signal: this.abort.signal }); }
   private async start() {
     try {
@@ -154,13 +164,14 @@ export class LetteringEditor {
       const { P, E } = this.runtime;
       if (!E.TEXT_FIT_POLICIES['reference-calibrated']) throw new Error('Apply the reference-lettering v2 patch before using this editor.');
       this.defaults = await draftDefaults(E); if (this.disposed) return;
-      fillSelect(this.control('recipe'), P.RECIPES.filter(r => !r.excluded).map(r => [r.id, r.name]));
+      fillSelect(this.control('recipe'), P.RECIPES.filter(r => !r.excluded).flatMap(r => [[r.id, r.name] as [string, string],
+        ...this.compositions.filter(c => c.recipe === r.id).map(c => [c.id, c.name] as [string, string])]));
       fillSelect(this.control('textFit'), Object.entries(E.TEXT_FIT_POLICIES).map(([id, p]) => [id, p.label]));
       for (const [key, table] of Object.entries({ crest: P.CRESTS, tab: P.TABS, layout: P.LOCKUPS })) {
         fillSelect(this.control(key), Object.keys(table).map(id => [id, title(id)]));
       }
-      this.part('quick').replaceChildren(...QUICK.filter(id => P.RECIPES.some(r => r.id === id && !r.excluded)).map(id => {
-        const b = node('button', P.recipe(id).name); b.type = 'button'; b.dataset.recipe = id; return b;
+      this.part('quick').replaceChildren(...QUICK.filter(id => this.isPreset(id)).map(id => {
+        const b = node('button', this.presetName(id)); b.type = 'button'; b.dataset.recipe = id; return b;
       }));
       let active = 'long-wildfire';
       try {
@@ -172,12 +183,12 @@ export class LetteringEditor {
             const adopt = { ...(saved.version === 1 ? { autoProfile: NEW_DRAFT.autoProfile, separatorPlacement: NEW_DRAFT.separatorPlacement } : {}),
               ...(saved.version < 3 ? { fanOut: NEW_DRAFT.fanOut } : {}), ...(saved.version < 4 ? { centreInRing: NEW_DRAFT.centreInRing } : {}) };
             const raw = draft && typeof draft === 'object' ? { ...draft, ...adopt } : draft;
-            try { const s = this.validate(raw); if (s.recipe === id) this.drafts.set(id, s); } catch { /* Ignore only this invalid saved draft. */ }
+            try { const s = this.validate(raw); if (this.isPreset(id) && s.recipe === this.baseRecipe(id)) this.drafts.set(id, s); } catch { /* Ignore only this invalid saved draft. */ }
           }
           if (this.drafts.has(saved.active)) active = saved.active;
         }
       } catch { /* Unavailable or corrupt storage does not prevent editing. */ }
-      if (!P.RECIPES.some(r => r.id === active && !r.excluded)) active = P.RECIPES.find(r => !r.excluded)!.id;
+      if (!this.isPreset(active)) active = P.RECIPES.find(r => !r.excluded)!.id;
       this.choose(active);
     } catch (error) { this.fail(error); }
   }
@@ -190,15 +201,16 @@ export class LetteringEditor {
     return E.normalise(value);
   }
   private remember() {
-    if (!this.state) return;
-    this.drafts.set(this.state.recipe, this.runtime!.E.normalise(this.state));
-    try { this.storage?.setItem(STORAGE_KEY, JSON.stringify({ version: 4, active: this.state.recipe, drafts: Object.fromEntries(this.drafts) })); }
+    if (!this.state || !this.preset) return;
+    this.drafts.set(this.preset, this.runtime!.E.normalise(this.state));
+    try { this.storage?.setItem(STORAGE_KEY, JSON.stringify({ version: 4, active: this.preset, drafts: Object.fromEntries(this.drafts) })); }
     catch { /* Restricted/full storage: the live in-memory draft is still usable. */ }
   }
   private choose(id: string) {
     if (!this.runtime) return;
     this.remember();
-    this.state = this.drafts.get(id) ?? this.runtime.E.recipeState(id, this.defaults);
+    this.preset = id;
+    this.state = this.drafts.get(id) ?? this.runtime.E.recipeState(this.baseRecipe(id), this.defaults);
     this.state = this.runtime.E.normalise(this.state);
     this.selected = undefined; this.part('dock').hidden = true;
     this.sync(); this.schedule();
@@ -206,7 +218,11 @@ export class LetteringEditor {
   private sync() {
     if (!this.state || !this.runtime) return;
     const { P } = this.runtime, s = this.state;
-    for (const key of ['recipe', 'textFit', 'treeLettering', 'crest', 'tab', 'layout', 'tabSizing', 'tabBacking', 'separatorPlacement'] as const) this.control(key).value = s[key];
+    for (const key of ['textFit', 'treeLettering', 'crest', 'tab', 'layout', 'tabSizing', 'tabBacking', 'separatorPlacement'] as const) this.control(key).value = s[key];
+    this.control('recipe').value = this.preset ?? s.recipe;
+    // A composition draws its own artwork around the crest, so its crest, tab and layout stay fixed.
+    const composed = this.composition();
+    for (const key of ['crest', 'tab', 'layout']) this.control(key).disabled = !!composed;
     const badge = P.LOCKUPS[s.layout].kind !== 'wordmark', ribbon = P.TABS[s.tab].shape === 'ribbon' && badge;
     this.control('tabSizing').disabled = !ribbon;
     this.control('tabBacking').disabled = !ribbon;
@@ -221,10 +237,10 @@ export class LetteringEditor {
     fan.checked = s.fanOut; fan.disabled = !marks || s.separatorPlacement !== 'follow-text';
     const ring = this.checkbox('centreInRing');
     ring.checked = s.centreInRing; ring.disabled = !badge;
-    this.part('name').textContent = P.recipe(s.recipe).name;
-    this.part('confidence').textContent = P.recipe(s.recipe).confidence ?? 'Reference-based reconstruction';
+    this.part('name').textContent = this.presetName(this.preset ?? s.recipe);
+    this.part('confidence').textContent = composed?.confidence ?? P.recipe(s.recipe).confidence ?? 'Reference-based reconstruction';
     this.part('policy-note').textContent = this.runtime.E.TEXT_FIT_POLICIES[s.textFit].description;
-    for (const b of this.root.querySelectorAll<HTMLButtonElement>('[data-recipe]')) b.setAttribute('aria-pressed', String(b.dataset.recipe === s.recipe));
+    for (const b of this.root.querySelectorAll<HTMLButtonElement>('[data-recipe]')) b.setAttribute('aria-pressed', String(b.dataset.recipe === this.preset));
     this.inputs.clear();
     this.part('fields').replaceChildren(...contentKeys(P, s).map(key => {
       const label = node('label', LABELS[key]);
@@ -331,7 +347,10 @@ export class LetteringEditor {
     const revision = this.revision;
     try {
       const snapshot = this.runtime.E.normalise({ ...this.state, colours: { ...this.state.colours, ...this.palette } });
-      const result = await this.runtime.E.render(snapshot, { allowNetwork });
+      const drawn = await this.runtime.E.render(snapshot, { allowNetwork });
+      if (this.disposed || revision !== this.revision) return;
+      const composition = this.composition();
+      const result = composition ? await composition.compose(drawn, this.runtime, this.palette) : drawn;
       if (this.disposed || revision !== this.revision) return;
       this.result = result;
       // Only the preview is decorated. Exports use the untouched engine result.
@@ -402,7 +421,7 @@ export class LetteringEditor {
     if (action === 'kabel') { this.part<HTMLInputElement>('kabel-file').click(); return; }
     if (!this.state || !this.runtime) return;
     if (action === 'reset') {
-      this.state = this.runtime.E.recipeState(this.state.recipe, this.defaults);
+      this.state = this.runtime.E.recipeState(this.baseRecipe(this.preset ?? this.state.recipe), this.defaults);
       this.selected = undefined; this.part('dock').hidden = true; this.sync(); this.schedule(); return;
     }
     if (action === 'fonts') {
@@ -419,11 +438,11 @@ export class LetteringEditor {
     }
     if (!this.result || this.rendering || this.working) return;
     if (action !== 'save' && this.unverified && !this.fontAck) return;
-    const result = this.result; this.working = true; this.updateButtons();
+    const result = this.result, name = this.preset ?? result.state.recipe; this.working = true; this.updateButtons();
     try {
-      if (action === 'svg') download(`${result.state.recipe}-editable.svg`, this.runtime.E.serialise(result), 'image/svg+xml');
-      if (action === 'save') download(`${result.state.recipe}-configuration.json`, JSON.stringify(result.state, null, 2) + '\n', 'application/json');
-      if (action === 'png') download(`${result.state.recipe}.png`, await this.runtime.E.png(result, result.state.outputWidth), 'image/png');
+      if (action === 'svg') download(`${name}-editable.svg`, this.runtime.E.serialise(result), 'image/svg+xml');
+      if (action === 'save') download(`${name}-configuration.json`, JSON.stringify(result.state, null, 2) + '\n', 'application/json');
+      if (action === 'png') download(`${name}.png`, await this.runtime.E.png(result, result.state.outputWidth), 'image/png');
     } catch (error) { this.part('status').textContent = `Export failed: ${error instanceof Error ? error.message : String(error)}`; }
     finally { this.working = false; if (!this.disposed) this.updateButtons(); }
   }
@@ -449,7 +468,9 @@ export class LetteringEditor {
       if (file.size > 1_000_000) throw new Error('Configuration exceeds the 1 MB limit.');
       const next = this.validate(JSON.parse(await file.text()));
       if (this.disposed) return;
+      // A configuration for the recipe a composition is built on stays in that composition.
       this.remember(); this.state = next; this.selected = undefined; this.part('dock').hidden = true;
+      if (this.composition()?.recipe !== next.recipe) this.preset = next.recipe;
       this.sync(); this.schedule();
     } catch (error) { this.part('status').textContent = `Configuration not opened: ${error instanceof Error ? error.message : String(error)}`; }
     finally { input.value = ''; }

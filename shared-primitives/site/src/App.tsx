@@ -3,6 +3,7 @@ import { PRIMITIVE_TOKENS, themes, type Palette } from './data';
 import { Library } from './components/Library';
 
 // The other tabs load when first opened.
+const LiveLettering = lazy(() => import('./components/LiveLettering').then((m) => ({ default: m.LiveLettering })));
 const Recreations = lazy(() => import('./components/Recreations').then((m) => ({ default: m.Recreations })));
 const Compose = lazy(() => import('./components/Compose').then((m) => ({ default: m.Compose })));
 const Checks = lazy(() => import('./components/Checks').then((m) => ({ default: m.Checks })));
@@ -24,7 +25,7 @@ class TabBoundary extends Component<{ children: ReactNode }, { error: Error | nu
   }
 }
 
-type Tab = 'library' | 'recreations' | 'compose' | 'checks';
+type Tab = 'lettering' | 'library' | 'recreations' | 'compose' | 'checks';
 type Backdrop = 'checker' | 'white' | 'dark' | 'custom';
 
 export interface ViewSettings {
@@ -35,15 +36,17 @@ export interface ViewSettings {
 }
 
 const TABS: [Tab, string][] = [
+  ['lettering', 'Live lettering'],
   ['library', 'Library'],
   ['recreations', 'Recreations'],
-  ['compose', 'Compose'],
+  ['compose', 'Layer assembly'],
   ['checks', 'Checks'],
 ];
 
+// The live lettering editor is the main app: it opens at the site root.
 const readTab = (): Tab => {
   const t = location.hash.replace('#/', '');
-  return t === 'recreations' || t === 'compose' || t === 'checks' ? t : 'library';
+  return TABS.some(([id]) => id === t) ? (t as Tab) : 'lettering';
 };
 
 function surfaceStyle(backdrop: Backdrop, colour: string): CSSProperties {
@@ -82,8 +85,8 @@ export default function App() {
     <div className="app">
       <header className="topbar">
         <div className="brand">
-          <strong>Shared primitives</strong>
-          <span>BC Ministry v5 · Airtanker package</span>
+          <strong>Forest oval lettering</strong>
+          <span>BC Ministry v5 · Airtanker package · shared primitives</span>
         </div>
         <nav className="tabs">
           {TABS.map(([id, label]) => (
@@ -110,6 +113,7 @@ export default function App() {
             </select>
           </label>
           {backdrop === 'custom' && <input type="color" value={backdropColour} onChange={(e) => setBackdropColour(e.target.value)} />}
+          {import.meta.env.PROD && <a className="studiolink" href="./lettering/" title="The live lettering editor on its own page">Lettering app ↗</a>}
           {import.meta.env.PROD && <a className="studiolink" href="./studio/" title="The v5 studio: live lettering engine">v5 studio ↗</a>}
         </div>
       </header>
@@ -133,6 +137,7 @@ export default function App() {
       <main className="main">
         <TabBoundary key={tab}>
           <Suspense fallback={<p className="empty">Loading…</p>}>
+            {tab === 'lettering' && <LiveLettering view={view} />}
             {tab === 'library' && <Library view={view} selected={selected} onSelect={setSelected} />}
             {tab === 'recreations' && <Recreations view={view} onOpen={(f) => { setSelected(f); go('library'); }} />}
             {tab === 'compose' && <Compose view={view} onOpen={(f) => { setSelected(f); go('library'); }} />}

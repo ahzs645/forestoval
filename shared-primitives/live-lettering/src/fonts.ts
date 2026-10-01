@@ -34,8 +34,8 @@ const LATIN_EXT = 'U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U
 const face = (latin: string, ext: string): FontSource[] => [{ url: latin, unicodeRange: LATIN }, { url: ext, unicodeRange: LATIN_EXT }];
 
 // Optional ignored build input. An absent private font must not break a clean build.
-const privateFonts = import.meta.glob<string>('../../../../bc-ministry-primitives-v5/fonts/*.otf', { eager: true, query: '?url', import: 'default' });
-const kabel = privateFonts['../../../../bc-ministry-primitives-v5/fonts/Kabel-Black.otf'];
+const privateFonts = import.meta.glob<string>('../../../bc-ministry-primitives-v5/fonts/*.otf', { eager: true, query: '?url', import: 'default' });
+const kabel = privateFonts['../../../bc-ministry-primitives-v5/fonts/Kabel-Black.otf'];
 
 /** Engine face id -> its bundled files (window.BC_FONT_SOURCES). */
 export const FONT_SOURCES: Record<string, FontSource[]> = {

@@ -62,11 +62,11 @@ neck ends at the oval edge). Colours are the source colours.
 - `crest/` — `frame` (shared), and the two finished blank crests: `tree-crest`, `wildlife-crest` (frame + scene, no lettering)
 - `scenes/` — `tree` (shared), `wildlife`
   - `tree-parts/` — sky, distant-forest, mountains, conifer. The source paints the conifer's branch notches in the sky colour; here they are cut out as transparent holes. The source canopy path also contains the small forest cluster at lower left.
-    Plus `mountain-ridge`: just the top edge of the mountains, drawn as a 7-unit line in the lettering ink. The full-colour scene doesn't use it. The single-colour Forest Service crest and the Airtanker crest draw their mountains with it, because their themes turn the mountains' fill into the background colour.
+    Plus `mountain-ridge` and `mountain-base`: the top edge and the foot of the mountains (the blue range in the full-colour scene), each drawn as a 7-unit line in the lettering ink. The full-colour scene doesn't use them. The single-colour Forest Service crest and the Airtanker crest draw their mountains with both, because their themes turn the mountains' fill into the background colour; both references show the two lines.
   - `wildlife-parts/` — sky, mountains, distant-woodland, river, river-bank, large-tree, small-tree, eagle, elk, fish
 - `marks/` — separator circle (wildlife crests) and diamond (tree crest)
 - `tabs/`
-  - `service-ribbon` — the Wildfire Service tab. It is drawn from parameters, not traced: a paper face 85.5 units deep on the crest's outer oval, a 15-unit ink border that tucks 8 under the crest's ring, ends leaning 14° toward the middle, and a half-span of 49.7° of the oval's angle. Those numbers were fitted to the v5 traced ribbon (they differ only by slivers along its traced edges). Because it is a band around the oval, a tab can **grow**: a larger half-span wraps it further round (`TAB` in `extract_primitives.py`, copied to `layout.json` `tab`; `site/src/tab.ts` draws any span, and Checks confirms it draws exactly this file at the default). In Compose, *Tabs* sliders grow the lower and upper tab by hand. The Wildfire Management upper tab is this same shape turned upside down (rotated 180° about the crest centre, same size), so it hugs the oval the way the lower tab does. The v5 engine also scaled it by 1.10 and moved it up 7, which left a gap of about 38 units at the top. Scaling by 1.10 about the top of the oval instead still lifts the tab's ends about 14 units off the oval.
+  - `service-ribbon` — the Wildfire Service tab. It is drawn from parameters, not traced: a paper face 85.5 units deep on the crest's outer oval, a 15-unit ink border that tucks 8 under the crest's ring, ends leaning 14° toward the middle, and a half-span of 49.7° of the oval's angle. Those numbers were fitted to the v5 traced ribbon (they differ only by slivers along its traced edges). Because it is a band around the oval, a tab can **grow**: a larger half-span wraps it further round (`TAB` in `extract_primitives.py`, copied to `layout.json` `tab`; `site/src/tab.ts` draws any span, and Checks confirms it draws exactly this file at the default). In Layer assembly, *Tabs* sliders grow the lower and upper tab by hand. The Wildfire Management upper tab is this same shape turned upside down (rotated 180° about the crest centre, same size), so it hugs the oval the way the lower tab does. The v5 engine also scaled it by 1.10 and moved it up 7, which left a gap of about 38 units at the top. Scaling by 1.10 about the top of the oval instead still lifts the tab's ends about 14 units off the oval.
   - `parks-plate` — in Parks theme colours.
   - `airtanker-wings`, `airtanker-band` — the v5 engine's photo-based approximation. Its colours are fixed in the engine.
 
@@ -89,19 +89,25 @@ Lettering is not included. Text is live and font-dependent, and it is fitted per
 `manifest.json`, `themes.json`, `layout.json` and `lettering.json` from this folder directly, so it always shows
 the current output.
 
+The live lettering editor is its own package, [`live-lettering/`](live-lettering/README.md)
+(`@forestoval/live-lettering`): the engine bridge, bundled faces, the editor and
+the badge presets, and the SVG plumbing the site's other tabs share. The two are
+one npm workspace (`package.json` here, one lockfile).
+
 ```sh
-cd site
-npm install      # first time only
-npm run dev      # then open the printed URL
-npm run regen    # rerun extract_primitives.py; the page reloads
+npm install                # first time only, here in shared-primitives/
+npm run dev                # the viewer; open the printed URL
+npm run lettering          # the editor on its own page
+npm run regen -w site      # rerun extract_primitives.py; the page reloads
 ```
 
-- **Library:** the 15 building blocks, grouped as Crest, Scenes, Separators, Service tabs and Airtanker package. Scene parts are hidden by default. They appear in their scene's detail panel, with the *Show scene parts* toggle, or in search results. Click a piece to see its details and download it as SVG or PNG. The colour and backdrop menus apply here and in Compose; Recreations uses each logo's own theme and only takes the backdrop.
-- **Recreations:** each supplied reference next to the same logo rebuilt from the primitives. The lettering is drawn by the live v5 engine with the same recipe and configuration as Compose → Live lettering (including the service holder's backing); the saved reference fits and the saved v5 examples remain as two legacy lettering modes. There are four views: side by side, a draggable wipe, an overlay and a difference blend. Each card lists the primitives used, where its lettering comes from, the reference file, how it was lined up, and any alternate copies in the folder.
-- **Compose:** two modes. *Live lettering* runs the v5 studio engine on any active recipe: click the curved text (or use the sidebar fields) to retype it and the reference-calibrated fit updates live; each preset keeps its own draft, and SVG, PNG and configuration exports come from the engine. See [`site/docs/live-lettering.md`](site/docs/live-lettering.md). *Layer assembly* stacks pieces in their shared coordinates, with presets for each logo. You can overlay the finished logo (loaded when picked); with *Difference blend* on, matching artwork turns black. There are also guides for the crest centre and each piece's viewBox. With a tab in the stack, *Tabs* sliders grow it around the oval; downloads include the grown tab.
+- **Live lettering** (the first tab; the site opens on it): runs the v5 studio engine on any active recipe: click the curved text (or use the sidebar fields) to retype it and the reference-calibrated fit updates live; each preset keeps its own draft, and SVG, PNG and configuration exports come from the engine. *Airtanker Operations · package* letters the Recreations airtanker badge (package band and wings, shared crest) live; it is a badge definition in the package. See [`live-lettering/docs/live-lettering.md`](live-lettering/docs/live-lettering.md).
+- **Library:** the 15 building blocks, grouped as Crest, Scenes, Separators, Service tabs and Airtanker package. Scene parts are hidden by default. They appear in their scene's detail panel, with the *Show scene parts* toggle, or in search results. Click a piece to see its details and download it as SVG or PNG. The colour and backdrop menus apply here, in Live lettering and in Layer assembly; Recreations uses each logo's own theme and only takes the backdrop.
+- **Recreations:** each supplied reference next to the same logo rebuilt from the primitives. The lettering is drawn by the live v5 engine with the same recipe and configuration as the Live lettering editor (including the service holder's backing); the saved reference fits and the saved v5 examples remain as two legacy lettering modes. There are four views: side by side, a draggable wipe, an overlay and a difference blend. Each card lists the primitives used, where its lettering comes from, the reference file, how it was lined up, and any alternate copies in the folder.
+- **Layer assembly** (`#/compose`): stacks pieces in their shared coordinates, with presets for each logo. You can overlay the finished logo (loaded when picked); with *Difference blend* on, matching artwork turns black. There are also guides for the crest centre and each piece's viewBox. With a tab in the stack, *Tabs* sliders grow it around the oval; downloads include the grown tab.
 - **Checks:** runs in the browser. For every file it checks the XML, viewBox, that the file is self-contained, internal references, unique ids and theme coverage. It also checks nothing falls outside the viewBox (rendered with a margin) and measures the padding. It stacks each set of parts and compares them pixel by pixel with the composite they came from.
 
-`npm run build` writes a static copy to `site/dist/`, with the v5 studio built into `dist/studio/` (it runs `../bc-ministry-primitives-v5/build.py`, so it needs `python3`). Serve it with `npm run preview`; browsers block the module script if you open `index.html` directly from disk. The deployed site links the studio from its header.
+`npm run build` writes a static copy to `site/dist/`, with the v5 studio built into `dist/studio/` and the standalone editor into `dist/lettering/` (it runs `../bc-ministry-primitives-v5/build.py`, so it needs `python3`). Serve it with `npm run preview`; browsers block the module script if you open `index.html` directly from disk. The deployed site links both from its header.
 
 ## Reference images (Recreations)
 
@@ -188,7 +194,7 @@ The *v5 studio lettering* switch shows what the studio drew, including its own t
 
 Build order: `extract_primitives.py`, then `build_gallery.py`, then `fit_lettering.py`.
 `fit_lettering.py` needs Playwright and Chromium (`pip install -r ../requirements.txt`, then
-`python -m playwright install chromium`, or set `CHROMIUM=/path/to/chromium`) and `npm install` in `site/`.
+`python -m playwright install chromium`, or set `CHROMIUM=/path/to/chromium`) and `npm install` in `shared-primitives/`.
 Scores depend on the browser and its font rendering, so a refit on another machine can land slightly differently.
 
 ## Regenerate

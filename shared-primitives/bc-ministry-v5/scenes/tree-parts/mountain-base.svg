@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="169.588 546.231 345.724 45.138" width="345.724" height="45.138">
+  <title>Tree scene · mountain base line</title>
+  <desc>The bottom edge of the mountains as a 7-unit line in the lettering ink, under the ridge line on the single-colour and airtanker crests. Not part of the full-colour scene. Centred in the shared crest window (source artwork shifted 1.25, 1.62 units). Isolated from bc-ministry-primitives-v5/data/art.json → treeInner #tree-mountains (bottom edge). Original coordinates retained; only the viewBox is cropped. Reference-based reconstruction, not an official master.</desc>
+  <defs>
+    <clipPath id="crest-window" clipPathUnits="userSpaceOnUse">
+      <ellipse id="crest-window-ellipse" cx="338.36631" cy="420.96480" rx="206.03861" ry="296.59750" />
+    </clipPath>
+  </defs>
+  <g id="mountain-base">
+    <g clip-path="url(#crest-window)">
+      <g transform="translate(1.24881 1.62174) translate(-353.61901156 -234.70751182) scale(11.61682669)">
+        <path id="tree-mountain-base" d="M 45.749 70.153 C 46.312 69.803 49.405 68.396 50.319 68.396 C 51.233 68.396 53.272 69.239 54.187 69.239 C 55.101 69.239 56.296 68.677 56.929 68.606 C 57.562 68.535 58.757 69.591 58.757 69.591 L 60.585 69.661 C 62.694 68.114 63.538 68.185 64.452 67.903 C 65.296 67.833 67.335 68.677 67.897 68.747 C 68.46 68.817 69.796 68.255 70.429 68.255 C 71.062 68.255 72.96 69.169 73.874 69.521" fill="none" stroke="#231f20" stroke-width="0.6026" stroke-linejoin="round" stroke-linecap="round" />
+      </g>
+    </g>
+  </g>
+</svg>

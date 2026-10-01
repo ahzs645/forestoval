@@ -105,17 +105,17 @@ def main():
         check('Kabel never triggers a Google Fonts request',not any('googleapis' in u or 'gstatic' in u for u in requests))
         # Compile the actual editor source, not a second implementation. This does
         # not exercise Vite's asset URL generation or React mounting.
-        tsc=ROOT.parent/'shared-primitives/site/node_modules/.bin/tsc'
+        tsc=ROOT.parent/'shared-primitives/node_modules/.bin/tsc'
         compiler=str(tsc) if tsc.exists() else shutil.which('tsc')
         if compiler:
             compiled=out/'compiled';cfg=out/'editor-tsconfig.json'
-            cfg.write_text(json.dumps({'compilerOptions':{'target':'ES2022','module':'ESNext','moduleResolution':'bundler','lib':['ES2022','DOM','DOM.Iterable'],'strict':True,'types':[],'skipLibCheck':True,'rootDir':str(ROOT.parent/'shared-primitives/site/src/lettering'),'outDir':str(compiled)},'files':[str(ROOT.parent/'shared-primitives/site/src/lettering/editor.ts'),str(ROOT.parent/'shared-primitives/site/src/lettering/types.ts')]}))
+            cfg.write_text(json.dumps({'compilerOptions':{'target':'ES2022','module':'ESNext','moduleResolution':'bundler','lib':['ES2022','DOM','DOM.Iterable'],'strict':True,'types':[],'skipLibCheck':True,'rootDir':str(ROOT.parent/'shared-primitives/live-lettering/src'),'outDir':str(compiled)},'files':[str(ROOT.parent/'shared-primitives/live-lettering/src/editor.ts'),str(ROOT.parent/'shared-primitives/live-lettering/src/types.ts')]}))
             run=subprocess.run([compiler,'-p',str(cfg)],capture_output=True,text=True)
             check('Affected Compose controller and types pass strict TypeScript checking',run.returncode==0,run.stdout+run.stderr)
             if run.returncode==0:
                 controller=(compiled/'editor.js').read_text().replace('export ','')
                 scripts=re.findall(r'<script\b[^>]*>[\s\S]*?</script>',bare)[:-1]
-                fixture='<!doctype html><html><head><style>'+(ROOT.parent/'shared-primitives/site/src/lettering/editor.css').read_text()+'</style></head><body><div id="editor"></div>'+''.join(scripts)+'<script>'+controller+'\nwindow.editor=new LetteringEditor(document.getElementById("editor"),{runtime:()=>Promise.resolve({E:BCLogo,P:BCPrimitives}),storage:null});</script></body></html>'
+                fixture='<!doctype html><html><head><style>'+(ROOT.parent/'shared-primitives/live-lettering/src/editor.css').read_text()+'</style></head><body><div id="editor"></div>'+''.join(scripts)+'<script>'+controller+'\nwindow.editor=new LetteringEditor(document.getElementById("editor"),{runtime:()=>Promise.resolve({E:BCLogo,P:BCPrimitives}),storage:null});</script></body></html>'
                 ui=browser.new_page(viewport={'width':1400,'height':1100});ui.on('pageerror',lambda e:errors.append(str(e)));ui.set_content(fixture)
                 ui.wait_for_function('window.editor?.configuration');ui.get_by_label('Current preset',exact=True).select_option('forest-service')
                 # No font yet, so the draft starts on the v2 faces; choose Kabel explicitly.

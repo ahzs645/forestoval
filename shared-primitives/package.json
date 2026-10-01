@@ -1,0 +1,14 @@
+{
+  "name": "forestoval-shared-primitives",
+  "private": true,
+  "description": "npm workspace: the viewer site and the live lettering package it uses.",
+  "workspaces": [
+    "live-lettering",
+    "site"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w site",
+    "build": "npm run build -w site",
+    "lettering": "npm run dev -w @forestoval/live-lettering"
+  }
+}

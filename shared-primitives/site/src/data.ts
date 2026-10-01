@@ -1,9 +1,8 @@
 import manifestJson from '../../manifest.json';
-import themesJson from '../../themes.json';
 import layout from '../../layout.json';
-
-export type VB = [number, number, number, number];
-export type Palette = Record<string, string>;
+import type { Palette, VB } from '@forestoval/live-lettering/svg';
+export type { Palette, VB };
+export { themes } from '@forestoval/live-lettering/svg';
 
 interface ManifestEntry {
   file: string;
@@ -69,8 +68,6 @@ export const SECTIONS: { id: string; label: string; blurb: string; match: (p: Pi
   { id: 'airtanker', label: 'Airtanker package', blurb: 'The package’s own parts; it uses the shared crest.', match: (p) => p.family === 'airtanker-operations' },
 ];
 
-export const sourceTokens: Record<string, string> = themesJson.sourceTokens;
-export const themes: Record<string, Palette> = themesJson.themes;
 // Tokens that actually paint a primitive (the rest colour wordmarks/strips).
 export const PRIMITIVE_TOKENS = ['ink', 'paper', 'text', 'sky', 'water', 'wildlife', 'distant', 'earth', 'tree'];
 

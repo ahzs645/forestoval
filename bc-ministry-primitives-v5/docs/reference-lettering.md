@@ -99,7 +99,7 @@ the font itself; the engine does not horizontally scale individual glyphs.
 The engine tries, in order: first-party files the host page supplies in
 `window.BC_FONT_SOURCES` (`{faceId: [{url, unicodeRange}]}`), named local faces,
 then Google Fonts when the user asks for it. The viewer site supplies all eleven
-faces from pinned Fontsource packages (`site/src/lettering/fonts.ts`; Noto is the
+faces from pinned Fontsource packages (`shared-primitives/live-lettering/src/fonts.ts`; Noto is the
 variable font, so weight and width come from its axes), so its editor and
 Recreations page fit with the same binaries on every machine. The standalone
 studio has no bundle and keeps the local/Google order.

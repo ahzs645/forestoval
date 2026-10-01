@@ -18,7 +18,7 @@ STORAGE = '''<script>window.__TEST_STORAGE__=new class {
 
 def main():
  ap=argparse.ArgumentParser(description=__doc__)
- ap.add_argument('--url',default='http://localhost:5173/#/compose')
+ ap.add_argument('--url',default='http://localhost:5173/')
  ap.add_argument('--html',type=Path)
  ap.add_argument('--out',type=Path,default=Path('tests/output/live-lettering'))
  a=ap.parse_args();out=a.out.resolve();out.mkdir(parents=True,exist_ok=True)
@@ -57,7 +57,9 @@ def main():
   wait()
   expected=page.evaluate("BCPrimitives.RECIPES.filter(r=>!r.excluded).map(r=>r.id)")
   actual=root.locator('[data-control="recipe"] option').evaluate_all('(es)=>es.map(e=>e.value)')
-  record('All active v5 recipes present; excluded references absent',actual==expected,actual)
+  # The app adds the airtanker package composition right after the recipe it is built on.
+  presets=expected if a.html else [x for id in expected for x in ([id,'airtanker-package'] if id=='airtanker' else [id])]
+  record('All active v5 recipes present; excluded references absent',actual==presets,actual)
   record('Fresh editor selects reference-calibrated fitting',root.get_by_label('Lettering style',exact=True).input_value()=='reference-calibrated')
   record('Preview is native SVG with editable textPaths, not an image',root.locator('[data-part="canvas"] > svg').count()==1 and text('lower').locator('textPath').count()==1)
   record('No fallback for the starting mixed-case reference profile',root.locator('[data-warning="FONT_FALLBACK"]').count()==0)
@@ -116,11 +118,11 @@ def main():
   root.get_by_label('Service holder',exact=True).select_option('reference');wait()
   record('Reference holder can be restored',root.locator('[data-primitive="reactive-service-ribbon"]').count()==0)
   rows=[]
-  for id in expected:
+  for id in presets:
    pick(id)
    keys=root.locator('[data-part="fields"] [data-content]').evaluate_all('(es)=>es.map(e=>e.dataset.content)')
    rows.append({'recipe':id,'fields':keys,'textRuns':root.locator('[data-part="canvas"] text[data-live-text]').count()})
-  record('Every active recipe renders with its applicable text fields',len(rows)==len(expected) and all(r['fields'] for r in rows),rows)
+  record('Every active recipe renders with its applicable text fields',len(rows)==len(presets) and all(r['fields'] for r in rows),rows)
   # The crest follows its wording: the short/long profile and the separator dots.
   pick('forests-wildfire');reset()
   auto=root.get_by_label('Pick the short or long crest from the wording',exact=True)
@@ -200,10 +202,32 @@ def main():
    record('Backdrop CSS contract reaches the canvas',root.locator('[data-part=canvas]').evaluate("el=>getComputedStyle(el).backgroundColor")=='rgb(17, 17, 17)')
    root.evaluate("el=>el.parentElement.style.removeProperty('--fo-canvas-background')")
   else:
-   page.get_by_role('button',name='Layer assembly',exact=True).click()
-   record('Existing layer presets remain usable in the React Compose tab',page.locator('.fo-mode-panel:not([hidden]) .presets button').count()>0)
+   record('Live lettering is the main app: it opens at the site root',page.evaluate("location.hash")=='' or page.evaluate("location.hash")=='#/lettering')
+   page.get_by_role('button',name='Layer assembly',exact=True).click();page.locator('.compose .presets button').first.wait_for(timeout=30000)
+   record('Existing layer presets remain usable in the Layer assembly tab',page.locator('.compose .presets button').count()>0)
    page.get_by_role('button',name='Live lettering',exact=True).click();wait()
-   record('Switching Compose modes preserves the editor',text('lower').text_content()=='Forests, Lands and Natural Resource Operations')
+   record('Switching tabs preserves the editor draft',text('lower').text_content()=='Forests, Lands and Natural Resource Operations')
+   # The Recreations airtanker badge, lettered live: package artwork, engine-fitted crest, package band words.
+   root.get_by_role('button',name='Airtanker Operations · package',exact=True).click();wait();reset()
+   canvas=root.locator('[data-part="canvas"] > svg')
+   band=text('service')
+   built=canvas.get_attribute('data-composition')=='airtanker-package' and root.locator('[data-part="canvas"] [data-tab-part], [data-part="canvas"] [data-fidelity]').count()==0
+   record('The airtanker package preset draws the package artwork with three live runs',built and root.locator('[data-part="canvas"] text[data-live-text]').count()==3 and band.text_content()=='AIRTANKER OPERATIONS' and band.get_attribute('data-face')=='condensed-bold' and float(band.get_attribute('font-size'))==114.54 and root.locator('[data-warning]').count()==0,
+          root.locator('[data-part="warnings"]').inner_text())
+   marks=root.locator('[data-part="canvas"] [data-layer="separators"] > g').count()
+   upper_face=text('upper').get_attribute('data-face')
+   record('Its crest lines and diamonds come from the engine fit of the airtanker recipe',marks==2 and upper_face in ('kabel-black','open-bold') and text('upper').text_content()=='FOREST SERVICE',{'marks':marks,'face':upper_face})
+   band.focus();page.keyboard.press('Enter')
+   record('Clicking the band lettering edits the service text',dock.is_visible() and root.locator('[data-part="edit-label"]').text_content()=='Service tab text')
+   dock.fill('AIRTANKER AND HELICOPTER OPERATIONS');wait();page.keyboard.press('Escape')
+   size=float(band.get_attribute('font-size'))
+   record('Longer band wording closes its gaps, then shrinks to stay on the band',band.text_content()=='AIRTANKER AND HELICOPTER OPERATIONS' and size<114.54 and root.locator('[data-warning="TEXT_STYLE_REDUCED"]').count()==1 and root.locator('[data-warning="TEXT_FIT_OVERFLOW"]').count()==0,size)
+   with page.expect_download() as dl:root.get_by_role('button',name='SVG',exact=True).click()
+   pkg=dl.value.path().read_text();(out/'airtanker-package.svg').write_text(pkg)
+   record('The package SVG export keeps the composition and the live band words',dl.value.suggested_filename=='airtanker-package-editable.svg' and 'data-composition="airtanker-package"' in pkg and 'AIRTANKER AND HELICOPTER OPERATIONS' in pkg and '<textPath' in pkg and 'tabindex=' not in pkg)
+   pick('airtanker')
+   record('The engine airtanker recipe keeps its own draft and wings',field('service').input_value()=='AIRTANKER OPERATIONS' and root.locator('[data-part="canvas"] [data-fidelity]').count()==1)
+   pick('airtanker-package');reset();pick('long-wildfire')
    # The app ships its own faces: no local install or Google request is needed.
    faces=page.evaluate("()=>[...BCLogo.fontState.values()].map(f=>({face:f.face,status:f.status,source:f.source,verified:f.verified}))")
    # Kabel Black is user-supplied (an ignored build input), so this checkout reports it as a plain fallback.
@@ -242,7 +266,7 @@ def main():
    # the crest to it. A bundled WOFF2 stands in for the user's file here, and the
    # committed OTF (if any) is blocked so the page starts without it.
    kp=context.new_page();kp.on('pageerror',lambda e:errors.append(str(e)))
-   kp.route('**/Kabel-Black.otf*',lambda route:route.abort() if route.request.resource_type=='fetch' else route.continue_())
+   kp.route('**/Kabel-Black*.otf*',lambda route:route.abort() if route.request.resource_type=='fetch' else route.continue_())
    kp.goto(a.url);kp.get_by_role('button',name='Live lettering',exact=True).click()
    kwait=lambda:kp.wait_for_function('''()=>{const b=document.querySelector('.fo-editor [data-action="save"]');return b&&!b.disabled}''',timeout=30000)
    kwait();kroot=kp.locator('.fo-editor');kroot.get_by_label('Current preset',exact=True).select_option('forest-service');kwait()
@@ -250,7 +274,7 @@ def main():
    ktext=lambda k:kroot.locator(f'[data-part="canvas"] [data-live-text="{k}"]')
    kselect=kroot.get_by_label('Tree oval lettering',exact=True)
    without=kselect.input_value()=='reference-v2' and ktext('lower').get_attribute('data-face')=='raleway-black' and kroot.locator('[data-warning="FONT_FALLBACK"]').count()==0 and kroot.get_by_role('button',name='SVG',exact=True).is_enabled()
-   kroot.locator('[data-part="kabel-file"]').set_input_files(str(Path(__file__).resolve().parents[1]/'node_modules/@fontsource/raleway/files/raleway-latin-900-normal.woff2'))
+   kroot.locator('[data-part="kabel-file"]').set_input_files(str(Path(__file__).resolve().parents[2]/'node_modules/@fontsource/raleway/files/raleway-latin-900-normal.woff2'))
    kp.wait_for_function('''()=>document.querySelector('.fo-editor [data-live-text="lower"]')?.getAttribute('data-face')==='kabel-black'&&!document.querySelector('.fo-editor [data-action="save"]').disabled''',timeout=30000)
    record('Without the Kabel OTF tree crests keep the calibrated faces; loading one switches the crest to it',without and kselect.input_value()=='kabel-black' and ktext('upper').get_attribute('data-face')=='kabel-black',{'without':without})
    kp.close()
