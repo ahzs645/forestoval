@@ -29,7 +29,7 @@ declare global {
     readonly FACES:Readonly<Record<BCFaceId,{family:string;weight:number;advance?:number;stretch?:string;locals:readonly string[];google:string;fallback:string;label:string}>>;
     readonly ROLES:Readonly<Record<BCRoleId,Readonly<BCRole>>>;
     readonly SLOTS:Readonly<Record<BCSlotId,Readonly<BCSlot>>>;
-    readonly CRESTS:Readonly<Record<BCCrestId,{scene:'wildlife'|'tree';upper:BCSlotId;lower:BCSlotId;separator:string;separatorY:number;separatorSize:number;separatorInset?:number;separatorHomeY?:number;longer?:BCCrestId;shorter?:BCCrestId;switchCap?:number;fan?:{capScale:number;trackingEm:number;wordSpacingEm:number;span:number;clearance:number}}>>;
+    readonly CRESTS:Readonly<Record<BCCrestId,{scene:'wildlife'|'tree';upper:BCSlotId;lower:BCSlotId;separator:string;separatorY:number;separatorSize:number;separatorInset?:number;separatorHomeY?:number;longer?:BCCrestId;shorter?:BCCrestId;switchCap?:number;ringOffset?:number;fan?:{capScale:number;trackingEm:number;wordSpacingEm:number;span:number;clearance:number}}>>;
     readonly SHAPES:{
       readonly centre:readonly [number,number];
       readonly separatorBand:{readonly rx:number;readonly ry:number};
@@ -38,7 +38,7 @@ declare global {
     };
     /** Source artwork colour (lower case) -> the theme token that repaints it. */
     readonly RECOLOUR:Readonly<Record<string,string>>;
-    readonly TABS:Readonly<Record<BCTabId,{shape:string;slot?:BCSlotId;side?:string}>>;
+    readonly TABS:Readonly<Record<BCTabId,{shape:string;slot?:BCSlotId;side?:string;holder?:'oval';halfSpan?:number}>>;
     readonly THEMES:Readonly<Record<BCThemeId,Readonly<Record<string,string>>>>;
     readonly LOCKUPS:Readonly<Record<BCLayoutId,Readonly<Record<string,string|number>>>>;
     readonly RECIPES:readonly BCRecipe[];

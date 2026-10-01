@@ -14,6 +14,15 @@
   pushed by a line that comes within 50 units, and exactly halfway between the
   lines once the gap is under 100. The lower arc narrows when the marks would
   touch a line. `'reference'` (the default) keeps `separatorY`.
+- The Wildfire Management tab (`TABS['management-top']`, `holder: 'oval'`,
+  `halfSpan: 60`) is built on the frame's outer oval (tab-layout.js) with the
+  reference holder too, so it sits on the oval as in the patch photos. It
+  used to be the lower ribbon flipped and scaled x1.1, which floated 39 units
+  above the oval. Its run reports the measured final-size advance and renders
+  with geometric precision like the other runs.
+- `ringOffset` per crest: the tree crests centre their lines 4.5 units inside
+  the ring, as the Forest Service vector does (both lines now within 1 unit
+  of it).
 - Crest pairs: `CRESTS` declare `longer` / `shorter` (and the short profile's
   `switchCap`), and `autoProfile` reads them instead of a wildlife-only check.
   New `tree-long` (long-ministry slots on the tree scene, smaller diamonds,

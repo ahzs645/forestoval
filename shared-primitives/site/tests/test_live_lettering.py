@@ -171,6 +171,11 @@ def main():
   field('lower').fill('BRITISH COLUMBIA');wait()
   record('Short wording returns the tree crest and its diamonds to the sides',crest()=='tree-heavy' and abs(dots()['y']-397.65)<.01)
   reset()
+  # Wildfire Management's upper tab sits on the oval: the oval-hugging holder at its fixed reference span.
+  pick('wildfire-management');reset()
+  holder=root.locator('[data-part="canvas"] [data-primitive="reactive-service-ribbon"]')
+  record('The Wildfire Management tab sits on the oval at its reference span',root.get_by_label('Service holder',exact=True).input_value()=='reference' and holder.count()==1 and abs(float(holder.get_attribute('data-tab-half-span'))-60)<.01)
+  reset()
   pick('long-wildfire')
   root.get_by_role('button',name='Reset this preset',exact=True).click();wait()
   record('Reset restores default wording and calibrated mode',field('lower').input_value()=='Forests, Lands and Natural Resource Operations' and root.get_by_label('Lettering style',exact=True).input_value()=='reference-calibrated')

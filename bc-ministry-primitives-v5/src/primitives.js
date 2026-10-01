@@ -148,6 +148,9 @@ const REFERENCE_LETTERING={
 // rasters, which agree, for the long crest).
 // separatorHomeY: where marks that follow the lettering sit while the lines
 // leave room (the sides; both wildlife crests share the capitals position).
+// ringOffset: with centreInRing, lines centre this many units outside (+) or
+// inside (-) the ring's centre line. The Forest Service vector sets both lines
+// about 4.5 units inward; the wildlife references sit within 2 units of centre.
 // longer / shorter: a crest pair's long and short profiles, picked from the
 // lower wording with autoProfile (engine effectiveCrest); switchCap is the cap
 // height the short profile measures it at. tree-long reuses the long-ministry
@@ -160,8 +163,8 @@ const REFERENCE_LETTERING={
 const CRESTS={
  'wildlife-caps':{scene:'wildlife',upper:'wildlife-upper',lower:'wildlife-lower',separator:'circle',separatorY:446,separatorSize:12.65,separatorInset:3.34,separatorHomeY:446,longer:'wildlife-long',switchCap:46},
  'wildlife-long':{scene:'wildlife',upper:'long-upper',lower:'long-lower',separator:'circle',separatorY:215,separatorSize:9,separatorInset:7.67,separatorHomeY:446,fan:{capScale:1.166,trackingEm:.06,wordSpacingEm:0,span:200,clearance:129},shorter:'wildlife-caps'},
- 'tree-heavy':{scene:'tree',upper:'tree-upper',lower:'tree-lower',separator:'diamond',separatorY:397.65,separatorSize:16.76,separatorHomeY:397.65,longer:'tree-long',switchCap:60},
- 'tree-long':{scene:'tree',upper:'long-upper',lower:'long-lower',separator:'diamond',separatorY:215,separatorSize:11.92,separatorInset:7.67,separatorHomeY:397.65,fan:{capScale:1.166,trackingEm:.06,wordSpacingEm:0,span:200,clearance:129},shorter:'tree-heavy'},
+ 'tree-heavy':{scene:'tree',upper:'tree-upper',lower:'tree-lower',separator:'diamond',separatorY:397.65,separatorSize:16.76,separatorHomeY:397.65,longer:'tree-long',switchCap:60,ringOffset:-4.5},
+ 'tree-long':{scene:'tree',upper:'long-upper',lower:'long-lower',separator:'diamond',separatorY:215,separatorSize:11.92,separatorInset:7.67,separatorHomeY:397.65,fan:{capScale:1.166,trackingEm:.06,wordSpacingEm:0,span:200,clearance:129},shorter:'tree-heavy',ringOffset:-4.5},
  'tree-thin':{scene:'tree',upper:'thin-upper',lower:'thin-lower',separator:'none',separatorY:397.65,separatorSize:0}
 };
 // Shapes the engine draws itself, not taken from the artwork. The generator in
@@ -181,10 +184,15 @@ const SHAPES={
 };
 // Recolouring: each source artwork colour and the theme token that replaces it.
 const RECOLOUR={'#000000':'ink','#ffffff':'paper','#fff':'paper','#231f20':'ink','#1f1a17':'ink','#15864a':'tree','#185192':'wildlife','#478cca':'water','#604b3d':'earth','#70c6ea':'sky','#93d0aa':'distant','#008450':'tree','#0091c4':'water','#4b3216':'earth','#6dc9ef':'sky'};
+// holder 'oval': no traced master; the holder is built on the frame's outer
+// oval (tab-layout.js) so it sits on the oval's border, at halfSpan degrees
+// either side (the Wildfire Management patch: its wording needs 59.9 at its
+// cap height). It used to be the lower ribbon flipped and scaled x1.1, which
+// floated 39 units above the oval.
 const TABS={
  none:{shape:'none'},
  'wildfire-bottom':{shape:'ribbon',side:'bottom',slot:'service-bottom',width:1,height:1,y:0},
- 'management-top':{shape:'ribbon',side:'top',slot:'management-top',width:1.10,height:1.10,y:-7},
+ 'management-top':{shape:'ribbon',side:'top',slot:'management-top',holder:'oval',halfSpan:60},
  parks:{shape:'plate',slot:'plate-label'},
  airtanker:{shape:'wings',slot:'wings-label',experimental:true}
 };

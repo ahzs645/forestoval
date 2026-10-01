@@ -110,8 +110,9 @@ function ringMid(id,s){
  if(!s.centreInRing||Number.isFinite(s.slots[id]?.rx)||Number.isFinite(s.slots[id]?.ry))return null;
  // Profiles of one pair share their scene, so the configured crest names the ring.
  if(!Object.values(P.CRESTS).some(c=>c.upper===id||c.lower===id))return null;
- const ring=P.SHAPES.rings?.[P.CRESTS[s.crest]?.scene];
- return ring?{rx:(ring.inner[0]+ring.outer[0])/2,ry:(ring.inner[1]+ring.outer[1])/2}:null;
+ const crest=P.CRESTS[s.crest],ring=P.SHAPES.rings?.[crest?.scene],off=crest?.ringOffset||0;
+ // ringOffset: a crest's measured optical offset from the ring centre (+ outward).
+ return ring?{rx:(ring.inner[0]+ring.outer[0])/2+off,ry:(ring.inner[1]+ring.outer[1])/2+off}:null;
 }
 // The part of a line that is centred, as a fraction of its cap height: the cap
 // height for capitals; for lowercase, the x-height plus TYPE_BODY_LIFT of the
@@ -247,7 +248,7 @@ function fitRun(text,slotId,s){
   preferredSpan,maxSpan,stylePreserved,overflow:Math.max(0,resolvedWidth-budget),
   tooSmall:cap<t.minCap,minimum:t.minCap,ascent:m.ascent*size,descent:m.descent*size};
 }
-function textAttrs(f,colour){return{'font-family':f.family,'font-weight':f.weight,'font-stretch':f.stretch,'font-size':round(f.size),'font-kerning':'normal','text-rendering':f.fitPolicy?'geometricPrecision':undefined,'letter-spacing':round(f.tracking),'word-spacing':f.wordSpacing===undefined?undefined:round(f.wordSpacing),style:'font-synthesis:none;white-space:pre','xml:space':'preserve',fill:colour};}
+function textAttrs(f,colour){return{'font-family':f.family,'font-weight':f.weight,'font-stretch':f.stretch,'font-size':round(f.size),'font-kerning':'normal','text-rendering':f.fitPolicy||f.precise?'geometricPrecision':undefined,'letter-spacing':round(f.tracking),'word-spacing':f.wordSpacing===undefined?undefined:round(f.wordSpacing),style:'font-synthesis:none;white-space:pre','xml:space':'preserve',fill:colour};}
 function curved(parent,defs,text,slotId,s,colour,id,report,resolved=null){if(!text?.trim())return;
  const f=resolved||fitRun(text,slotId,s);const pid=id+'-baseline';defs.append(node('path',{id:pid,d:f.curve.d,'data-baseline':slotId}));
  const e=node('text',{...textAttrs(f,colour),'text-anchor':'middle','data-slot':slotId,'data-role':f.role,'data-face':f.face,'data-live-text':id});
@@ -277,19 +278,27 @@ function ribbon(defs,t,theme,backing='paper'){
 }
 function wings(){const W=P.SHAPES.wings,g=node('g',{'data-layer':'tab-shape','data-fidelity':'photo-based approximation'});for(const mirror of [false,true]){const x=node('g',mirror?{transform:`translate(${2*CX} 0) scale(-1 1)`}:{});x.append(node('path',{d:W.outline,fill:W.fill,stroke:W.stroke,'stroke-width':W.strokeWidth,'stroke-linejoin':'round'}));for(const[a,b]of W.rules)x.append(node('path',{d:`M ${a} ${b} H ${W.ruleEnd}`,fill:'none',stroke:W.stroke,'stroke-width':W.ruleWidth}));g.append(x);}g.append(node('path',{d:W.band,fill:W.bandFill,stroke:W.stroke,'stroke-width':W.bandStrokeWidth}));return g;}
 // Resolve the service lettering and its holder once; exports use this same result.
+// A tab with holder 'oval' (no traced master of its own) always uses this
+// oval-hugging holder: at its fixed halfSpan with the reference holder, or
+// grown to the wording with follow-text.
 function serviceTabLayout(s){
- const t=P.TABS[s.tab];
- if(s.tabSizing!=='follow-text'||t.shape!=='ribbon'||P.LOCKUPS[s.layout].kind==='wordmark')return null;
+ const t=P.TABS[s.tab],grow=s.tabSizing==='follow-text';
+ if(!(grow||t.holder==='oval')||t.shape!=='ribbon'||P.LOCKUPS[s.layout].kind==='wordmark')return null;
  if(!global.BCTabLayout||!global.BCTabProfile)throw Error('Reactive tabs require tab-layout.js and the layout.json tab profile. Rebuild the studio.');
  const text=s.content.service||'',sl=slot(t.slot,s),r=role(sl.role,s),m=metrics(text,r.face);
- const layout=global.BCTabLayout.resolve({profile:global.BCTabProfile,side:t.side==='top'?'upper':'lower',metrics:m,
+ const fixed=!grow&&Number.isFinite(t.halfSpan),profile=fixed?{...global.BCTabProfile,halfSpan:t.halfSpan}:global.BCTabProfile;
+ const layout=global.BCTabLayout.resolve({profile,side:t.side==='top'?'upper':'lower',metrics:m,...(fixed?{maxHalfSpan:t.halfSpan}:{}),
   capHeight:sl.cap*r.capScale,referenceCap:P.SLOTS[t.slot].anchorCap,minCap:sl.minCap,
   trackingEm:Math.max(0,sl.tracking+r.trackingEm),count:Array.from(text).length,endPad:sl.endPad||12});
- const tab={mode:'follow-text',side:t.side,halfSpan:layout.halfSpan,depth:layout.depth,
+ const tab={mode:grow?'follow-text':'reference',side:t.side,halfSpan:layout.halfSpan,depth:layout.depth,
   padding:layout.padding,baselineOffset:layout.offset,endPadding:layout.endPadding,status:layout.status};
- const fit={text,widthBasis:'browser advance',slot:t.slot,role:sl.role,face:r.face,family:m.family,weight:m.weight,...(m.stretch?{stretch:m.stretch}:{}),
+ // Report the final-size textPath advance, measured like every other run, and
+ // render it with the same geometric precision.
+ const width=text?measuredAdvance(text,m,layout.size,layout.trackingEm):0;
+ const fit={text,widthBasis:'final-size browser advance',slot:t.slot,role:sl.role,face:r.face,family:m.family,weight:m.weight,...(m.stretch?{stretch:m.stretch}:{}),
   size:layout.size,cap:layout.cap,preferredCap:layout.requestedCap,tracking:layout.tracking,trackingEm:layout.trackingEm,
-  width:layout.width,available:layout.available,curve:layout.curve,stage:layout.stage,
+  precise:true,overflow:Math.max(0,width-layout.available),
+  width,available:layout.available,curve:layout.curve,stage:layout.stage,
   tooSmall:layout.tooSmall,minimum:layout.minimum,ascent:m.ascent*layout.size,descent:m.descent*layout.size,tab};
  return {fit,geometry:layout.geometry};
 }
@@ -447,7 +456,7 @@ function makeLogo(input={},options={}){
   if(r.overflow>.05)warnings.push({code:'TEXT_FIT_OVERFLOW',message:`${r.slot}: the measured text exceeds the available arc by ${r.overflow.toFixed(2)} units. Review this configuration before export.`});
  }
  if(layoutInfo.separators?.crowded)warnings.push({code:'SEPARATOR_CROWDED',message:'The upper and lower lettering leave no clear room for the separator marks. Shorten the wording or choose another crest profile.'});
- if(tabLayout?.fit.tab.status==='text-reduced')warnings.push({code:'TAB_TEXT_REDUCED',message:`Service tab reached its 80° half-span limit. Requested cap ${tabLayout.fit.preferredCap.toFixed(1)}; rendered ${tabLayout.fit.cap.toFixed(1)}. Shorten the wording to keep the requested size.`});
+ if(tabLayout?.fit.tab.status==='text-reduced')warnings.push({code:'TAB_TEXT_REDUCED',message:`Service tab reached its ${tabLayout.fit.tab.halfSpan.toFixed(0)}° half-span limit. Requested cap ${tabLayout.fit.preferredCap.toFixed(1)}; rendered ${tabLayout.fit.cap.toFixed(1)}. Shorten the wording to keep the requested size.`});
  if(P.recipe(s.recipe).excluded)warnings.push({code:'EXCLUDED_REFERENCE',message:'Fire Control is excluded from calibration. This is only a shared-component placeholder.'});
  if(s.tab==='airtanker')warnings.push({code:'APPROXIMATION',message:'Winged geometry remains a photographic approximation.'});
  measurementRoot().append(svg);let b;try{b=composition.getBBox();}catch{b={x:nominal.x,y:nominal.y,width:nominal.w,height:nominal.h};}
