@@ -3,24 +3,13 @@ import { FAMILIES, references, type FamilyId, type VB } from '../data';
 import { LAYERS, PRESETS, resolve, type Preset } from '../layers';
 import { dataUrl, download, downloadPng, finish, stack } from '../svg';
 import { MAX_HALF_SPAN, TAB, tabPiece, type TabSide } from '../tab';
-import { LiveLettering } from './LiveLettering';
 
 const TAB_LAYERS: Record<string, TabSide> = { 'ribbon-lower': 'lower', 'ribbon-upper': 'upper' };
 import type { ViewSettings } from '../App';
 
+/** Arbitrary layer combinations; the live lettering editor is its own tab. */
 export function Compose(props: { view: ViewSettings; onOpen: (file: string) => void }) {
-  const [mode, setMode] = useState<'lettering' | 'layers'>('lettering');
-  return (
-    <div className="fo-compose">
-      <div className="fo-modes" aria-label="Compose mode">
-        <button type="button" aria-pressed={mode === 'lettering'} onClick={() => setMode('lettering')}>Live lettering</button>
-        <button type="button" aria-pressed={mode === 'layers'} onClick={() => setMode('layers')}>Layer assembly</button>
-        <span>Live text uses the studio engine. Existing layer presets remain in Layer assembly.</span>
-      </div>
-      <div className="fo-mode-panel" hidden={mode !== 'lettering'}><LiveLettering view={props.view} /></div>
-      <div className="fo-mode-panel" hidden={mode !== 'layers'}><LayerCompose {...props} /></div>
-    </div>
-  );
+  return <LayerCompose {...props} />;
 }
 
 function LayerCompose({ view, onOpen }: { view: ViewSettings; onOpen: (file: string) => void }) {

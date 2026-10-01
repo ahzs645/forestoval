@@ -22,7 +22,7 @@ import { loadLetteringRuntime } from '../lettering/runtime';
 type Mode = 'side' | 'wipe' | 'overlay' | 'difference';
 type Source = 'live' | 'fitted' | 'v5';
 const SOURCES: [Source, string, string][] = [
-  ['live', 'Live engine', 'Drawn now by the v5 engine, configured as Compose → Live lettering (reference-calibrated).'],
+  ['live', 'Live engine', 'Drawn now by the v5 engine, configured as the Live lettering editor (reference-calibrated).'],
   ['fitted', 'Saved reference fit · legacy', 'The saved v5 examples with the fits in lettering-fit.json applied.'],
   ['v5', 'Saved v5 examples · legacy', 'The lettering in the saved v5 examples, as generated.'],
 ];
@@ -72,7 +72,7 @@ export function Recreations({ view, onOpen }: { view: ViewSettings; onOpen: (fil
           <h2>Recreations</h2>
           <p className="muted">
             Each supplied reference next to the same logo rebuilt from the shared primitives. The artwork is our pieces; the lettering is drawn by the live v5 engine with
-            the same recipe and configuration as Compose → Live lettering. The two saved-lettering modes are kept as legacy evidence of the earlier pipeline.
+            the same recipe and configuration as the Live lettering editor. The two saved-lettering modes are kept as legacy evidence of the earlier pipeline.
             The references are the supplied images, kept in <code>shared-primitives/references/</code>.
           </p>
         </div>
@@ -219,7 +219,7 @@ function RecreationCard({ rec, mode, source, live, view, onOpen }: CardProps) {
           <br />
           {source === 'live' ? (
             <span className="muted">
-              Same recipe and configuration as Compose → Live lettering; no saved corrections applied.
+              Same recipe and configuration as the Live lettering editor; no saved corrections applied.
               {built.warnings?.map((w) => <span key={w} className="recwarn"><br />⚠ {w}</span>)}
             </span>
           ) : built.fit ? (

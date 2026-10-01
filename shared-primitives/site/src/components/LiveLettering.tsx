@@ -1,5 +1,6 @@
 import { useEffect, useRef, type CSSProperties } from 'react';
 import type { ViewSettings } from '../App';
+import { AIRTANKER_PACKAGE } from '../lettering/airtanker';
 import { LetteringEditor } from '../lettering/editor';
 import { loadLetteringRuntime } from '../lettering/runtime';
 import '../lettering/editor.css';
@@ -10,7 +11,7 @@ export function LiveLettering({ view }: { view: ViewSettings }) {
   const controller = useRef<LetteringEditor | null>(null);
   useEffect(() => {
     if (!host.current) return;
-    const editor = new LetteringEditor(host.current, { runtime: loadLetteringRuntime });
+    const editor = new LetteringEditor(host.current, { runtime: loadLetteringRuntime, compositions: [AIRTANKER_PACKAGE] });
     controller.current = editor;
     return () => { editor.destroy(); controller.current = null; };
   }, []);

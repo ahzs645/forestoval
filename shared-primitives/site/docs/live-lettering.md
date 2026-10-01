@@ -1,11 +1,12 @@
-# Live lettering inside Compose
+# Live lettering
 
-The main viewer's Compose tab now offers two modes:
+The live lettering editor is the site's main app: it is the first tab, and the
+site opens on it (`#/` or `#/lettering`).
 
 - **Live lettering** mounts the same v5 engine and reads the same `BCPrimitives.RECIPES`
   catalogue as the standalone studio. Click curved text to open its inline input,
   or edit the labelled sidebar fields. The selected profile fits the wording live.
-- **Layer assembly** retains the previous Compose implementation and its presets,
+- **Layer assembly** (`#/compose`, formerly Compose's second mode) retains its presets,
   arbitrary layer combinations, Airtanker package, comparison overlays and exports.
   These arbitrary layer combinations are not converted into editable text recipes.
 
@@ -20,22 +21,22 @@ npm ci
 npm run dev
 ```
 
-Open the URL printed by Vite, select **Compose**, then **Live lettering**. The
-production route is `#/compose` under the site's existing base URL. The existing
+Open the URL printed by Vite; the editor is the first tab. The production route
+is the site's existing base URL (`#/lettering` also links to it). The existing
 build script builds both the React viewer and standalone `dist/studio/` page.
 No package.json, lockfile, workflow or extra npm dependency change is required.
 
 The editor needs the reference-lettering v2 engine (`src/engine.js` and
 `src/primitives.js` under `bc-ministry-primitives-v5/`). The runtime checks for the
 v2 policy and reference catalogue and displays a rebuild message rather than
-falling back to an older fitting policy. Only `components/Compose.tsx` changed
-among the existing files; the rest of the integration is new files.
+falling back to an older fitting policy.
 
 ## Editing and presets
 
-The preset dropdown comes directly from all active v5 recipes, with four quick
-buttons for the supplied wildlife references. In the delivered v2 catalogue there
-are 14 active recipes; excluded Fire Control is not offered. Recipe inheritance
+The preset dropdown comes directly from all active v5 recipes, with quick
+buttons for the supplied references. In the delivered v2 catalogue there
+are 14 active recipes; excluded Fire Control is not offered. The app adds one
+composition after the recipe it is built on (see *Airtanker Operations · package*). Recipe inheritance
 still supplies the wording, crest, tab and layout. The UI does not maintain a
 second collection of preset coordinates.
 
@@ -140,6 +141,34 @@ The site's palette controls are applied to the rendered configuration. Backdrop
 is passed as a CSS variable to the canvas only. Saved/exported configuration
 includes the effective colours of the last completed render.
 
+## Airtanker Operations · package
+
+The engine's own `airtanker` recipe draws its wings and band as a photographic
+approximation. **Airtanker Operations · package** instead draws the badge the
+Recreations tab rebuilds: the package's lower band and wing pair, and the shared
+crest frame, tree scene and ridge line scaled into that layout
+(`layout.json` → `airtanker-operations.crestTransform`), in the airtanker palette.
+
+- **Crest lines** are fitted by the engine with the `airtanker` recipe's
+  configuration (the same controls apply: Kabel, crest from the wording, dots,
+  spreading, ring centring) and carried into the layout with the crest transform.
+- **Diamonds** are the package's diamond, placed wherever the engine put the
+  crest's marks, and scaled with them on the long crest.
+- **Band words** keep the package master's curve, face (Roboto Condensed Bold,
+  bundled), size and spacing. Wording longer than *AIRTANKER OPERATIONS* (plus 4%)
+  first closes the master's wide word gaps, down to half, then shrinks evenly
+  (to 60% at most), kept centred on the band. A shrink is reported as
+  `TEXT_STYLE_REDUCED`; wording that still does not fit as `TEXT_FIT_OVERFLOW`.
+
+It is a composition over an engine recipe (`lettering/airtanker.ts`, passed to
+the editor as `compositions`), not a new engine recipe: its drafts are kept under
+its own preset id with the `airtanker` recipe's configuration, so it does not
+share a draft with the engine's Airtanker preset. Its crest, tab and layout
+selectors are fixed. Saved configurations are v5 `airtanker` configurations;
+opening one while the package preset is selected keeps the package artwork. SVG
+and PNG exports are the composed badge, through the engine's `serialise` and
+`png` (local font aliases; bundled faces embedded only in the PNG rasterization).
+
 ## Shared engine bridge
 
 `lettering/runtime.ts` imports the checkout's `art.json`, generated `layout.json`
@@ -186,12 +215,13 @@ with this editor's default configuration, with no saved corrections.
 With the app running:
 
 ```sh
-python3 tests/test_live_lettering.py --url http://localhost:5173/#/compose
+python3 tests/test_live_lettering.py --url http://localhost:5173/
 ```
 
 Use the actual Vite URL/base path when it differs (`npx vite preview` serves the
-production build on port 4173). The full-URL mode checks the React wrapper, both
-Compose modes and the existing layer presets. It requires the normal Python
+production build on port 4173). The full-URL mode checks the React wrapper, that
+the site opens on the editor, the Layer assembly presets, and the airtanker package
+preset (artwork, live runs, band fitting, export, separate draft). It requires the normal Python
 Playwright dependency from the repository requirements and Chromium (or
 `CHROMIUM=/path/to/browser`). Results and screenshots go to `tests/output/`.
 
@@ -207,7 +237,7 @@ matches its calibration advance, that the service backing defaults per preset,
 that exports with a fallback face need consent (it blocks the bundled Noto file
 and all local faces in a second page), and that the Recreations cards show the
 engine's lettering with the same advances, and that the font button reloads the
-bundled face once it is reachable again. All 54 checks passed against
+bundled face once it is reachable again, and the airtanker package preset. All 62 checks passed against
 `npm run dev` and against the production build on a machine with none of the
 faces installed. A separate check confirmed that the three engine scripts load
 from `assets/` when the build is served under a sub-path like `/forestoval/`, that

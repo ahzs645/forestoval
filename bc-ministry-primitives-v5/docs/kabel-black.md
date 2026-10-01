@@ -59,7 +59,7 @@ npm ci
 npm run dev
 ```
 
-Open **Compose → Live lettering → Forest Service**. In **Tree oval lettering**,
+Open **Live lettering → Forest Service** (the site's first tab). In **Tree oval lettering**,
 choose **Kabel Black · supplied OTF**. The source image remains available in
 Recreations' comparison views; choose **Live engine** rather than a legacy mode.
 

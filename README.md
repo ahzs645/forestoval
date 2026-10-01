@@ -45,7 +45,7 @@ To replace it:
 python3 bc-ministry-primitives-v5/tools/setup_kabel.py /path/to/Kabel-Black.otf
 ```
 
-Open **Compose → Live lettering → Forest Service** and select **Kabel
+Open **Live lettering → Forest Service** and select **Kabel
 Black · supplied OTF**. New drafts use it by default whenever the font is
 available (bundled, installed, or loaded in the editor); without it they keep
 the calibrated v2 substitutes. Older drafts keep their previous v2 settings until

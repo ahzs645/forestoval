@@ -31,7 +31,7 @@ export interface Recipe {
 }
 export interface Catalogue {
   RECIPES: Recipe[];
-  CRESTS: Record<string, { upper: string; lower: string; separator: string; longer?: string; shorter?: string }>;
+  CRESTS: Record<string, { upper: string; lower: string; separator: string; separatorSize?: number; longer?: string; shorter?: string }>;
   TABS: Record<string, { slot?: string; shape?: string }>;
   LOCKUPS: Record<string, { kind: string }>;
   FACES: Record<string, { family: string; weight: number; advance?: number }>;
@@ -41,12 +41,12 @@ export interface Catalogue {
 export interface LogoResult {
   svg: SVGSVGElement;
   state: Configuration;
-  report: Array<{ slot?: string; role: string; cap: number; trackingEm: number; stage: string; referenceProfile?: string }>;
+  report: Array<{ slot?: string; role: string; face?: string; cap: number; trackingEm: number; stage: string; referenceProfile?: string }>;
   warnings: Array<{ code: string; message: string }>;
   fontIds: string[];
   /** The crest profile actually drawn (autoProfile can differ from state.crest). */
   crest: string;
-  separators: { placement: string; state: string; y: number; angle: number; crowded: boolean } | null;
+  separators: { placement: string; state: string; y: number; angle: number; crowded: boolean; points?: Array<[number, number]> } | null;
   viewBox: { x: number; y: number; w: number; h: number };
 }
 export interface Engine {
@@ -62,9 +62,22 @@ export interface Engine {
   fontState: Map<string, { status: string; source: string; verified?: boolean; advance?: number }>;
 }
 export interface Runtime { P: Catalogue; E: Engine }
+/** A preset that draws an engine recipe's fitted lettering in other artwork
+ *  (e.g. the airtanker package). The engine still fits every line from the
+ *  recipe's configuration; the composition only redraws the result. */
+export interface Composition {
+  id: string;
+  name: string;
+  /** The engine recipe whose configuration, drafts and lettering it uses. */
+  recipe: string;
+  confidence?: string;
+  compose(result: LogoResult, runtime: Runtime, palette: Record<string, string> | null): Promise<LogoResult>;
+}
 export interface EditorOptions {
   palette?: Record<string, string> | null;
   storage?: Storage | null;
   /** Dependency injection is for the browser tests, not a second renderer. */
   runtime: () => Promise<Runtime>;
+  /** Extra presets, each listed after the recipe it is built on. */
+  compositions?: Composition[];
 }
